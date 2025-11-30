@@ -1,0 +1,114 @@
+import { prisma } from '@/lib/prisma';
+import { requireRole } from '@/lib/auth';
+import { handleApiError, successResponse, errorResponse } from '@/lib/api-utils';
+import { z } from 'zod';
+
+const createAcademySchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+});
+
+export async function POST(request: Request) {
+  try {
+    const session = await requireRole(['TEACHER', 'ADMIN']);
+    const body = await request.json();
+    const data = createAcademySchema.parse(body);
+
+    const academy = await prisma.academy.create({
+      data: {
+        name: data.name,
+        description: data.description,
+        ownerId: session.id,
+      },
+    });
+
+    return Response.json(successResponse(academy), { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const session = await requireRole(['ADMIN', 'TEACHER', 'STUDENT']);
+
+    let academies;
+
+    if (session.role === 'ADMIN') {
+      // Admin sees all academies
+      academies = await prisma.academy.findMany({
+        include: {
+          owner: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          _count: {
+            select: {
+              memberships: true,
+              classes: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    } else if (session.role === 'TEACHER') {
+      // Teachers see their own academies
+      academies = await prisma.academy.findMany({
+        where: {
+          ownerId: session.id,
+        },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          _count: {
+            select: {
+              memberships: true,
+              classes: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    } else {
+      // Students see all academies (to request membership)
+      academies = await prisma.academy.findMany({
+        include: {
+          owner: {
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          _count: {
+            select: {
+              classes: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    }
+
+    return Response.json(successResponse(academies));
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
