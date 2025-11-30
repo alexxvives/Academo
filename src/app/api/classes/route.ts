@@ -7,8 +7,7 @@ const createClassSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   academyId: z.string(),
-  defaultMaxPlays: z.number().optional(),
-  defaultMaxSeekBackMinutes: z.number().optional(),
+  defaultMaxWatchTimeMultiplier: z.number().optional(),
 });
 
 export async function POST(request: Request) {
@@ -33,8 +32,7 @@ export async function POST(request: Request) {
         name: data.name,
         description: data.description,
         academyId: data.academyId,
-        defaultMaxPlays: data.defaultMaxPlays,
-        defaultMaxSeekBackMinutes: data.defaultMaxSeekBackMinutes,
+        defaultMaxWatchTimeMultiplier: data.defaultMaxWatchTimeMultiplier,
       },
       include: {
         academy: true,

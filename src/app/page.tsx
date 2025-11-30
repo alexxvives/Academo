@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import AuthModal from '@/components/AuthModal';
 
-export default function HomePage() {
+function HomePageContent() {
   const searchParams = useSearchParams();
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'login' | 'register'>('login');
@@ -234,6 +234,14 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-primary-50 flex items-center justify-center">Loading...</div>}>
+      <HomePageContent />
+    </Suspense>
   );
 }
 

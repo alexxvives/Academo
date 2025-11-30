@@ -19,8 +19,7 @@ interface Academy {
 }
 
 interface PlatformSettings {
-  defaultMaxPlays: number;
-  defaultMaxSeekBackMinutes: number;
+  defaultMaxWatchTimeMultiplier: number;
 }
 
 export default function AdminDashboard() {

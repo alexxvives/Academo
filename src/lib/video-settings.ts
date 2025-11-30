@@ -9,8 +9,7 @@ export async function getPlatformSettings() {
     settings = await prisma.platformSettings.create({
       data: {
         id: 'platform_settings',
-        defaultMaxPlays: 2,
-        defaultMaxSeekBackMinutes: 10,
+        defaultMaxWatchTimeMultiplier: 2.0,
       },
     });
   }
@@ -37,20 +36,13 @@ export async function getEffectiveVideoSettings(videoId: string) {
   const platformSettings = await getPlatformSettings();
 
   // Priority: Video > Class > Academy > Platform
-  const maxPlays =
-    video.maxPlays ??
-    video.class.defaultMaxPlays ??
-    video.class.academy.defaultMaxPlays ??
-    platformSettings.defaultMaxPlays;
-
-  const maxSeekBackMinutes =
-    video.maxSeekBackMinutes ??
-    video.class.defaultMaxSeekBackMinutes ??
-    video.class.academy.defaultMaxSeekBackMinutes ??
-    platformSettings.defaultMaxSeekBackMinutes;
+  const maxWatchTimeMultiplier =
+    video.maxWatchTimeMultiplier ??
+    video.class.defaultMaxWatchTimeMultiplier ??
+    video.class.academy.defaultMaxWatchTimeMultiplier ??
+    platformSettings.defaultMaxWatchTimeMultiplier;
 
   return {
-    maxPlays,
-    maxSeekBackMinutes,
+    maxWatchTimeMultiplier,
   };
 }
