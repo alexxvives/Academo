@@ -6,6 +6,7 @@ interface VideoPlayState {
   totalWatchTimeSeconds: number;
   sessionStartTime: string | null;
   status?: string;
+  lastPositionSeconds?: number;
 }
 
 interface ProtectedVideoPlayerProps {
@@ -134,6 +135,36 @@ export default function ProtectedVideoPlayer({
     };
   }, [isPlaying, isUnlimitedUser, canPlay]);
 
+  // Set initial position from lastPositionSeconds when video loads
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleLoadedMetadata = () => {
+      // Set duration
+      if (video.duration && !isNaN(video.duration) && video.duration !== Infinity) {
+        setVideoDuration(video.duration);
+      }
+
+      // Restore last position if available
+      if (initialPlayState?.lastPositionSeconds && initialPlayState.lastPositionSeconds > 0) {
+        video.currentTime = initialPlayState.lastPositionSeconds;
+        setCurrentTime(initialPlayState.lastPositionSeconds);
+      }
+    };
+
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+    // Check if metadata already loaded
+    if (video.readyState >= 1) {
+      handleLoadedMetadata();
+    }
+
+    return () => {
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
+  }, [initialPlayState]);
+
   // Update current time and detect duration
   useEffect(() => {
     const video = videoRef.current;
@@ -148,12 +179,6 @@ export default function ProtectedVideoPlayer({
         video.pause();
         setIsPlaying(false);
         setIsLocked(true);
-      }
-    };
-
-    const handleLoadedMetadata = () => {
-      if (video.duration && !isNaN(video.duration) && video.duration !== Infinity) {
-        setVideoDuration(video.duration);
       }
     };
 
@@ -172,22 +197,15 @@ export default function ProtectedVideoPlayer({
     };
 
     video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('play', handlePlay);
     video.addEventListener('pause', handlePause);
     
-    // Check if metadata already loaded
-    if (video.duration && !isNaN(video.duration) && video.duration !== Infinity) {
-      setVideoDuration(video.duration);
-    }
-    
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
     };
-  }, [canPlay, isPlaying]);
+  }, [canPlay, isPlaying, isLocked]);
 
   // Prevent context menu
   useEffect(() => {

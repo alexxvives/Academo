@@ -81,7 +81,22 @@ export async function GET(request: Request) {
 
     const videos = await videoQueries.findByClass(classId);
 
-    return Response.json(successResponse(videos));
+    // If student, include their play state for each video
+    let videosWithPlayState = videos;
+    if (session.role === 'STUDENT') {
+      const { playStateQueries } = await import('@/lib/db');
+      videosWithPlayState = await Promise.all(
+        videos.map(async (video: any) => {
+          const playState = await playStateQueries.findByVideoAndStudent(video.id, session.id);
+          return {
+            ...video,
+            playStates: playState ? [playState] : [],
+          };
+        })
+      );
+    }
+
+    return Response.json(successResponse(videosWithPlayState));
   } catch (error) {
     return handleApiError(error);
   }
