@@ -307,17 +307,10 @@ export default function ProtectedVideoPlayer({
             Watch Time Limit Reached
           </h3>
           
-          <p className="text-gray-600 mb-6">
-            You've used all {formatTime(maxWatchTimeSeconds)} of watch time for this video.
+          <p className="text-gray-600">
+            You've used all your available watch time for this video.
             Please contact your teacher if you need more time.
           </p>
-          
-          <div className="bg-white rounded-lg p-4 border border-gray-200">
-            <div className="text-sm text-gray-500 mb-1">Total Watch Time Used</div>
-            <div className="text-2xl font-bold text-gray-900">
-              {formatTime(playState?.totalWatchTimeSeconds || 0)} / {formatTime(maxWatchTimeSeconds)}
-            </div>
-          </div>
         </div>
       </div>
     );

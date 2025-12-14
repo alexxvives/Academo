@@ -508,50 +508,120 @@ export default function TeacherClassPage() {
               </div>
             ) : analyticsData ? (
               <div className="space-y-6">
-                {/* Video Stats */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">Video Watch Statistics</h4>
-                  <div className="space-y-2">
-                    {analyticsData.videos.map((video: any) => (
-                      <div key={video.id} className="bg-gray-50 rounded-lg p-3">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="font-medium text-sm">{video.title}</div>
-                          <div className="text-xs text-gray-500">{video.studentsWatched || 0} students</div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          <div>
-                            <div className="text-gray-500">Avg Watch Time</div>
-                            <div className="font-medium">{formatDuration(video.avgWatchTime || 0)}</div>
-                          </div>
-                          <div>
-                            <div className="text-gray-500">Total Watch Time</div>
-                            <div className="font-medium">{formatDuration(video.totalWatchTime || 0)}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                {/* Overview Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
+                    <div className="text-blue-600 text-sm font-medium mb-1">Total Videos</div>
+                    <div className="text-3xl font-bold text-blue-900">{analyticsData.videos.length}</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4">
+                    <div className="text-green-600 text-sm font-medium mb-1">Active Students</div>
+                    <div className="text-3xl font-bold text-green-900">{analyticsData.studentEngagement.length}</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4">
+                    <div className="text-purple-600 text-sm font-medium mb-1">Total Watch Time</div>
+                    <div className="text-3xl font-bold text-purple-900">
+                      {formatDuration(analyticsData.studentEngagement.reduce((sum: number, s: any) => sum + (s.totalWatchTime || 0), 0))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Student Engagement */}
+                {/* Video Stats with Bar Chart */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">Video Watch Statistics</h4>
+                  <div className="space-y-3">
+                    {analyticsData.videos.map((video: any) => {
+                      const maxWatchTime = Math.max(...analyticsData.videos.map((v: any) => v.totalWatchTime || 0));
+                      const barWidth = maxWatchTime > 0 ? ((video.totalWatchTime || 0) / maxWatchTime) * 100 : 0;
+                      return (
+                        <div key={video.id} className="bg-gray-50 rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="font-medium text-sm flex-1">{video.title}</div>
+                            <div className="text-xs text-gray-500 ml-2">{video.studentsWatched || 0} students</div>
+                          </div>
+                          
+                          {/* Visual Bar */}
+                          <div className="mb-2">
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                                style={{ width: `${barWidth}%` }}
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                              <div className="text-gray-500">Avg Watch Time</div>
+                              <div className="font-medium">{formatDuration(video.avgWatchTime || 0)}</div>
+                            </div>
+                            <div>
+                              <div className="text-gray-500">Total Watch Time</div>
+                              <div className="font-medium">{formatDuration(video.totalWatchTime || 0)}</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Student Engagement with Progress Circles */}
                 <div>
                   <h4 className="font-medium text-gray-900 mb-3">Student Engagement</h4>
                   <div className="space-y-2">
-                    {analyticsData.studentEngagement.map((student: any) => (
-                      <div key={student.studentId} className="bg-gray-50 rounded-lg p-3">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="font-medium text-sm">{student.firstName} {student.lastName}</div>
-                            <div className="text-xs text-gray-500">{student.email}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-xs text-gray-500">Watch Time</div>
-                            <div className="font-medium text-sm">{formatDuration(student.totalWatchTime || 0)}</div>
-                            <div className="text-xs text-gray-500 mt-1">{student.videosWatched || 0} videos</div>
+                    {analyticsData.studentEngagement.map((student: any) => {
+                      const totalVideos = analyticsData.videos.length;
+                      const watchedVideos = student.videosWatched || 0;
+                      const completionPercent = totalVideos > 0 ? (watchedVideos / totalVideos) * 100 : 0;
+                      
+                      return (
+                        <div key={student.studentId} className="bg-gray-50 rounded-lg p-4">
+                          <div className="flex items-center gap-4">
+                            {/* Circle Progress */}
+                            <div className="relative w-12 h-12 flex-shrink-0">
+                              <svg className="w-12 h-12 transform -rotate-90">
+                                <circle
+                                  cx="24"
+                                  cy="24"
+                                  r="20"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                  fill="none"
+                                  className="text-gray-200"
+                                />
+                                <circle
+                                  cx="24"
+                                  cy="24"
+                                  r="20"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                  fill="none"
+                                  strokeDasharray={`${2 * Math.PI * 20}`}
+                                  strokeDashoffset={`${2 * Math.PI * 20 * (1 - completionPercent / 100)}`}
+                                  className="text-blue-600 transition-all duration-500"
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-xs font-bold text-gray-700">{Math.round(completionPercent)}%</span>
+                              </div>
+                            </div>
+                            
+                            {/* Student Info */}
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{student.firstName} {student.lastName}</div>
+                              <div className="text-xs text-gray-500">{watchedVideos} / {totalVideos} videos watched</div>
+                            </div>
+                            
+                            {/* Watch Time */}
+                            <div className="text-right">
+                              <div className="text-xs text-gray-500">Total Watch Time</div>
+                              <div className="font-medium text-sm">{formatDuration(student.totalWatchTime || 0)}</div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>

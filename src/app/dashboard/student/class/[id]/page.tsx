@@ -146,7 +146,15 @@ export default function ClassPage() {
               initialPlayState={selectedVideo.playStates?.[0] || { totalWatchTimeSeconds: 0, sessionStartTime: null }}              userRole={user.role}            />
             
             <button
-              onClick={() => setSelectedVideo(null)}
+              onClick={async () => {
+                setSelectedVideo(null);
+                // Refetch videos to get fresh playState status
+                const videosRes = await fetch(`/api/videos?classId=${classId}`);
+                const videosResult = await videosRes.json();
+                if (videosResult.success) {
+                  setVideos(videosResult.data);
+                }
+              }}
               className="mt-6 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
             >
               ← Back to video list
@@ -240,7 +248,7 @@ export default function ClassPage() {
                         <div className="mt-3 pt-3 border-t border-gray-100">
                           <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
                             <span>Watch time used</span>
-                            <span>{Math.round(watchProgress)}%</span>
+                            <span>{Math.min(Math.round(watchProgress), 100)}%</span>
                           </div>
                           <div className="w-full bg-gray-100 rounded-full h-1.5">
                             <div
@@ -249,7 +257,14 @@ export default function ClassPage() {
                             />
                           </div>
                           <p className="text-xs text-gray-500 mt-1">
-                            {Math.floor(playState.totalWatchTimeSeconds / 60)}min / {Math.floor(maxWatchTime / 60)}min
+                            {(() => {
+                              const usedMinutes = Math.floor(playState.totalWatchTimeSeconds / 60);
+                              const maxMinutes = Math.floor(maxWatchTime / 60);
+                              if (usedMinutes >= 60 || maxMinutes >= 60) {
+                                return `${Math.floor(usedMinutes / 60)}h ${usedMinutes % 60}m / ${Math.floor(maxMinutes / 60)}h ${maxMinutes % 60}m`;
+                              }
+                              return `${usedMinutes}m / ${maxMinutes}m`;
+                            })()}
                           </p>
                         </div>
                       )}
