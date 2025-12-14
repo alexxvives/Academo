@@ -518,9 +518,9 @@ export default function TeacherClassPage() {
                     <div className="text-green-600 text-sm font-medium mb-1">Active Students</div>
                     <div className="text-3xl font-bold text-green-900">{analyticsData.studentEngagement.length}</div>
                   </div>
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4">
-                    <div className="text-purple-600 text-sm font-medium mb-1">Total Watch Time</div>
-                    <div className="text-3xl font-bold text-purple-900">
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4">
+                    <div className="text-gray-600 text-sm font-medium mb-1">Total Watch Time</div>
+                    <div className="text-3xl font-bold text-gray-900">
                       {formatDuration(analyticsData.studentEngagement.reduce((sum: number, s: any) => sum + (s.totalWatchTime || 0), 0))}
                     </div>
                   </div>

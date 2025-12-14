@@ -107,10 +107,11 @@ export default function ClassPage() {
     <DashboardLayout role="STUDENT">
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
-        <div>
-          <Link href="/dashboard/student" className="text-sm text-gray-500 hover:text-gray-900 mb-4 inline-block">
-            ← Back to Dashboard
-          </Link>
+        {!selectedVideo && (
+          <div>
+            <Link href="/dashboard/student" className="text-sm text-gray-500 hover:text-gray-900 mb-4 inline-block">
+              ← Back to Dashboard
+            </Link>
           {classData && (
             <div className="mb-2">
               <h1 className="text-2xl font-bold text-gray-900">{classData.name}</h1>
@@ -126,6 +127,7 @@ export default function ClassPage() {
             <span>{documents.length} document{documents.length !== 1 ? 's' : ''}</span>
           </div>
         </div>
+        )}
 
         {/* Video Player */}
         {selectedVideo && user && (
@@ -244,7 +246,7 @@ export default function ClassPage() {
                       )}
 
                       {/* Watch Time Progress */}
-                      {playState && playState.totalWatchTimeSeconds > 0 && (
+                      {playState && playState.totalWatchTimeSeconds > 0 && maxWatchTime > 0 && (
                         <div className="mt-3 pt-3 border-t border-gray-100">
                           <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
                             <span>Watch time used</span>

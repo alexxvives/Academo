@@ -281,7 +281,7 @@ export default function TeacherDashboard() {
                     {/* Class Header */}
                     <Link
                       href={`/dashboard/teacher/class/${cls.id}`}
-                      className="block p-4 bg-gradient-to-r from-purple-50 to-purple-100 border-b border-purple-200 hover:from-purple-100 hover:to-purple-150 transition-colors"
+                      className="block p-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -292,7 +292,7 @@ export default function TeacherDashboard() {
                           <p className="text-xs text-gray-500 mt-1">{cls.academyName}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="px-3 py-1 bg-white rounded-full border border-purple-300 text-purple-700 text-sm font-medium">
+                          <span className="px-3 py-1 bg-white rounded-full border border-gray-300 text-gray-700 text-sm font-medium">
                             {classStudents.length} estudiantes
                           </span>
                           <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
