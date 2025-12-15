@@ -194,20 +194,12 @@ export default function ClassPage() {
         {selectedLesson && user && (
           <div className="space-y-6">
             {/* Lesson Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <button
-                  onClick={goBackToLessons}
-                  className="text-sm text-gray-500 hover:text-gray-900 mb-2 inline-block"
-                >
-                  ← Back to lessons
-                </button>
-                <h2 className="text-xl font-semibold text-gray-900">{selectedLesson.title}</h2>
-                {selectedLesson.description && (
-                  <p className="text-gray-600 mt-1">{selectedLesson.description}</p>
-                )}
-              </div>
-            </div>
+            <button
+              onClick={goBackToLessons}
+              className="text-sm text-gray-500 hover:text-gray-900 inline-block"
+            >
+              ← Back to lessons
+            </button>
 
             {/* Video Selection - if multiple videos */}
             {selectedLesson.videos.length > 1 && (
@@ -231,13 +223,6 @@ export default function ClassPage() {
             {/* Video Player */}
             {selectedVideo && (
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div className="p-4 border-b border-gray-100">
-                  <h3 className="font-medium text-gray-900">{selectedVideo.title}</h3>
-                  {selectedVideo.description && (
-                    <p className="text-sm text-gray-600 mt-1">{selectedVideo.description}</p>
-                  )}
-                </div>
-                
                 <ProtectedVideoPlayer
                   videoUrl={`/api/video/stream/${selectedVideo.id}`}
                   videoId={selectedVideo.id}
@@ -267,47 +252,32 @@ export default function ClassPage() {
                   Documents ({selectedLesson.documents.length})
                 </h3>
                 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {selectedLesson.documents.map((doc) => (
-                    <div key={doc.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                      <div className="flex items-center justify-between p-3 bg-gray-50">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{doc.title}</p>
-                            {doc.description && (
-                              <p className="text-xs text-gray-500">{doc.description}</p>
-                            )}
-                          </div>
-                        </div>
-                        <a
-                          href={`/api/storage/serve/${encodeURIComponent(doc.upload.storagePath)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    <a
+                      key={doc.id}
+                      href={`/api/storage/serve/${encodeURIComponent(doc.upload.storagePath)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
-                          Open
-                        </a>
-                      </div>
-                      
-                      {/* Embedded PDF viewer for PDF documents */}
-                      {isPdfDocument(doc) && (
-                        <div className="border-t border-gray-200">
-                          <iframe
-                            src={`/api/storage/serve/${encodeURIComponent(doc.upload.storagePath)}#toolbar=0`}
-                            className="w-full h-[500px]"
-                            title={doc.title}
-                          />
                         </div>
-                      )}
-                    </div>
+                        <div>
+                          <p className="font-medium text-gray-900 group-hover:text-blue-600">{doc.title}</p>
+                          {doc.description && (
+                            <p className="text-xs text-gray-500">{doc.description}</p>
+                          )}
+                        </div>
+                      </div>
+                      <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
                   ))}
                 </div>
               </div>
@@ -364,6 +334,36 @@ export default function ClassPage() {
                       <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{lesson.title}</h3>
                       {lesson.description && (
                         <p className="text-sm text-gray-500 mb-3 line-clamp-2">{lesson.description}</p>
+                      )}
+                      
+                      {/* Video Progress Bars */}
+                      {lesson.videos && lesson.videos.length > 0 && (
+                        <div className="space-y-2 mb-3">
+                          {lesson.videos.map((video: any) => {
+                            const playState = video.playStates?.[0];
+                            const watchedSeconds = playState?.totalWatchTimeSeconds || 0;
+                            const videoDuration = video.durationSeconds || 0;
+                            const maxWatchSeconds = videoDuration * lesson.maxWatchTimeMultiplier;
+                            const remainingSeconds = Math.max(0, maxWatchSeconds - watchedSeconds);
+                            const progressPercent = videoDuration > 0 ? Math.min(100, (watchedSeconds / videoDuration) * 100) : 0;
+                            const remainingMinutes = Math.ceil(remainingSeconds / 60);
+                            
+                            return (
+                              <div key={video.id}>
+                                <div className="flex items-center justify-between text-xs mb-1">
+                                  <span className="text-gray-600 truncate flex-1">{video.title}</span>
+                                  <span className="text-gray-500 ml-2">{remainingMinutes}min left</span>
+                                </div>
+                                <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-blue-600 rounded-full transition-all"
+                                    style={{ width: `${progressPercent}%` }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                       
                       {/* Content Count */}

@@ -332,10 +332,6 @@ export default function TeacherClassPage() {
             {/* Video Player */}
             {selectedVideo && (
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div className="p-4 border-b border-gray-100">
-                  <h3 className="font-medium text-gray-900">{selectedVideo.title}</h3>
-                  {selectedVideo.description && <p className="text-sm text-gray-600 mt-1">{selectedVideo.description}</p>}
-                </div>
                 <ProtectedVideoPlayer
                   videoUrl={`/api/video/stream/${selectedVideo.id}`}
                   videoId={selectedVideo.id}
@@ -359,40 +355,30 @@ export default function TeacherClassPage() {
             {selectedLesson.documents.length > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-medium text-gray-900 mb-4">Documents ({selectedLesson.documents.length})</h3>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {selectedLesson.documents.map((doc) => (
-                    <div key={doc.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                      <div className="flex items-center justify-between p-3 bg-gray-50">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                            <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd"/>
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{doc.title}</p>
-                            {doc.description && <p className="text-xs text-gray-500">{doc.description}</p>}
-                          </div>
+                    <a
+                      key={doc.id}
+                      href={`/api/storage/serve/${encodeURIComponent(doc.upload.storagePath)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                          <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd"/>
+                          </svg>
                         </div>
-                        <a
-                          href={`/api/storage/serve/${encodeURIComponent(doc.upload.storagePath)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg"
-                        >
-                          Open
-                        </a>
+                        <div>
+                          <p className="font-medium text-gray-900 group-hover:text-blue-600">{doc.title}</p>
+                          {doc.description && <p className="text-xs text-gray-500">{doc.description}</p>}
+                        </div>
                       </div>
-                      {isPdfDocument(doc) && (
-                        <div className="border-t border-gray-200">
-                          <iframe
-                            src={`/api/storage/serve/${encodeURIComponent(doc.upload.storagePath)}#toolbar=0`}
-                            className="w-full h-[500px]"
-                            title={doc.title}
-                          />
-                        </div>
-                      )}
-                    </div>
+                      <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
                   ))}
                 </div>
               </div>
