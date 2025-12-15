@@ -1,14 +1,10 @@
-import { videoQueries, classQueries, academyQueries, settingsQueries } from './db';
+import { videoQueries, academyQueries, settingsQueries } from './db';
 
 // Types for database records
-interface Video {
+interface VideoWithDetails {
   classId: string;
-  maxWatchTimeMultiplier?: number | null;
-}
-
-interface Class {
   academyId: string;
-  defaultMaxWatchTimeMultiplier?: number | null;
+  lessonMultiplier?: number | null;
 }
 
 interface Academy {
@@ -24,28 +20,27 @@ export async function getPlatformSettings() {
 }
 
 export async function getEffectiveVideoSettings(videoId: string) {
-  const video = await videoQueries.findById(videoId) as Video | null;
+  // Use findWithDetails to get video with classId and academyId from Lesson join
+  const video = await videoQueries.findWithDetails(videoId) as VideoWithDetails | null;
 
   if (!video) {
     throw new Error('Video not found');
   }
 
-  const classData = await classQueries.findById(video.classId) as Class | null;
-  if (!classData) {
-    throw new Error('Class not found');
+  if (!video.classId || !video.academyId) {
+    throw new Error('Video has no associated class');
   }
 
-  const academy = await academyQueries.findById(classData.academyId) as Academy | null;
+  const academy = await academyQueries.findById(video.academyId) as Academy | null;
   if (!academy) {
     throw new Error('Academy not found');
   }
 
   const platformSettings = await getPlatformSettings() as PlatformSettings;
 
-  // Priority: Video > Class > Academy > Platform
+  // Priority: Lesson > Academy > Platform
   const maxWatchTimeMultiplier =
-    video.maxWatchTimeMultiplier ??
-    classData.defaultMaxWatchTimeMultiplier ??
+    video.lessonMultiplier ??
     academy.defaultMaxWatchTimeMultiplier ??
     platformSettings.defaultMaxWatchTimeMultiplier;
 

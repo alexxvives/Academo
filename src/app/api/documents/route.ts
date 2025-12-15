@@ -11,9 +11,9 @@ export async function POST(request: Request) {
     const file = formData.get('file') as File;
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
-    const classId = formData.get('classId') as string;
+    const lessonId = formData.get('lessonId') as string;
 
-    if (!file || !title || !classId) {
+    if (!file || !title || !lessonId) {
       return errorResponse('Missing required fields');
     }
 
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     const document = await documentQueries.create({
       title,
       description: description || undefined,
-      classId,
+      lessonId,
       uploadId: upload.id,
     });
 

@@ -3,11 +3,11 @@ import { handleApiError } from '@/lib/api-utils';
 import { getDB } from '@/lib/db';
 
 // GET: List teachers for a specific academy
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireRole(['STUDENT', 'ADMIN', 'ACADEMY']);
     const db = await getDB();
-    const { id: academyId } = params;
+    const { id: academyId } = await params;
 
     const teachers = await db
       .prepare(`

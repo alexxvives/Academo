@@ -89,7 +89,7 @@ const translations = {
     contactDemo: 'Solicitar Demo',
     
     // Footer
-    footerRights: '© 2025 ACADEMO. Todos los derechos reservados.',
+    footerRights: '© 2025 AKADEMO. Todos los derechos reservados.',
     footerTagline: 'Protegiendo el conocimiento que creas.',
   },
   en: {
@@ -174,7 +174,7 @@ const translations = {
     contactDemo: 'Request Demo',
     
     // Footer
-    footerRights: '© 2025 ACADEMO. All rights reserved.',
+    footerRights: '© 2025 AKADEMO. All rights reserved.',
     footerTagline: 'Protecting the knowledge you create.',
   }
 };
@@ -235,13 +235,13 @@ function HomePageContent() {
               {/* Logo - Left */}
               <div className="flex items-center gap-2">
                 <img 
-                  src={isScrolled ? '/logo/academo_logo_B.svg' : '/logo/academo_logo_W.svg'} 
-                  alt="ACADEMO" 
+                  src={isScrolled ? '/logo/akademo_logo_B.svg' : '/logo/akademo_logo_W.svg'} 
+                  alt="AKADEMO" 
                   className="h-7 sm:h-9 w-auto transition-all"
                 />
                 <span className={`text-lg sm:text-xl font-bold transition-colors ${
                   isScrolled ? 'text-gray-900' : 'text-white'
-                }`}>ACADEMO</span>
+                }`}>AKADEMO</span>
               </div>
               
               {/* Right Actions - Fixed width */}
@@ -929,10 +929,10 @@ function HomePageContent() {
               {lang === 'es' ? 'O escríbenos directamente a' : 'Or email us directly at'}
             </p>
             <a 
-              href="mailto:contact@academyhive.com"
+              href="mailto:contact@akademo.com"
               className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
-              contact@academyhive.com
+              contact@akademo.com
             </a>
           </div>
         </div>
@@ -945,7 +945,7 @@ function HomePageContent() {
             {/* Brand */}
             <div>
               <div className="mb-4">
-                <span className="font-bold text-white text-lg">ACADEMO</span>
+                <span className="font-bold text-white text-lg">AKADEMO</span>
               </div>
               <p className="text-gray-400 text-sm leading-relaxed">
                 {t.footerTagline}

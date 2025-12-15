@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import ProtectedVideoPlayer from '@/components/ProtectedVideoPlayer';
@@ -11,7 +11,6 @@ interface Video {
   title: string;
   description: string | null;
   durationSeconds: number | null;
-  maxWatchTimeMultiplier: number;
   playStates: Array<{
     totalWatchTimeSeconds: number;
     sessionStartTime: string | null;
@@ -25,7 +24,19 @@ interface Document {
   upload: {
     fileName: string;
     storagePath: string;
+    mimeType?: string;
   };
+}
+
+interface Lesson {
+  id: string;
+  title: string;
+  description: string | null;
+  releaseDate: string;
+  maxWatchTimeMultiplier: number;
+  watermarkIntervalMins: number;
+  videos: Video[];
+  documents: Document[];
 }
 
 interface ClassData {
@@ -39,11 +50,15 @@ interface ClassData {
 
 export default function ClassPage() {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const classId = params.id as string;
+  const lessonParam = searchParams.get('lesson');
+  const watchVideoId = searchParams.get('watch');
 
   const [classData, setClassData] = useState<ClassData | null>(null);
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -52,19 +67,42 @@ export default function ClassPage() {
     loadData();
   }, [classId]);
 
+  // Handle URL parameters for lesson and video selection
+  useEffect(() => {
+    if (lessons.length === 0) return;
+
+    if (lessonParam) {
+      const lesson = lessons.find(l => l.id === lessonParam);
+      if (lesson) {
+        setSelectedLesson(lesson);
+        // If watching a specific video
+        if (watchVideoId) {
+          const video = lesson.videos.find(v => v.id === watchVideoId);
+          if (video) {
+            setSelectedVideo(video);
+          }
+        } else if (lesson.videos.length > 0) {
+          // Auto-select first video
+          setSelectedVideo(lesson.videos[0]);
+        }
+      }
+    } else {
+      setSelectedLesson(null);
+      setSelectedVideo(null);
+    }
+  }, [lessonParam, watchVideoId, lessons]);
+
   const loadData = async () => {
     try {
-      const [userRes, videosRes, docsRes, classRes] = await Promise.all([
+      const [userRes, lessonsRes, classRes] = await Promise.all([
         fetch('/api/auth/me'),
-        fetch(`/api/videos?classId=${classId}`),
-        fetch(`/api/documents?classId=${classId}`),
+        fetch(`/api/lessons?classId=${classId}`),
         fetch(`/api/classes/${classId}`),
       ]);
 
-      const [userResult, videosResult, docsResult, classResult] = await Promise.all([
+      const [userResult, lessonsResult, classResult] = await Promise.all([
         userRes.json(),
-        videosRes.json(),
-        docsRes.json(),
+        lessonsRes.json(),
         classRes.json(),
       ]);
 
@@ -72,12 +110,16 @@ export default function ClassPage() {
         setUser(userResult.data);
       }
 
-      if (videosResult.success) {
-        setVideos(videosResult.data);
-      }
-
-      if (docsResult.success) {
-        setDocuments(docsResult.data);
+      if (lessonsResult.success) {
+        // Fetch detailed lesson data with videos and documents
+        const detailedLessons = await Promise.all(
+          lessonsResult.data.map(async (lesson: any) => {
+            const res = await fetch(`/api/lessons/${lesson.id}`);
+            const result = await res.json();
+            return result.success ? result.data : lesson;
+          })
+        );
+        setLessons(detailedLessons);
       }
 
       if (classResult.success) {
@@ -90,10 +132,33 @@ export default function ClassPage() {
     }
   };
 
+  const selectLesson = (lesson: Lesson) => {
+    const isReleased = new Date(lesson.releaseDate) <= new Date();
+    if (!isReleased) return;
+    
+    router.push(`/dashboard/student/class/${classId}?lesson=${lesson.id}`);
+  };
+
+  const goBackToLessons = async () => {
+    router.push(`/dashboard/student/class/${classId}`);
+    setSelectedLesson(null);
+    setSelectedVideo(null);
+    await loadData();
+  };
+
+  const selectVideoInLesson = (video: Video) => {
+    if (!selectedLesson) return;
+    router.push(`/dashboard/student/class/${classId}?lesson=${selectedLesson.id}&watch=${video.id}`);
+  };
+
+  const isPdfDocument = (doc: Document) => {
+    return doc.upload.mimeType?.includes('pdf') || doc.upload.fileName.toLowerCase().endsWith('.pdf');
+  };
+
   if (loading) {
     return (
       <DashboardLayout role="STUDENT">
-        <div className="max-w-5xl mx-auto px-4 py-12">
+        <div className="max-w-6xl mx-auto px-4 py-12">
           <div className="flex items-center justify-center">
             <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             <span className="ml-3 text-gray-600">Loading class...</span>
@@ -105,13 +170,12 @@ export default function ClassPage() {
 
   return (
     <DashboardLayout role="STUDENT">
-      <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
-        {/* Header */}
-        {!selectedVideo && (
-          <div>
-            <Link href="/dashboard/student" className="text-sm text-gray-500 hover:text-gray-900 mb-4 inline-block">
-              ← Back to Dashboard
-            </Link>
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+        {/* Header - Always visible */}
+        <div>
+          <Link href="/dashboard/student" className="text-sm text-gray-500 hover:text-gray-900 mb-4 inline-block">
+            ← Back to Dashboard
+          </Link>
           {classData && (
             <div className="mb-2">
               <h1 className="text-2xl font-bold text-gray-900">{classData.name}</h1>
@@ -122,160 +186,211 @@ export default function ClassPage() {
             </div>
           )}
           <div className="flex gap-4 text-sm text-gray-600">
-            <span>{videos.length} video{videos.length !== 1 ? 's' : ''}</span>
-            <span>•</span>
-            <span>{documents.length} document{documents.length !== 1 ? 's' : ''}</span>
+            <span>{lessons.length} lesson{lessons.length !== 1 ? 's' : ''}</span>
           </div>
         </div>
-        )}
 
-        {/* Video Player */}
-        {selectedVideo && user && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">{selectedVideo.title}</h2>
-              {selectedVideo.description && (
-                <p className="text-sm text-gray-600 mt-1">{selectedVideo.description}</p>
-              )}
-            </div>
-            
-            <ProtectedVideoPlayer
-              videoUrl={`/api/video/stream/${selectedVideo.id}`}
-              videoId={selectedVideo.id}
-              studentId={user.id}
-              maxWatchTimeMultiplier={selectedVideo.maxWatchTimeMultiplier}
-              durationSeconds={selectedVideo.durationSeconds || 0}
-              initialPlayState={selectedVideo.playStates?.[0] || { totalWatchTimeSeconds: 0, sessionStartTime: null }}              userRole={user.role}            />
-            
-            <button
-              onClick={async () => {
-                setSelectedVideo(null);
-                // Refetch videos to get fresh playState status
-                const videosRes = await fetch(`/api/videos?classId=${classId}`);
-                const videosResult = await videosRes.json();
-                if (videosResult.success) {
-                  setVideos(videosResult.data);
-                }
-              }}
-              className="mt-6 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              ← Back to video list
-            </button>
-          </div>
-        )}
-
-        {/* Documents Section */}
-        {!selectedVideo && documents.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Class Documents</h2>
-            <div className="space-y-2">
-              {documents.map((doc) => (
-                <a
-                  key={doc.id}
-                  href={`/api/storage/serve/${encodeURIComponent(doc.upload.storagePath)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors group"
+        {/* Lesson Content View - When a lesson is selected */}
+        {selectedLesson && user && (
+          <div className="space-y-6">
+            {/* Lesson Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <button
+                  onClick={goBackToLessons}
+                  className="text-sm text-gray-500 hover:text-gray-900 mb-2 inline-block"
                 >
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                      {doc.title}
-                    </p>
-                    {doc.description && (
-                      <p className="text-sm text-gray-500 truncate">{doc.description}</p>
-                    )}
-                    <p className="text-xs text-gray-400 mt-0.5">{doc.upload.fileName}</p>
-                  </div>
-                  <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                </a>
-              ))}
+                  ← Back to lessons
+                </button>
+                <h2 className="text-xl font-semibold text-gray-900">{selectedLesson.title}</h2>
+                {selectedLesson.description && (
+                  <p className="text-gray-600 mt-1">{selectedLesson.description}</p>
+                )}
+              </div>
             </div>
+
+            {/* Video Selection - if multiple videos */}
+            {selectedLesson.videos.length > 1 && (
+              <div className="flex gap-2 flex-wrap">
+                {selectedLesson.videos.map((video) => (
+                  <button
+                    key={video.id}
+                    onClick={() => selectVideoInLesson(video)}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                      selectedVideo?.id === video.id
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {video.title}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Video Player */}
+            {selectedVideo && (
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div className="p-4 border-b border-gray-100">
+                  <h3 className="font-medium text-gray-900">{selectedVideo.title}</h3>
+                  {selectedVideo.description && (
+                    <p className="text-sm text-gray-600 mt-1">{selectedVideo.description}</p>
+                  )}
+                </div>
+                
+                <ProtectedVideoPlayer
+                  videoUrl={`/api/video/stream/${selectedVideo.id}`}
+                  videoId={selectedVideo.id}
+                  studentId={user.id}
+                  studentName={`${user.firstName} ${user.lastName}`}
+                  studentEmail={user.email}
+                  maxWatchTimeMultiplier={selectedLesson.maxWatchTimeMultiplier}
+                  durationSeconds={selectedVideo.durationSeconds || 0}
+                  initialPlayState={selectedVideo.playStates?.[0] || { totalWatchTimeSeconds: 0, sessionStartTime: null }}
+                  userRole={user.role}
+                  watermarkIntervalMins={selectedLesson.watermarkIntervalMins}
+                />
+              </div>
+            )}
+
+            {/* No videos message */}
+            {selectedLesson.videos.length === 0 && (
+              <div className="bg-gray-50 rounded-xl border border-gray-200 p-8 text-center">
+                <p className="text-gray-600">No videos in this lesson yet.</p>
+              </div>
+            )}
+
+            {/* Documents Section - Below Video */}
+            {selectedLesson.documents.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="font-medium text-gray-900 mb-4">
+                  Documents ({selectedLesson.documents.length})
+                </h3>
+                
+                <div className="space-y-4">
+                  {selectedLesson.documents.map((doc) => (
+                    <div key={doc.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="flex items-center justify-between p-3 bg-gray-50">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{doc.title}</p>
+                            {doc.description && (
+                              <p className="text-xs text-gray-500">{doc.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <a
+                          href={`/api/storage/serve/${encodeURIComponent(doc.upload.storagePath)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          Open
+                        </a>
+                      </div>
+                      
+                      {/* Embedded PDF viewer for PDF documents */}
+                      {isPdfDocument(doc) && (
+                        <div className="border-t border-gray-200">
+                          <iframe
+                            src={`/api/storage/serve/${encodeURIComponent(doc.upload.storagePath)}#toolbar=0`}
+                            className="w-full h-[500px]"
+                            title={doc.title}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Video List */}
-        {!selectedVideo && (
+        {/* Lessons Grid - When no lesson is selected */}
+        {!selectedLesson && (
           <div>
-            {videos.length === 0 ? (
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Lessons</h2>
+            
+            {lessons.length === 0 ? (
               <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
                 <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 </div>
-                <p className="text-gray-600">No videos available in this class yet.</p>
+                <p className="text-gray-600">No lessons available in this class yet.</p>
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {videos.map((video) => {
-                  const playState = video.playStates?.[0];
-                  const maxWatchTime = (video.durationSeconds || 0) * video.maxWatchTimeMultiplier;
-                  const watchProgress = playState && maxWatchTime > 0
-                    ? (playState.totalWatchTimeSeconds / maxWatchTime) * 100
-                    : 0;
-
+                {lessons.map((lesson) => {
+                  const isReleased = new Date(lesson.releaseDate) <= new Date();
+                  const videoCount = lesson.videos?.length || 0;
+                  const docCount = lesson.documents?.length || 0;
+                  
                   return (
                     <div
-                      key={video.id}
-                      className="bg-white rounded-xl border border-gray-200 hover:border-blue-300 transition-colors p-4 cursor-pointer"
-                      onClick={() => setSelectedVideo(video)}
+                      key={lesson.id}
+                      onClick={() => selectLesson(lesson)}
+                      className={`bg-white rounded-xl border border-gray-200 p-5 transition-all ${
+                        isReleased
+                          ? 'cursor-pointer hover:border-blue-300 hover:shadow-md'
+                          : 'opacity-60 cursor-not-allowed'
+                      }`}
                     >
-                      <div className="aspect-video bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-                        <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                          <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
+                      {/* Lesson Card Header */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                           </svg>
                         </div>
+                        {!isReleased && (
+                          <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full">
+                            Scheduled
+                          </span>
+                        )}
                       </div>
                       
-                      <h3 className="font-medium text-gray-900 mb-1 line-clamp-1">
-                        {video.title}
-                      </h3>
+                      {/* Title & Description */}
+                      <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{lesson.title}</h3>
+                      {lesson.description && (
+                        <p className="text-sm text-gray-500 mb-3 line-clamp-2">{lesson.description}</p>
+                      )}
                       
-                      {video.description && (
-                        <p className="text-sm text-gray-500 mb-3 line-clamp-2">
-                          {video.description}
-                        </p>
-                      )}
-
-                      {/* Watch Time Progress */}
-                      {playState && playState.totalWatchTimeSeconds > 0 && maxWatchTime > 0 && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
-                          <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                            <span>Watch time used</span>
-                            <span>{Math.min(Math.round(watchProgress), 100)}%</span>
-                          </div>
-                          <div className="w-full bg-gray-100 rounded-full h-1.5">
-                            <div
-                              className="bg-blue-600 h-1.5 rounded-full transition-all"
-                              style={{ width: `${Math.min(watchProgress, 100)}%` }}
-                            />
-                          </div>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {(() => {
-                              const usedMinutes = Math.floor(playState.totalWatchTimeSeconds / 60);
-                              const maxMinutes = Math.floor(maxWatchTime / 60);
-                              if (usedMinutes >= 60 || maxMinutes >= 60) {
-                                return `${Math.floor(usedMinutes / 60)}h ${usedMinutes % 60}m / ${Math.floor(maxMinutes / 60)}h ${maxMinutes % 60}m`;
-                              }
-                              return `${usedMinutes}m / ${maxMinutes}m`;
-                            })()}
-                          </p>
-                        </div>
-                      )}
-
-                      {!playState && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
-                          <p className="text-xs text-gray-500">Not started</p>
-                        </div>
-                      )}
+                      {/* Content Count */}
+                      <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                        {videoCount > 0 && (
+                          <span className="flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {videoCount} video{videoCount !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {docCount > 0 && (
+                          <span className="flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            {docCount} doc{docCount !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Release Date */}
+                      <p className="text-xs text-gray-400">
+                        {isReleased ? 'Released' : 'Available'}: {new Date(lesson.releaseDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
                     </div>
                   );
                 })}

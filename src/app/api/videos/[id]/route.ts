@@ -25,14 +25,15 @@ export async function PATCH(
     // Get video and verify teacher has access through academy membership
     const video = await db
       .prepare(
-        `SELECT v.id, v.classId, c.academyId, a.ownerId
-         FROM Video v 
-         JOIN Class c ON v.classId = c.id 
+        `SELECT v.id, v.lessonId, l.classId, c.academyId, a.ownerId
+         FROM Video v
+         JOIN Lesson l ON v.lessonId = l.id 
+         JOIN Class c ON l.classId = c.id 
          JOIN Academy a ON c.academyId = a.id
          WHERE v.id = ?`
       )
       .bind(id)
-      .first<{ id: string; classId: string; academyId: string; ownerId: string }>();
+      .first<{ id: string; lessonId: string; classId: string; academyId: string; ownerId: string }>();
 
     if (!video) {
       return NextResponse.json(
@@ -109,14 +110,15 @@ export async function DELETE(
     // Get video and verify teacher has access through academy membership
     const video = await db
       .prepare(
-        `SELECT v.id, v.classId, v.uploadId, c.academyId, a.ownerId
-         FROM Video v 
-         JOIN Class c ON v.classId = c.id 
+        `SELECT v.id, v.lessonId, v.uploadId, l.classId, c.academyId, a.ownerId
+         FROM Video v
+         JOIN Lesson l ON v.lessonId = l.id 
+         JOIN Class c ON l.classId = c.id 
          JOIN Academy a ON c.academyId = a.id
          WHERE v.id = ?`
       )
       .bind(id)
-      .first<{ id: string; classId: string; uploadId: string; academyId: string; ownerId: string }>();
+      .first<{ id: string; lessonId: string; uploadId: string; classId: string; academyId: string; ownerId: string }>();
 
     if (!video) {
       return NextResponse.json(

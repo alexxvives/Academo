@@ -10,11 +10,16 @@ export async function GET(
     const session = await requireAuth();
     const { id } = await params;
 
+    console.log('[API /api/classes/[id]] GET request for class:', id, 'by user:', session.id, 'role:', session.role);
+
     const classData = await classQueries.findWithAcademyAndCounts(id) as any;
 
     if (!classData) {
+      console.log('[API /api/classes/[id]] Class not found:', id);
       return errorResponse('Class not found', 404);
     }
+
+    console.log('[API /api/classes/[id]] Class found:', classData.name);
 
     // Check access permissions
     if (session.role === 'TEACHER') {
@@ -26,6 +31,7 @@ export async function GET(
         .first();
 
       if (!membership) {
+        console.log('[API /api/classes/[id]] Teacher not member of academy');
         return errorResponse('Forbidden', 403);
       }
     } else if (session.role === 'STUDENT') {
@@ -33,16 +39,34 @@ export async function GET(
       const enrollment = await enrollmentQueries.findByClassAndStudent(id, session.id);
 
       if (!enrollment) {
+        console.log('[API /api/classes/[id]] Student not enrolled in class');
         return errorResponse('Forbidden - not enrolled in this class', 403);
       }
     }
     // Admins can access all classes
 
-    // Get videos, documents, and enrollments
-    const videos = await videoQueries.findByClass(id);
-    const documents = await documentQueries.findByClass(id);
+    // Get videos, documents, and enrollments via lessons (not direct classId)
+    console.log('[API /api/classes/[id]] Fetching videos and documents...');
+    let videos = [];
+    let documents = [];
+    try {
+      videos = await videoQueries.findByClass(id);
+      console.log('[API /api/classes/[id]] Found', videos.length, 'videos');
+    } catch (err) {
+      console.error('[API /api/classes/[id]] Error fetching videos:', err);
+    }
+    
+    try {
+      documents = await documentQueries.findByClass(id);
+      console.log('[API /api/classes/[id]] Found', documents.length, 'documents');
+    } catch (err) {
+      console.error('[API /api/classes/[id]] Error fetching documents:', err);
+    }
+    
     const enrollments = await enrollmentQueries.findByClassWithStudent(id);
+    console.log('[API /api/classes/[id]] Found', enrollments.length, 'enrollments');
 
+    console.log('[API /api/classes/[id]] Returning successful response');
     return Response.json(successResponse({
       ...classData,
       videos,
@@ -50,6 +74,7 @@ export async function GET(
       enrollments,
     }));
   } catch (error) {
+    console.error('[API /api/classes/[id]] Error:', error);
     return handleApiError(error);
   }
 }

@@ -167,8 +167,8 @@ export const classQueries = {
     const counts = await db.prepare(`
       SELECT 
         (SELECT COUNT(*) FROM ClassEnrollment WHERE classId = ?) as enrollments,
-        (SELECT COUNT(*) FROM Video WHERE classId = ?) as videos,
-        (SELECT COUNT(*) FROM Document WHERE classId = ?) as documents
+        (SELECT COUNT(*) FROM Video v JOIN Lesson l ON v.lessonId = l.id WHERE l.classId = ?) as videos,
+        (SELECT COUNT(*) FROM Document d JOIN Lesson l ON d.lessonId = l.id WHERE l.classId = ?) as documents
     `).bind(id, id, id).first() as any;
     
     return {
@@ -183,8 +183,8 @@ export const classQueries = {
     const result = await db.prepare(`
       SELECT c.*, a.name as academyName,
         (SELECT COUNT(*) FROM ClassEnrollment WHERE classId = c.id) as enrollmentCount,
-        (SELECT COUNT(*) FROM Video WHERE classId = c.id) as videoCount,
-        (SELECT COUNT(*) FROM Document WHERE classId = c.id) as documentCount
+        (SELECT COUNT(*) FROM Video v JOIN Lesson l ON v.lessonId = l.id WHERE l.classId = c.id) as videoCount,
+        (SELECT COUNT(*) FROM Document d JOIN Lesson l ON d.lessonId = l.id WHERE l.classId = c.id) as documentCount
       FROM Class c
       JOIN Academy a ON c.academyId = a.id
       JOIN ClassEnrollment ce ON c.id = ce.classId
@@ -204,14 +204,17 @@ export const classQueries = {
     let query = `
       SELECT c.*, a.name as academyName,
         (SELECT COUNT(*) FROM ClassEnrollment WHERE classId = c.id) as enrollmentCount,
-        (SELECT COUNT(*) FROM Video WHERE classId = c.id) as videoCount,
-        (SELECT COUNT(*) FROM Document WHERE classId = c.id) as documentCount
+        (SELECT COUNT(*) FROM Video v JOIN Lesson l ON v.lessonId = l.id WHERE l.classId = c.id) as videoCount,
+        (SELECT COUNT(*) FROM Document d JOIN Lesson l ON d.lessonId = l.id WHERE l.classId = c.id) as documentCount
       FROM Class c
       JOIN Academy a ON c.academyId = a.id
       JOIN AcademyMembership m ON a.id = m.academyId
       WHERE m.userId = ?
     `;
     const params: any[] = [teacherId];
+    
+    console.log('[classQueries.findByTeacher] Query:', query);
+    console.log('[classQueries.findByTeacher] Params:', params);
     
     if (academyId) {
       query += ' AND c.academyId = ?';
@@ -234,8 +237,8 @@ export const classQueries = {
     const result = await db.prepare(`
       SELECT c.*, a.name as academyName,
         (SELECT COUNT(*) FROM ClassEnrollment WHERE classId = c.id) as enrollmentCount,
-        (SELECT COUNT(*) FROM Video WHERE classId = c.id) as videoCount,
-        (SELECT COUNT(*) FROM Document WHERE classId = c.id) as documentCount
+        (SELECT COUNT(*) FROM Video v JOIN Lesson l ON v.lessonId = l.id WHERE l.classId = c.id) as videoCount,
+        (SELECT COUNT(*) FROM Document d JOIN Lesson l ON d.lessonId = l.id WHERE l.classId = c.id) as documentCount
       FROM Class c
       JOIN Academy a ON c.academyId = a.id
       WHERE a.ownerId = ?
@@ -322,31 +325,80 @@ export const enrollmentQueries = {
     return db.prepare('SELECT * FROM ClassEnrollment WHERE classId = ? AND studentId = ?').bind(classId, studentId).first();
   },
 
-  async create(data: { classId: string; studentId: string }) {
+  async findApprovedByClassAndStudent(classId: string, studentId: string) {
+    const db = await getDB();
+    return db.prepare("SELECT * FROM ClassEnrollment WHERE classId = ? AND studentId = ? AND status = 'APPROVED'").bind(classId, studentId).first();
+  },
+
+  async create(data: { classId: string; studentId: string; status?: string }) {
     const db = await getDB();
     const id = generateId();
     const now = new Date().toISOString();
+    const status = data.status || 'PENDING';
+    const approvedAt = status === 'APPROVED' ? now : null;
     await db.prepare(`
-      INSERT INTO ClassEnrollment (id, classId, studentId, enrolledAt, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).bind(id, data.classId, data.studentId, now, now, now).run();
-    return { id, ...data, enrolledAt: now };
+      INSERT INTO ClassEnrollment (id, classId, studentId, status, enrolledAt, approvedAt, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(id, data.classId, data.studentId, status, now, approvedAt, now, now).run();
+    return { id, ...data, status, enrolledAt: now, approvedAt };
   },
 
-  async findByClassWithStudent(classId: string) {
+  async findByClassWithStudent(classId: string, statusFilter?: string) {
     const db = await getDB();
-    const result = await db.prepare(`
+    let query = `
       SELECT e.*, u.email, u.firstName, u.lastName
       FROM ClassEnrollment e
       JOIN users u ON e.studentId = u.id
       WHERE e.classId = ?
-      ORDER BY e.enrolledAt DESC
-    `).bind(classId).all();
+    `;
+    const params: any[] = [classId];
+    
+    if (statusFilter) {
+      query += ' AND e.status = ?';
+      params.push(statusFilter);
+    }
+    query += ' ORDER BY e.enrolledAt DESC';
+    
+    const result = await db.prepare(query).bind(...params).all();
     
     return (result.results || []).map((e: any) => ({
       ...e,
       student: { id: e.studentId, email: e.email, firstName: e.firstName, lastName: e.lastName }
     }));
+  },
+
+  async findPendingByTeacher(teacherId: string) {
+    const db = await getDB();
+    const result = await db.prepare(`
+      SELECT e.*, u.email, u.firstName, u.lastName, c.name as className, c.id as classId
+      FROM ClassEnrollment e
+      JOIN users u ON e.studentId = u.id
+      JOIN Class c ON e.classId = c.id
+      JOIN Academy a ON c.academyId = a.id
+      JOIN AcademyMembership m ON a.id = m.academyId
+      WHERE m.userId = ? AND m.status = 'APPROVED' AND e.status = 'PENDING'
+      ORDER BY e.enrolledAt DESC
+    `).bind(teacherId).all();
+    
+    return (result.results || []).map((e: any) => ({
+      ...e,
+      student: { id: e.studentId, email: e.email, firstName: e.firstName, lastName: e.lastName },
+      class: { id: e.classId, name: e.className }
+    }));
+  },
+
+  async updateStatus(id: string, status: string) {
+    const db = await getDB();
+    const now = new Date().toISOString();
+    const approvedAt = status === 'APPROVED' ? now : null;
+    await db.prepare(`
+      UPDATE ClassEnrollment SET status = ?, approvedAt = ?, updatedAt = ? WHERE id = ?
+    `).bind(status, approvedAt, now, id).run();
+  },
+
+  async findById(id: string) {
+    const db = await getDB();
+    return db.prepare('SELECT * FROM ClassEnrollment WHERE id = ?').bind(id).first();
   },
 
   async delete(classId: string, studentId: string) {
@@ -365,12 +417,31 @@ export const videoQueries = {
   async findByClass(classId: string) {
     const db = await getDB();
     const result = await db.prepare(`
+      SELECT v.*, u.fileName, u.fileSize, u.mimeType, u.storagePath, u.storageType,
+        l.maxWatchTimeMultiplier as lessonMultiplier, l.watermarkIntervalMins
+      FROM Video v
+      JOIN Upload u ON v.uploadId = u.id
+      JOIN Lesson l ON v.lessonId = l.id
+      WHERE l.classId = ?
+      ORDER BY v.createdAt DESC
+    `).bind(classId).all();
+    
+    return (result.results || []).map((v: any) => ({
+      ...v,
+      maxWatchTimeMultiplier: v.lessonMultiplier || 2.0,
+      upload: { fileName: v.fileName, fileSize: v.fileSize, mimeType: v.mimeType, storagePath: v.storagePath, storageType: v.storageType }
+    }));
+  },
+
+  async findByLesson(lessonId: string) {
+    const db = await getDB();
+    const result = await db.prepare(`
       SELECT v.*, u.fileName, u.fileSize, u.mimeType, u.storagePath, u.storageType
       FROM Video v
       JOIN Upload u ON v.uploadId = u.id
-      WHERE v.classId = ?
-      ORDER BY v.createdAt DESC
-    `).bind(classId).all();
+      WHERE v.lessonId = ?
+      ORDER BY v.createdAt ASC
+    `).bind(lessonId).all();
     
     return (result.results || []).map((v: any) => ({
       ...v,
@@ -378,14 +449,14 @@ export const videoQueries = {
     }));
   },
 
-  async create(data: { title: string; description?: string; classId: string; uploadId: string; durationSeconds?: number; maxWatchTimeMultiplier?: number }) {
+  async create(data: { title: string; description?: string; lessonId: string; uploadId: string; durationSeconds?: number }) {
     const db = await getDB();
     const id = generateId();
     const now = new Date().toISOString();
     await db.prepare(`
-      INSERT INTO Video (id, title, description, classId, uploadId, durationSeconds, maxWatchTimeMultiplier, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(id, data.title, data.description || null, data.classId, data.uploadId, data.durationSeconds || null, data.maxWatchTimeMultiplier || 2.0, now, now).run();
+      INSERT INTO Video (id, title, description, lessonId, uploadId, durationSeconds, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(id, data.title, data.description || null, data.lessonId, data.uploadId, data.durationSeconds || null, now, now).run();
     return { id, ...data, createdAt: now, updatedAt: now };
   },
 
@@ -393,13 +464,38 @@ export const videoQueries = {
     const db = await getDB();
     return db.prepare(`
       SELECT v.*, u.fileName, u.fileSize, u.mimeType, u.storagePath, u.storageType,
+        l.classId, l.maxWatchTimeMultiplier as lessonMultiplier, l.watermarkIntervalMins,
         c.name as className, c.academyId, a.ownerId as academyOwnerId
       FROM Video v
       JOIN Upload u ON v.uploadId = u.id
-      JOIN Class c ON v.classId = c.id
-      JOIN Academy a ON c.academyId = a.id
+      LEFT JOIN Lesson l ON v.lessonId = l.id
+      LEFT JOIN Class c ON l.classId = c.id
+      LEFT JOIN Academy a ON c.academyId = a.id
       WHERE v.id = ?
     `).bind(id).first();
+  },
+
+  async update(id: string, data: { title?: string; description?: string; durationSeconds?: number }) {
+    const db = await getDB();
+    const now = new Date().toISOString();
+    const video = await this.findById(id) as any;
+    if (!video) throw new Error('Video not found');
+    
+    await db.prepare(`
+      UPDATE Video SET title = ?, description = ?, durationSeconds = ?, updatedAt = ? WHERE id = ?
+    `).bind(
+      data.title ?? video.title,
+      data.description ?? video.description,
+      data.durationSeconds ?? video.durationSeconds,
+      now, id
+    ).run();
+    
+    return this.findById(id);
+  },
+
+  async delete(id: string) {
+    const db = await getDB();
+    await db.prepare('DELETE FROM Video WHERE id = ?').bind(id).run();
   },
 };
 
@@ -411,7 +507,8 @@ export const documentQueries = {
       SELECT d.*, u.fileName, u.fileSize, u.mimeType, u.storagePath, u.storageType
       FROM Document d
       JOIN Upload u ON d.uploadId = u.id
-      WHERE d.classId = ?
+      JOIN Lesson l ON d.lessonId = l.id
+      WHERE l.classId = ?
       ORDER BY d.createdAt DESC
     `).bind(classId).all();
     
@@ -421,15 +518,133 @@ export const documentQueries = {
     }));
   },
 
-  async create(data: { title: string; description?: string; classId: string; uploadId: string }) {
+  async findByLesson(lessonId: string) {
+    const db = await getDB();
+    const result = await db.prepare(`
+      SELECT d.*, u.fileName, u.fileSize, u.mimeType, u.storagePath, u.storageType
+      FROM Document d
+      JOIN Upload u ON d.uploadId = u.id
+      WHERE d.lessonId = ?
+      ORDER BY d.createdAt DESC
+    `).bind(lessonId).all();
+    
+    return (result.results || []).map((d: any) => ({
+      ...d,
+      upload: { fileName: d.fileName, fileSize: d.fileSize, mimeType: d.mimeType, storagePath: d.storagePath, storageType: d.storageType }
+    }));
+  },
+
+  async create(data: { title: string; description?: string; lessonId: string; uploadId: string }) {
     const db = await getDB();
     const id = generateId();
     const now = new Date().toISOString();
     await db.prepare(`
-      INSERT INTO Document (id, title, description, classId, uploadId, createdAt, updatedAt)
+      INSERT INTO Document (id, title, description, lessonId, uploadId, createdAt, updatedAt)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).bind(id, data.title, data.description || null, data.classId, data.uploadId, now, now).run();
+    `).bind(id, data.title, data.description || null, data.lessonId, data.uploadId, now, now).run();
     return { id, ...data, createdAt: now, updatedAt: now };
+  },
+};
+
+// Lesson queries
+export const lessonQueries = {
+  async findById(id: string) {
+    const db = await getDB();
+    return db.prepare('SELECT * FROM Lesson WHERE id = ?').bind(id).first();
+  },
+
+  async findByClass(classId: string) {
+    const db = await getDB();
+    const result = await db.prepare(`
+      SELECT l.*,
+        (SELECT COUNT(*) FROM Video WHERE lessonId = l.id) as videoCount,
+        (SELECT COUNT(*) FROM Document WHERE lessonId = l.id) as documentCount
+      FROM Lesson l
+      WHERE l.classId = ?
+      ORDER BY l.releaseDate DESC
+    `).bind(classId).all();
+    
+    return result.results || [];
+  },
+
+  async findWithContent(id: string) {
+    const db = await getDB();
+    const lesson = await db.prepare(`
+      SELECT l.*, c.name as className, c.academyId, a.ownerId as academyOwnerId
+      FROM Lesson l
+      JOIN Class c ON l.classId = c.id
+      JOIN Academy a ON c.academyId = a.id
+      WHERE l.id = ?
+    `).bind(id).first() as any;
+    
+    if (!lesson) return null;
+    
+    const videos = await db.prepare(`
+      SELECT v.*, u.fileName, u.fileSize, u.mimeType, u.storagePath, u.storageType
+      FROM Video v
+      JOIN Upload u ON v.uploadId = u.id
+      WHERE v.lessonId = ?
+      ORDER BY v.createdAt ASC
+    `).bind(id).all();
+    
+    const documents = await db.prepare(`
+      SELECT d.*, u.fileName, u.fileSize, u.mimeType, u.storagePath, u.storageType
+      FROM Document d
+      JOIN Upload u ON d.uploadId = u.id
+      WHERE d.lessonId = ?
+      ORDER BY d.createdAt ASC
+    `).bind(id).all();
+    
+    return {
+      ...lesson,
+      class: { id: lesson.classId, name: lesson.className, academyId: lesson.academyId },
+      videos: (videos.results || []).map((v: any) => ({
+        ...v,
+        upload: { fileName: v.fileName, fileSize: v.fileSize, mimeType: v.mimeType, storagePath: v.storagePath, storageType: v.storageType }
+      })),
+      documents: (documents.results || []).map((d: any) => ({
+        ...d,
+        upload: { fileName: d.fileName, fileSize: d.fileSize, mimeType: d.mimeType, storagePath: d.storagePath, storageType: d.storageType }
+      })),
+      academyOwnerId: lesson.academyOwnerId
+    };
+  },
+
+  async create(data: { title: string; description?: string; classId: string; releaseDate?: string; maxWatchTimeMultiplier?: number; watermarkIntervalMins?: number }) {
+    const db = await getDB();
+    const id = generateId();
+    const now = new Date().toISOString();
+    const releaseDate = data.releaseDate || now;
+    await db.prepare(`
+      INSERT INTO Lesson (id, title, description, classId, releaseDate, maxWatchTimeMultiplier, watermarkIntervalMins, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(id, data.title, data.description || null, data.classId, releaseDate, data.maxWatchTimeMultiplier || 2.0, data.watermarkIntervalMins || 5, now, now).run();
+    return { id, ...data, releaseDate, createdAt: now, updatedAt: now };
+  },
+
+  async update(id: string, data: { title?: string; description?: string; releaseDate?: string; maxWatchTimeMultiplier?: number; watermarkIntervalMins?: number }) {
+    const db = await getDB();
+    const now = new Date().toISOString();
+    const lesson = await this.findById(id) as any;
+    if (!lesson) throw new Error('Lesson not found');
+    
+    await db.prepare(`
+      UPDATE Lesson SET title = ?, description = ?, releaseDate = ?, maxWatchTimeMultiplier = ?, watermarkIntervalMins = ?, updatedAt = ? WHERE id = ?
+    `).bind(
+      data.title ?? lesson.title,
+      data.description ?? lesson.description,
+      data.releaseDate ?? lesson.releaseDate,
+      data.maxWatchTimeMultiplier ?? lesson.maxWatchTimeMultiplier,
+      data.watermarkIntervalMins ?? lesson.watermarkIntervalMins,
+      now, id
+    ).run();
+    
+    return this.findById(id);
+  },
+
+  async delete(id: string) {
+    const db = await getDB();
+    await db.prepare('DELETE FROM Lesson WHERE id = ?').bind(id).run();
   },
 };
 

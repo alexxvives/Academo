@@ -1,4 +1,4 @@
-# AcademyControl Database Schema
+# AKADEMO Database Schema
 
 ## Overview
 Database: **Cloudflare D1** (SQLite-based)

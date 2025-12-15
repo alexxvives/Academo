@@ -22,9 +22,10 @@ export async function GET(request: Request) {
       // Verify teacher has access to this video
       const video = await db
         .prepare(
-          `SELECT v.id, v.title, v.classId, c.academyId, a.ownerId
+          `SELECT v.id, v.title, l.classId, c.academyId, a.ownerId
            FROM Video v 
-           JOIN Class c ON v.classId = c.id 
+           JOIN Lesson l ON v.lessonId = l.id
+           JOIN Class c ON l.classId = c.id 
            JOIN Academy a ON c.academyId = a.id
            WHERE v.id = ?`
         )
@@ -138,14 +139,15 @@ export async function GET(request: Request) {
              v.id,
              v.title,
              v.durationSeconds,
-             v.maxWatchTimeMultiplier,
+             l.maxWatchTimeMultiplier,
              COUNT(DISTINCT vps.studentId) as studentsWatched,
              AVG(vps.totalWatchTimeSeconds) as avgWatchTime,
              SUM(vps.totalWatchTimeSeconds) as totalWatchTime
            FROM Video v
+           JOIN Lesson l ON v.lessonId = l.id
            LEFT JOIN VideoPlayState vps ON v.id = vps.videoId
-           WHERE v.classId = ?
-           GROUP BY v.id, v.title, v.durationSeconds, v.maxWatchTimeMultiplier
+           WHERE l.classId = ?
+           GROUP BY v.id, v.title, v.durationSeconds, l.maxWatchTimeMultiplier
            ORDER BY v.createdAt DESC`
         )
         .bind(classId)
@@ -164,7 +166,8 @@ export async function GET(request: Request) {
            FROM ClassEnrollment ce
            JOIN users u ON ce.studentId = u.id
            LEFT JOIN VideoPlayState vps ON vps.studentId = u.id
-           LEFT JOIN Video v ON vps.videoId = v.id AND v.classId = ?
+           LEFT JOIN Video v ON vps.videoId = v.id
+           LEFT JOIN Lesson l ON v.lessonId = l.id AND l.classId = ?
            WHERE ce.classId = ?
            GROUP BY u.id, u.firstName, u.lastName
            ORDER BY totalWatchTime DESC`

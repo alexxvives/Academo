@@ -41,33 +41,64 @@ interface EnrolledStudent {
   className: string;
 }
 
+interface PendingEnrollment {
+  id: string;
+  student: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  class: {
+    id: string;
+    name: string;
+  };
+  enrolledAt: string;
+}
+
 export default function TeacherDashboard() {
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [availableAcademies, setAvailableAcademies] = useState<Academy[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [enrolledStudents, setEnrolledStudents] = useState<EnrolledStudent[]>([]);
+  const [pendingEnrollments, setPendingEnrollments] = useState<PendingEnrollment[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [academyName, setAcademyName] = useState<string>('');
   const [showBrowse, setShowBrowse] = useState(false);
-  const [showCreateStudent, setShowCreateStudent] = useState(false);
-  const [studentForm, setStudentForm] = useState({ email: '', firstName: '', lastName: '', classId: '' });
   const [loading, setLoading] = useState(true);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     loadData();
+    loadUser();
   }, []);
+
+  const loadUser = async () => {
+    try {
+      const response = await fetch('/api/auth/me');
+      const result = await response.json();
+      if (result.success) {
+        setCurrentUser(result.data);
+      }
+    } catch (error) {
+      console.error('Failed to load user:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
-      const [membershipsRes, academiesRes, classesRes] = await Promise.all([
+      const [membershipsRes, academiesRes, classesRes, pendingRes] = await Promise.all([
         fetch('/api/requests/teacher'),
         fetch('/api/explore/academies'),
         fetch('/api/classes'),
+        fetch('/api/enrollments/pending'),
       ]);
 
-      const [membershipsResult, academiesResult, classesResult] = await Promise.all([
+      const [membershipsResult, academiesResult, classesResult, pendingResult] = await Promise.all([
         membershipsRes.json(),
         academiesRes.json(),
         classesRes.json(),
+        pendingRes.json(),
       ]);
 
       if (Array.isArray(membershipsResult)) {
@@ -80,6 +111,10 @@ export default function TeacherDashboard() {
       
       if (Array.isArray(academiesResult)) {
         setAvailableAcademies(academiesResult);
+      }
+
+      if (pendingResult.success && Array.isArray(pendingResult.data)) {
+        setPendingEnrollments(pendingResult.data);
       }
 
       if (classesResult.success && Array.isArray(classesResult.data)) {
@@ -137,25 +172,32 @@ export default function TeacherDashboard() {
     }
   };
 
-  const handleCreateStudent = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEnrollmentAction = async (enrollmentId: string, action: 'approve' | 'reject') => {
     try {
-      const res = await fetch('/api/users/create-student', {
+      const response = await fetch('/api/enrollments/pending', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(studentForm),
+        body: JSON.stringify({ enrollmentId, action }),
       });
-      const data = await res.json();
-      if (data.success) {
-        alert(`Estudiante creado exitosamente.\nEmail: ${studentForm.email}\nContraseña: password`);
-        setStudentForm({ email: '', firstName: '', lastName: '', classId: '' });
-        setShowCreateStudent(false);
+
+      const result = await response.json();
+
+      if (result.success) {
+        loadData();
       } else {
-        alert(data.error || 'Failed to create student');
+        alert(result.error || 'Failed to process request');
       }
     } catch (error) {
-      alert('Error creating student');
+      alert('An error occurred');
     }
+  };
+
+  const copyJoinLink = () => {
+    if (!currentUser) return;
+    const link = `${window.location.origin}/join/${currentUser.id}`;
+    navigator.clipboard.writeText(link);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
   };
 
   const approvedMemberships = memberships.filter(m => m.status === 'APPROVED');
@@ -258,7 +300,7 @@ export default function TeacherDashboard() {
         {/* Header with Academy Branding */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Teacher Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Panel del Profesor</h1>
             {academyName && (
               <div className="flex items-center gap-2 mt-2">
                 <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
@@ -268,6 +310,92 @@ export default function TeacherDashboard() {
             )}
           </div>
         </div>
+
+        {/* Join Link Section */}
+        {currentUser && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 mb-1">Enlace de Invitación para Estudiantes</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  Comparte este enlace con tus estudiantes. Ellos podrán registrarse y solicitar acceso a tus clases.
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 px-3 py-2 bg-white rounded-lg border border-gray-200 text-sm text-gray-700 truncate">
+                    {`${typeof window !== 'undefined' ? window.location.origin : ''}/join/${currentUser.id}`}
+                  </code>
+                  <button
+                    onClick={copyJoinLink}
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                      linkCopied 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    {linkCopied ? '¡Copiado!' : 'Copiar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pending Approvals Section */}
+        {pendingEnrollments.length > 0 && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Solicitudes Pendientes</h2>
+                <p className="text-sm text-yellow-700">{pendingEnrollments.length} estudiante{pendingEnrollments.length !== 1 ? 's' : ''} esperando aprobación</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {pendingEnrollments.map((enrollment) => (
+                <div key={enrollment.id} className="bg-white rounded-lg border border-yellow-200 p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="text-gray-600 font-semibold">
+                        {enrollment.student.firstName.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {enrollment.student.firstName} {enrollment.student.lastName}
+                      </p>
+                      <p className="text-sm text-gray-500">{enrollment.student.email}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Clase: {enrollment.class.name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleEnrollmentAction(enrollment.id, 'reject')}
+                      className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      Rechazar
+                    </button>
+                    <button
+                      onClick={() => handleEnrollmentAction(enrollment.id, 'approve')}
+                      className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700"
+                    >
+                      Aprobar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Classes with Students */}
         {classes.length > 0 && (
@@ -336,131 +464,7 @@ export default function TeacherDashboard() {
             </div>
           </div>
         )}
-
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Mis Estudiantes</h2>
-            <button
-              onClick={() => setShowCreateStudent(true)}
-              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium text-sm flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Crear Estudiante
-            </button>
-          </div>
-
-          {enrolledStudents.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p className="mb-2">No hay estudiantes inscritos aún.</p>
-              <p className="text-sm">Crea estudiantes y ellos podrán inscribirse en tus clases.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                {enrolledStudents.length} estudiante{enrolledStudents.length !== 1 ? 's' : ''} inscrito{enrolledStudents.length !== 1 ? 's' : ''}
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {enrolledStudents.map((student) => (
-                  <div key={`${student.id}-${student.classId}`} className="border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-green-600 font-semibold text-sm">
-                          {student.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-gray-900 truncate">{student.name}</h3>
-                        <p className="text-sm text-gray-500 truncate">{student.email}</p>
-                        <p className="text-xs text-gray-400 mt-1 truncate">Clase: {student.className}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
       </div>
-
-      {showCreateStudent && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Crear Estudiante</h2>
-              <button
-                onClick={() => {
-                  setShowCreateStudent(false);
-                  setStudentForm({ email: '', firstName: '', lastName: '', classId: '' });
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateStudent} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={studentForm.email}
-                  onChange={(e) => setStudentForm({ ...studentForm, email: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                  placeholder="estudiante@email.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={studentForm.firstName}
-                  onChange={(e) => setStudentForm({ ...studentForm, firstName: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                  placeholder="Juan"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Apellido
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={studentForm.lastName}
-                  onChange={(e) => setStudentForm({ ...studentForm, lastName: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                  placeholder="Pérez"
-                />
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>Nota:</strong> La contraseña del estudiante será: <strong>password</strong>
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full px-4 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium transition-colors"
-              >
-                Crear Estudiante
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </DashboardLayout>
   );
 }

@@ -79,17 +79,18 @@ model Class {
   // Relations
   academy     Academy           @relation(fields: [academyId], references: [id], onDelete: Cascade)
   enrollments ClassEnrollment[]
-  documents   Document[]
-  videos      Video[]
+  lessons     Lesson[]
 }
 
 model ClassEnrollment {
-  id        String   @id @default(cuid())
-  classId   String
-  studentId String
+  id         String   @id @default(cuid())
+  classId    String
+  studentId  String
+  status     String   @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
   enrolledAt DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  approvedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
   class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
@@ -98,35 +99,49 @@ model ClassEnrollment {
   @@unique([classId, studentId])
 }
 
+model Lesson {
+  id                     String   @id @default(cuid())
+  title                  String   // Default to today's date if not provided
+  description            String?
+  classId                String
+  releaseDate            DateTime @default(now())  // When the lesson becomes available to students
+  maxWatchTimeMultiplier Float    @default(2.0)  // Multiplier for watch time limit
+  watermarkIntervalMins  Int      @default(5)    // How often watermark appears (in minutes)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  // Relations
+  class     Class      @relation(fields: [classId], references: [id], onDelete: Cascade)
+  videos    Video[]
+  documents Document[]
+}
+
 model Document {
   id          String   @id @default(cuid())
   title       String
   description String?
-  classId     String
+  lessonId    String
   uploadId    String   @unique
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  class  Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   upload Upload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
 }
 
 model Video {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  classId     String
-  uploadId    String   @unique
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  lessonId        String
+  uploadId        String   @unique
   durationSeconds Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Per-video settings - now tracking total watch time instead of play count
-  maxWatchTimeMultiplier Float? @default(2.0) // e.g., 2.0 = can watch for 2x video duration
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Relations
-  class      Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  lesson     Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   upload     Upload           @relation(fields: [uploadId], references: [id], onDelete: Cascade)
   playStates VideoPlayState[]
 }

@@ -82,10 +82,10 @@ export default function AuthModal({ mode, onClose }: AuthModalProps) {
 
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">
-            {isLogin ? 'Welcome back' : 'Create account'}
+            {isLogin ? 'Bienvenido de nuevo' : 'Crear cuenta'}
           </h2>
           <p className="text-gray-600 text-sm mt-1">
-            {isLogin ? 'Sign in to your account' : 'Join ACADEMO today'}
+            {isLogin ? 'Inicia sesión en tu cuenta' : 'Únete a AKADEMO hoy'}
           </p>
         </div>
 

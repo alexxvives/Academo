@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/auth';
 import { handleApiError, errorResponse } from '@/lib/api-utils';
-import { videoQueries, enrollmentQueries, playStateQueries, uploadQueries } from '@/lib/db';
+import { videoQueries, enrollmentQueries, playStateQueries } from '@/lib/db';
 import { getStorageAdapter } from '@/lib/storage';
 
 export async function GET(
@@ -11,20 +11,28 @@ export async function GET(
     const { id } = await params;
     const session = await requireAuth();
 
-    // Get video
-    const video = await videoQueries.findById(id) as { uploadId: string; classId: string } | null;
+    // Get video with details (includes classId from Lesson join)
+    const video = await videoQueries.findWithDetails(id) as { 
+      uploadId: string; 
+      lessonId: string;
+      classId: string | null; 
+      storagePath: string; 
+      mimeType?: string;
+    } | null;
+    
+    console.log('[Video Stream] Video lookup:', { id, found: !!video, lessonId: video?.lessonId, classId: video?.classId });
+    
     if (!video) {
       return errorResponse('Video not found', 404);
     }
 
-    // Get the upload info
-    const upload = await uploadQueries.findById(video.uploadId) as { storagePath: string; mimeType?: string } | null;
-    if (!upload) {
-      return errorResponse('Video file not found', 404);
-    }
-
     // Check if user has access (admin, teacher of academy, or enrolled student)
     if (session.role === 'STUDENT') {
+      // Ensure video has a valid classId (from Lesson)
+      if (!video.classId) {
+        console.log('[Video Stream] Video has no classId:', { videoId: id, lessonId: video.lessonId });
+        return errorResponse('Video is not associated with a class', 400);
+      }
       const enrollment = await enrollmentQueries.findByClassAndStudent(video.classId, session.id);
       if (!enrollment) {
         return errorResponse('Not enrolled in this class', 403);
@@ -41,48 +49,61 @@ export async function GET(
       }
     }
 
-    // Serve video file from R2
+    // First get the file metadata to know the size (without downloading body)
     const storage = getStorageAdapter();
-    const object = await storage.getObject(upload.storagePath);
+    const metadata = await storage.getMetadata(video.storagePath);
     
-    if (!object) {
+    if (!metadata) {
       return errorResponse('Video file not found in storage', 404);
     }
 
-    const fileSize = object.size;
-    const contentType = upload.mimeType || object.contentType || 'video/mp4';
+    const fileSize = metadata.size;
+    const contentType = video.mimeType || metadata.contentType || 'video/mp4';
     const range = request.headers.get('range');
 
     if (range) {
-      // Handle range request for seeking
-      // For R2, we need to get the full object and slice it
-      // In production, you'd want to use R2's range parameter
+      // Handle range request for seeking using R2 native range support
       const parts = range.replace(/bytes=/, '').split('-');
       const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      // Use 2MB chunks - smaller chunks = faster initial load and seeking
+      const maxChunkSize = 2 * 1024 * 1024; // 2MB
+      const requestedEnd = parts[1] ? parseInt(parts[1], 10) : start + maxChunkSize - 1;
+      const end = Math.min(requestedEnd, fileSize - 1, start + maxChunkSize - 1);
       const chunksize = end - start + 1;
 
-      // For now, read full body and slice (not ideal but works)
-      // A better approach would be to use R2's range option
-      const arrayBuffer = await new Response(object.body).arrayBuffer();
-      const chunk = arrayBuffer.slice(start, end + 1);
+      // Use R2's native range request
+      const rangedObject = await storage.getObjectWithRange(video.storagePath, {
+        offset: start,
+        length: chunksize
+      });
 
-      return new Response(chunk, {
+      if (!rangedObject) {
+        return errorResponse('Failed to fetch video chunk', 500);
+      }
+
+      return new Response(rangedObject.body, {
         status: 206,
         headers: {
           'Content-Range': `bytes ${start}-${end}/${fileSize}`,
           'Accept-Ranges': 'bytes',
           'Content-Length': chunksize.toString(),
           'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=3600',
         },
       });
     } else {
-      // Send entire file
-      return new Response(object.body, {
+      // For non-range requests, stream the full file
+      const fullObject = await storage.getObject(video.storagePath);
+      if (!fullObject) {
+        return errorResponse('Video file not found in storage', 404);
+      }
+      
+      return new Response(fullObject.body, {
         headers: {
           'Content-Length': fileSize.toString(),
           'Content-Type': contentType,
           'Accept-Ranges': 'bytes',
+          'Cache-Control': 'public, max-age=3600',
         },
       });
     }

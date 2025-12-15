@@ -44,10 +44,10 @@ export default function DashboardLayout({
       if (result.success && result.data.role === role) {
         setUser(result.data);
       } else {
-        router.push('/login');
+        router.push('/?modal=login');
       }
     } catch {
-      router.push('/login');
+      router.push('/?modal=login');
     } finally {
       setLoading(false);
     }

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Academy Hive - Secure Learning Platform",
-  description: "Manage classes, teachers, students, and protected video lessons",
+  title: "AKADEMO - Plataforma de Aprendizaje Seguro",
+  description: "Gestiona clases, profesores, estudiantes y lecciones de video protegidas",
 };
 
 export default function RootLayout({

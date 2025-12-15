@@ -6,6 +6,13 @@ export interface StorageAdapter {
   delete(key: string): Promise<void>;
   getStream(key: string): Promise<ReadableStream | null>;
   getObject(key: string): Promise<{ body: ReadableStream; contentType?: string; size: number } | null>;
+  getMetadata(key: string): Promise<{ contentType?: string; size: number } | null>;
+  getObjectWithRange(key: string, range?: { offset: number; length: number }): Promise<{ 
+    body: ReadableStream; 
+    contentType?: string; 
+    size: number;
+    range?: { offset: number; length: number };
+  } | null>;
 }
 
 class R2StorageAdapter implements StorageAdapter {
@@ -60,6 +67,17 @@ class R2StorageAdapter implements StorageAdapter {
     return object?.body || null;
   }
 
+  async getMetadata(key: string): Promise<{ contentType?: string; size: number } | null> {
+    const bucket = this.getBucket();
+    // Use head() to get metadata without downloading the body
+    const head = await bucket.head(key);
+    if (!head) return null;
+    return {
+      contentType: head.httpMetadata?.contentType,
+      size: head.size
+    };
+  }
+
   async getObject(key: string): Promise<{ body: ReadableStream; contentType?: string; size: number } | null> {
     const bucket = this.getBucket();
     const object = await bucket.get(key);
@@ -68,6 +86,28 @@ class R2StorageAdapter implements StorageAdapter {
       body: object.body,
       contentType: object.httpMetadata?.contentType,
       size: object.size
+    };
+  }
+
+  async getObjectWithRange(key: string, range?: { offset: number; length: number }): Promise<{ 
+    body: ReadableStream; 
+    contentType?: string; 
+    size: number;
+    range?: { offset: number; length: number };
+  } | null> {
+    const bucket = this.getBucket();
+    
+    // R2 supports range requests via the options parameter
+    const options = range ? { range: { offset: range.offset, length: range.length } } : undefined;
+    const object = await bucket.get(key, options);
+    
+    if (!object) return null;
+    
+    return {
+      body: object.body,
+      contentType: object.httpMetadata?.contentType,
+      size: object.size,
+      range: range
     };
   }
 }

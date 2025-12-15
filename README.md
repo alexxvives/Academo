@@ -82,7 +82,7 @@ All viewing progress saved server-side. Students resume from last position with 
 
 ### Project Structure
 ```
-academy-hive/
+akademo/
 ├── prisma/              # Database schema and migrations
 ├── src/
 │   ├── app/

@@ -44,24 +44,32 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const academyId = searchParams.get('academyId');
 
+    console.log('[API /api/classes] GET request by user:', session.id, 'role:', session.role, 'academyId:', academyId);
+
     let classes;
 
     if (session.role === 'STUDENT') {
       // Students see only enrolled classes
+      console.log('[API /api/classes] Fetching classes for student...');
       classes = await classQueries.findByStudentEnrollment(session.id);
     } else if (session.role === 'TEACHER') {
       // Teachers see classes in their academies
+      console.log('[API /api/classes] Fetching classes for teacher...');
       classes = await classQueries.findByTeacher(session.id, academyId || undefined);
     } else if (session.role === 'ACADEMY') {
       // Academy owners see all classes in their academies
+      console.log('[API /api/classes] Fetching classes for academy owner...');
       classes = await classQueries.findByAcademyOwner(session.id);
     } else {
       // Admin sees all classes
+      console.log('[API /api/classes] Fetching classes for admin...');
       classes = await classQueries.findByTeacher(session.id, academyId || undefined);
     }
 
+    console.log('[API /api/classes] Found', classes?.length || 0, 'classes');
     return Response.json(successResponse(classes));
   } catch (error) {
+    console.error('[API /api/classes] Error:', error);
     return handleApiError(error);
   }
 }

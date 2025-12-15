@@ -11,11 +11,10 @@ export async function POST(request: Request) {
     const file = formData.get('file') as File;
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
-    const classId = formData.get('classId') as string;
-    const maxWatchTimeMultiplier = formData.get('maxWatchTimeMultiplier') as string;
+    const lessonId = formData.get('lessonId') as string;
     const durationSeconds = formData.get('durationSeconds') as string;
 
-    if (!file || !title || !classId) {
+    if (!file || !title || !lessonId) {
       return errorResponse('Missing required fields');
     }
 
@@ -48,10 +47,9 @@ export async function POST(request: Request) {
     const video = await videoQueries.create({
       title,
       description: description || undefined,
-      classId,
+      lessonId,
       uploadId: upload.id,
       durationSeconds: durationSeconds ? parseFloat(durationSeconds) : undefined,
-      maxWatchTimeMultiplier: maxWatchTimeMultiplier ? parseFloat(maxWatchTimeMultiplier) : 2.0,
     });
 
     return Response.json(successResponse({ ...video, upload }), { status: 201 });
