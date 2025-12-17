@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { BarChart, LineChart, StatCard } from '@/components/Charts';
 
 interface Teacher {
   id: string;

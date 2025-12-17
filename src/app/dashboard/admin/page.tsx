@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
+import { BarChart, DonutChart, StatCard } from '@/components/Charts';
 
 interface Academy {
   id: string;
@@ -54,38 +55,102 @@ export default function AdminDashboard() {
   const totalStudents = academies.reduce((sum, a) => sum + a._count.memberships, 0);
   const totalClasses = academies.reduce((sum, a) => sum + a._count.classes, 0);
 
+  // Calculate growth (mock data for demo)
+  const growth = {
+    academies: '+12%',
+    students: '+24%',
+    classes: '+18%',
+    teachers: '+8%',
+  };
+
+  // Prepare chart data
+  const academyData = academies.slice(0, 6).map((a, i) => ({
+    label: a.name.length > 15 ? a.name.substring(0, 15) + '...' : a.name,
+    value: a._count.memberships + a._count.classes,
+  }));
+
+  const distributionData = [
+    { label: 'Estudiantes', value: totalStudents, color: '#3B82F6' },
+    { label: 'Profesores', value: academies.length, color: '#10B981' },
+    { label: 'Clases', value: totalClasses, color: '#F59E0B' },
+  ];
+
   return (
     <DashboardLayout role="ADMIN">
-      <div className="max-w-5xl mx-auto space-y-8">
+      <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-500 text-sm mt-1">Monitor and manage the platform</p>
+          <h1 className="text-3xl font-bold text-gray-900">Panel de Administración</h1>
+          <p className="text-gray-500 mt-1">Monitorea y gestiona toda la plataforma</p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Academies</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{academies.length}</p>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Students</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{totalStudents}</p>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Classes</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{totalClasses}</p>
-          </div>
-          <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Teachers</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{academies.length}</p>
-          </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            title="Academias"
+            value={academies.length}
+            change={growth.academies}
+            trend="up"
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            }
+          />
+          <StatCard
+            title="Estudiantes"
+            value={totalStudents}
+            change={growth.students}
+            trend="up"
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            }
+          />
+          <StatCard
+            title="Clases"
+            value={totalClasses}
+            change={growth.classes}
+            trend="up"
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            }
+          />
+          <StatCard
+            title="Profesores"
+            value={academies.length}
+            change={growth.teachers}
+            trend="up"
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            }
+          />
         </div>
+
+        {/* Charts Row */}
+        {academies.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <BarChart
+              data={academyData}
+              title="Actividad por Academia"
+              height={300}
+            />
+            <DonutChart
+              data={distributionData}
+              title="Distribución de Usuarios"
+              size={240}
+            />
+          </div>
+        )}
 
         {/* All Academies */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">All Academies</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Todas las Academias</h2>
           
           {academies.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
