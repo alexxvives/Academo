@@ -66,7 +66,6 @@ export default function TeacherDashboard() {
   const [academyName, setAcademyName] = useState<string>('');
   const [showBrowse, setShowBrowse] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [expandedRequestId, setExpandedRequestId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -292,81 +291,56 @@ export default function TeacherDashboard() {
 
         {/* Pending Approvals Section - Moved to Top */}
         {pendingEnrollments.length > 0 && (
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-2xl overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+          <div className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 border border-blue-200 rounded-xl overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-500/10 to-indigo-500/10 px-6 py-3 border-b border-blue-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-white">Solicitudes Pendientes</h2>
-                  <p className="text-sm text-blue-50">{pendingEnrollments.length} estudiante{pendingEnrollments.length !== 1 ? 's' : ''} esperando tu aprobación</p>
+                  <h2 className="text-lg font-semibold text-gray-900">Solicitudes Pendientes</h2>
+                  <p className="text-xs text-gray-600">{pendingEnrollments.length} estudiante{pendingEnrollments.length !== 1 ? 's' : ''} esperando tu aprobación</p>
                 </div>
               </div>
             </div>
             
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto pr-2">
+            <div className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-2">
                 {pendingEnrollments.map((enrollment) => (
                   <div 
                     key={enrollment.id} 
-                    className={`bg-white rounded-xl border-2 border-blue-200 transition-all cursor-pointer ${
-                      expandedRequestId === enrollment.id 
-                        ? 'col-span-full p-4 shadow-lg' 
-                        : 'p-3 hover:shadow-md hover:border-blue-300'
-                    }`}
-                    onClick={() => setExpandedRequestId(expandedRequestId === enrollment.id ? null : enrollment.id)}
+                    className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-md hover:border-blue-300 transition-all"
                   >
-                    <div className={`flex items-start gap-3 ${
-                      expandedRequestId === enrollment.id ? 'mb-4' : ''
-                    }`}>
+                    <div className="flex items-start gap-3 mb-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-white font-bold text-sm">
                           {enrollment.student.firstName.charAt(0)}{enrollment.student.lastName.charAt(0)}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 truncate text-sm">
+                        <p className="font-semibold text-gray-900 text-sm">
                           {enrollment.student.firstName} {enrollment.student.lastName}
                         </p>
-                        {expandedRequestId === enrollment.id ? (
-                          <>
-                            <p className="text-sm text-gray-600 mt-1">{enrollment.student.email}</p>
-                            <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
-                              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                              <span className="font-medium">{enrollment.class.name}</span>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="text-xs text-gray-500 truncate">{enrollment.class.name}</p>
-                        )}
+                        <p className="text-xs text-gray-500 truncate">{enrollment.student.email}</p>
+                        <p className="text-xs text-blue-600 mt-1 truncate">{enrollment.class.name}</p>
                       </div>
-                      {expandedRequestId !== enrollment.id && (
-                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      )}
                     </div>
-                    {expandedRequestId === enrollment.id && (
-                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => handleEnrollmentAction(enrollment.id, 'reject')}
-                          className="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all"
-                        >
-                          ✕ Rechazar
-                        </button>
-                        <button
-                          onClick={() => handleEnrollmentAction(enrollment.id, 'approve')}
-                          className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 shadow-md transition-all"
-                        >
-                          ✓ Aprobar
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleEnrollmentAction(enrollment.id, 'reject')}
+                        className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-50 transition-all"
+                      >
+                        ✕ Rechazar
+                      </button>
+                      <button
+                        onClick={() => handleEnrollmentAction(enrollment.id, 'approve')}
+                        className="flex-1 px-2 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-all"
+                      >
+                        ✓ Aprobar
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -421,7 +395,7 @@ export default function TeacherDashboard() {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución de Completion de Videos</h3>
             {enrolledStudents.length > 0 ? (
-              <div className="h-64 w-full">
+              <div className="h-56 w-full">
                 <BarChart
                   data={[
                     { label: '0-20%', value: Math.max(1, Math.floor(enrolledStudents.length * 0.15)) },

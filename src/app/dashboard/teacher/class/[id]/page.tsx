@@ -480,24 +480,15 @@ export default function TeacherClassPage() {
         {/* Header - Only show when no lesson is selected */}
         {!selectedLesson && (
           <div>
-            <Link href="/dashboard/teacher" className="text-sm text-gray-500 hover:text-gray-900 mb-4 inline-block">
-              ← {classData.academy.name}
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900">{classData.name}</h1>
-            {classData.description && <p className="text-gray-600 mt-1">{classData.description}</p>}
-            <div className="flex gap-6 mt-2 text-sm text-gray-500">
-              <span>{classData.enrollments.length} students</span>
-              <span>{lessons.length} lessons</span>
-              {pendingEnrollments.length > 0 && (
-                <button
-                  onClick={() => setShowPendingRequests(!showPendingRequests)}
-                  className="text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1"
-                >
-                  <span className="w-2 h-2 bg-orange-600 rounded-full animate-pulse"></span>
-                  {pendingEnrollments.length} pending request{pendingEnrollments.length !== 1 ? 's' : ''}
-                </button>
-              )}
-            </div>
+            {pendingEnrollments.length > 0 && (
+              <button
+                onClick={() => setShowPendingRequests(!showPendingRequests)}
+                className="text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1 text-sm mb-4"
+              >
+                <span className="w-2 h-2 bg-orange-600 rounded-full animate-pulse"></span>
+                {pendingEnrollments.length} pending request{pendingEnrollments.length !== 1 ? 's' : ''}
+              </button>
+            )}
           </div>
         )}
 
