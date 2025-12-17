@@ -962,63 +962,78 @@ export default function TeacherClassPage() {
                   {lessons.map((lesson) => (
                     <div
                       key={lesson.id}
-                      className="bg-white rounded-xl border border-gray-200 p-5 transition-all hover:border-blue-300 hover:shadow-md"
+                      className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden transition-all hover:border-brand-400 hover:shadow-lg group cursor-pointer"
+                      onClick={() => selectLesson(lesson)}
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div
-                          className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 cursor-pointer"
-                          onClick={() => selectLesson(lesson)}
-                        >
-                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                          </svg>
-                        </div>
-                        <div className="flex items-center gap-2">
+                      <div className="bg-gradient-to-br from-brand-500 to-brand-600 p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                          </div>
                           {!isReleased(lesson.releaseDate) && (
-                            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full">Scheduled</span>
+                            <span className="px-2 py-1 bg-yellow-400 text-yellow-900 text-xs font-semibold rounded-full">Programada</span>
                           )}
+                        </div>
+                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleEditLesson(lesson); }}
-                            className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-xs font-medium"
+                            className="p-2 text-white hover:bg-white/20 rounded-lg transition-colors"
+                            title="Editar"
                           >
-                            Edit
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteLesson(lesson.id); }}
-                            className="px-2 py-1 text-red-600 hover:bg-red-50 rounded text-xs"
+                            className="p-2 text-white hover:bg-red-500/50 rounded-lg transition-colors"
+                            title="Eliminar"
                           >
-                            Delete
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                           </button>
                         </div>
                       </div>
+                      
+                      <div className="p-5">
+                        <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-brand-600 transition-colors">{lesson.title}</h3>
+                        {lesson.description && <p className="text-sm text-gray-600 mb-4 line-clamp-2">{lesson.description}</p>}
 
-                      <div onClick={() => selectLesson(lesson)} className="cursor-pointer">
-                        <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2">{lesson.title}</h3>
-                        {lesson.description && <p className="text-sm text-gray-500 mb-3 line-clamp-2">{lesson.description}</p>}
-
-                        <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                        <div className="flex items-center gap-4 text-sm mb-4">
                           {lesson.videoCount > 0 && (
-                            <span className="flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                              </svg>
-                              {lesson.videoCount} video{lesson.videoCount !== 1 ? 's' : ''}
+                            <span className="flex items-center gap-2 text-gray-600">
+                              <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                              </div>
+                              <span className="font-semibold">{lesson.videoCount}</span>
                             </span>
                           )}
                           {lesson.documentCount > 0 && (
-                            <span className="flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                              </svg>
-                              {lesson.documentCount} doc{lesson.documentCount !== 1 ? 's' : ''}
+                            <span className="flex items-center gap-2 text-gray-600">
+                              <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                              </div>
+                              <span className="font-semibold">{lesson.documentCount}</span>
                             </span>
                           )}
                         </div>
 
-                        <p className="text-xs text-gray-400">
-                          {isReleased(lesson.releaseDate) ? 'Released' : 'Scheduled'}: {formatDate(lesson.releaseDate)}
-                        </p>
+                        <div className="pt-3 border-t border-gray-100">
+                          <p className="text-xs text-gray-500 flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            {isReleased(lesson.releaseDate) ? 'Lanzada' : 'Se lanza'}: {formatDate(lesson.releaseDate)}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ))}

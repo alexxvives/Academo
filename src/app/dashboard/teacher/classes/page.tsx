@@ -116,11 +116,17 @@ export default function TeacherClasses() {
                 className="block bg-white rounded-xl border-2 border-gray-200 hover:border-brand-400 hover:shadow-xl transition-all overflow-hidden group"
               >
                 <div className="flex items-center">
-                  {/* Icon Section */}
-                  <div className="w-24 h-24 bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-bold text-3xl">
-                      {cls.name.charAt(0).toUpperCase()}
-                    </span>
+                  {/* Stats Section */}
+                  <div className="w-32 bg-gradient-to-br from-brand-500 to-brand-600 flex flex-col items-center justify-center py-6 px-4 flex-shrink-0">
+                    <div className="text-center mb-3">
+                      <div className="text-3xl font-bold text-white">{cls.studentCount}</div>
+                      <div className="text-xs text-brand-100 uppercase tracking-wide">Estudiantes</div>
+                    </div>
+                    <div className="w-full h-px bg-brand-400 my-2"></div>
+                    <div className="text-center mt-3">
+                      <div className="text-3xl font-bold text-white">{cls.lessonCount}</div>
+                      <div className="text-xs text-brand-100 uppercase tracking-wide">Lecciones</div>
+                    </div>
                   </div>
                   
                   {/* Content Section */}
@@ -133,26 +139,12 @@ export default function TeacherClasses() {
                         ) : (
                           <p className="text-sm text-gray-400 italic mb-3">Sin descripción</p>
                         )}
-                        <div className="flex items-center gap-6 text-sm">
-                          <span className="flex items-center gap-2 text-gray-600">
-                            <svg className="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                            </svg>
-                            <span className="font-semibold">{cls.studentCount}</span>
-                            <span className="text-gray-500">estudiantes</span>
-                          </span>
-                          <span className="flex items-center gap-2 text-gray-600">
-                            <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                            <span className="font-semibold">{cls.lessonCount}</span>
-                            <span className="text-gray-500">lecciones</span>
-                          </span>
-                          <span className="flex items-center gap-2 text-gray-600">
-                            <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center gap-6 text-sm text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            <span className="text-gray-500">Creada {new Date(cls.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                            Creada {new Date(cls.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </span>
                         </div>
                       </div>
