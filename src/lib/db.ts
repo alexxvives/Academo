@@ -203,7 +203,8 @@ export const classQueries = {
     const db = await getDB();
     let query = `
       SELECT c.*, a.name as academyName,
-        (SELECT COUNT(*) FROM ClassEnrollment WHERE classId = c.id) as enrollmentCount,
+        (SELECT COUNT(*) FROM ClassEnrollment WHERE classId = c.id AND status = 'APPROVED') as studentCount,
+        (SELECT COUNT(*) FROM Lesson WHERE classId = c.id) as lessonCount,
         (SELECT COUNT(*) FROM Video v JOIN Lesson l ON v.lessonId = l.id WHERE l.classId = c.id) as videoCount,
         (SELECT COUNT(*) FROM Document d JOIN Lesson l ON d.lessonId = l.id WHERE l.classId = c.id) as documentCount
       FROM Class c
@@ -228,7 +229,10 @@ export const classQueries = {
     return (result.results || []).map((c: any) => ({
       ...c,
       academy: { name: c.academyName },
-      _count: { enrollments: c.enrollmentCount, videos: c.videoCount, documents: c.documentCount }
+      studentCount: c.studentCount,
+      lessonCount: c.lessonCount,
+      videoCount: c.videoCount,
+      documentCount: c.documentCount
     }));
   },
 
@@ -236,7 +240,8 @@ export const classQueries = {
     const db = await getDB();
     const result = await db.prepare(`
       SELECT c.*, a.name as academyName,
-        (SELECT COUNT(*) FROM ClassEnrollment WHERE classId = c.id) as enrollmentCount,
+        (SELECT COUNT(*) FROM ClassEnrollment WHERE classId = c.id AND status = 'APPROVED') as studentCount,
+        (SELECT COUNT(*) FROM Lesson WHERE classId = c.id) as lessonCount,
         (SELECT COUNT(*) FROM Video v JOIN Lesson l ON v.lessonId = l.id WHERE l.classId = c.id) as videoCount,
         (SELECT COUNT(*) FROM Document d JOIN Lesson l ON d.lessonId = l.id WHERE l.classId = c.id) as documentCount
       FROM Class c
@@ -248,7 +253,10 @@ export const classQueries = {
     return (result.results || []).map((c: any) => ({
       ...c,
       academy: { name: c.academyName },
-      _count: { enrollments: c.enrollmentCount, videos: c.videoCount, documents: c.documentCount }
+      studentCount: c.studentCount,
+      lessonCount: c.lessonCount,
+      videoCount: c.videoCount,
+      documentCount: c.documentCount
     }));
   },
 };
