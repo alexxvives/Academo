@@ -307,45 +307,43 @@ export default function TeacherDashboard() {
             </div>
             
             <div className="p-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 max-h-[400px] overflow-y-auto pr-2">
+              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                 {pendingEnrollments.map((enrollment) => (
                   <div 
                     key={enrollment.id} 
-                    className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-md hover:border-blue-300 transition-all"
+                    className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-md hover:border-blue-300 transition-all flex items-center gap-3 max-w-md"
                   >
-                    <div className="flex flex-col items-center text-center space-y-2">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-bold text-base">
-                          {enrollment.student.firstName.charAt(0)}{enrollment.student.lastName.charAt(0)}
-                        </span>
-                      </div>
-                      <div className="w-full">
-                        <p className="font-semibold text-gray-900 text-sm truncate">
-                          {enrollment.student.firstName} {enrollment.student.lastName}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate">{enrollment.student.email}</p>
-                        <p className="text-xs text-blue-600 truncate mt-1">{enrollment.class.name}</p>
-                      </div>
-                      <div className="flex items-center gap-2 w-full pt-2">
-                        <button
-                          onClick={() => handleEnrollmentAction(enrollment.id, 'reject')}
-                          className="flex-1 p-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all"
-                          title="Rechazar"
-                        >
-                          <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleEnrollmentAction(enrollment.id, 'approve')}
-                          className="flex-1 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
-                          title="Aprobar"
-                        >
-                          <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </button>
-                      </div>
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-sm">
+                        {enrollment.student.firstName.charAt(0)}{enrollment.student.lastName.charAt(0)}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm">
+                        {enrollment.student.firstName} {enrollment.student.lastName}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">{enrollment.student.email}</p>
+                      <p className="text-xs text-blue-600 truncate">{enrollment.class.name}</p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => handleEnrollmentAction(enrollment.id, 'reject')}
+                        className="p-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all"
+                        title="Rechazar"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleEnrollmentAction(enrollment.id, 'approve')}
+                        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
+                        title="Aprobar"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -401,19 +399,17 @@ export default function TeacherDashboard() {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución de Completion de Videos</h3>
             {enrolledStudents.length > 0 ? (
-              <div className="h-56 w-full overflow-x-auto pb-4">
-                <div className="min-w-[400px] h-full">
-                  <BarChart
-                    data={[
-                      { label: '0-20%', value: Math.max(1, Math.floor(enrolledStudents.length * 0.15)) },
-                      { label: '21-40%', value: Math.max(1, Math.floor(enrolledStudents.length * 0.20)) },
-                      { label: '41-60%', value: Math.max(2, Math.floor(enrolledStudents.length * 0.25)) },
-                      { label: '61-80%', value: Math.max(2, Math.floor(enrolledStudents.length * 0.25)) },
-                      { label: '81-100%', value: Math.max(1, Math.floor(enrolledStudents.length * 0.15)) }
-                    ]}
-                    showValues={true}
-                  />
-                </div>
+              <div className="h-40 w-full">
+                <BarChart
+                  data={[
+                    { label: '0-20', value: Math.max(1, Math.floor(enrolledStudents.length * 0.15)) },
+                    { label: '21-40', value: Math.max(1, Math.floor(enrolledStudents.length * 0.20)) },
+                    { label: '41-60', value: Math.max(2, Math.floor(enrolledStudents.length * 0.25)) },
+                    { label: '61-80', value: Math.max(2, Math.floor(enrolledStudents.length * 0.25)) },
+                    { label: '81-100', value: Math.max(1, Math.floor(enrolledStudents.length * 0.15)) }
+                  ]}
+                  showValues={true}
+                />
               </div>
             ) : (
               <div className="h-64 flex items-center justify-center text-gray-400">
