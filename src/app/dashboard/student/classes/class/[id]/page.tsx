@@ -169,11 +169,11 @@ export default function ClassPage() {
       return;
     }
     
-    router.push(`/dashboard/student/class/${classId}?lesson=${lesson.id}`);
+    router.push(`/dashboard/student/classes/class/${classId}?lesson=${lesson.id}`);
   };
 
   const goBackToLessons = async () => {
-    router.push(`/dashboard/student/class/${classId}`);
+    router.push(`/dashboard/student/classes/class/${classId}`);
     setSelectedLesson(null);
     setSelectedVideo(null);
     await loadData();
@@ -181,7 +181,7 @@ export default function ClassPage() {
 
   const selectVideoInLesson = (video: Video) => {
     if (!selectedLesson) return;
-    router.push(`/dashboard/student/class/${classId}?lesson=${selectedLesson.id}&watch=${video.id}`);
+    router.push(`/dashboard/student/classes/class/${classId}?lesson=${selectedLesson.id}&watch=${video.id}`);
   };
 
   const isPdfDocument = (doc: Document) => {
@@ -378,7 +378,7 @@ export default function ClassPage() {
         {!selectedLesson && !isWatchingStream && (
           <div>
             <button
-              onClick={() => router.push('/dashboard/student')}
+              onClick={() => router.push('/dashboard/student/classes')}
               className="text-sm text-gray-500 hover:text-gray-900 mb-4 inline-block"
             >
               ← Back to classes

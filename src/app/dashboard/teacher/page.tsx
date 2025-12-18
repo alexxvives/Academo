@@ -307,38 +307,42 @@ export default function TeacherDashboard() {
             </div>
             
             <div className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-2">
+              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                 {pendingEnrollments.map((enrollment) => (
                   <div 
                     key={enrollment.id} 
-                    className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-md hover:border-blue-300 transition-all"
+                    className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-md hover:border-blue-300 transition-all flex items-center gap-3"
                   >
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-bold text-sm">
-                          {enrollment.student.firstName.charAt(0)}{enrollment.student.lastName.charAt(0)}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 text-sm">
-                          {enrollment.student.firstName} {enrollment.student.lastName}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate">{enrollment.student.email}</p>
-                        <p className="text-xs text-blue-600 mt-1 truncate">{enrollment.class.name}</p>
-                      </div>
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-sm">
+                        {enrollment.student.firstName.charAt(0)}{enrollment.student.lastName.charAt(0)}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm">
+                        {enrollment.student.firstName} {enrollment.student.lastName}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">{enrollment.student.email}</p>
+                      <p className="text-xs text-blue-600 truncate">{enrollment.class.name}</p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <button
                         onClick={() => handleEnrollmentAction(enrollment.id, 'reject')}
-                        className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 hover:bg-gray-50 transition-all"
+                        className="p-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all"
+                        title="Rechazar"
                       >
-                        ✕ Rechazar
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                       </button>
                       <button
                         onClick={() => handleEnrollmentAction(enrollment.id, 'approve')}
-                        className="flex-1 px-2 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-all"
+                        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
+                        title="Aprobar"
                       >
-                        ✓ Aprobar
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
                       </button>
                     </div>
                   </div>
@@ -395,7 +399,7 @@ export default function TeacherDashboard() {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución de Completion de Videos</h3>
             {enrolledStudents.length > 0 ? (
-              <div className="h-56 w-full">
+              <div className="h-48 w-full">
                 <BarChart
                   data={[
                     { label: '0-20%', value: Math.max(1, Math.floor(enrolledStudents.length * 0.15)) },
