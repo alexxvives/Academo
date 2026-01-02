@@ -758,50 +758,41 @@ export default function TeacherClassPage() {
         {/* Clean Minimalist Header - Focus on Lessons */}
         {!selectedLesson && (
           <>
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-8">
-              <Link
-                href="/dashboard/teacher/classes"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 text-sm mb-4 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Volver a clases
-              </Link>
-
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex-1">
-                  <h1 className="text-4xl font-bold text-gray-900 mb-2">{classData.name}</h1>
-                  {classData.description && (
-                    <p className="text-gray-600 text-lg max-w-3xl">{classData.description}</p>
-                  )}
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => { router.push(`/dashboard/teacher/class/${classId}?action=create`); }}
-                    className="px-5 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-all"
-                  >
-                    + Nueva Lección
-                  </button>
-                  <button
-                    onClick={createLiveClass}
-                    disabled={creatingStream}
-                    className="px-5 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
-                  >
-                    {creatingStream ? (
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    ) : (
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                      </span>
-                    )}
-                    {creatingStream ? 'Creando...' : '🔴 Stream'}
-                  </button>
-                </div>
+            {/* Title and Actions */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <h1 className="text-4xl font-bold text-gray-900 mb-2">{classData.name}</h1>
+                {classData.description && (
+                  <p className="text-gray-600 text-lg max-w-3xl">{classData.description}</p>
+                )}
               </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { router.push(`/dashboard/teacher/class/${classId}?action=create`); }}
+                  className="px-5 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-all"
+                >
+                  + Nueva Lección
+                </button>
+                <button
+                  onClick={createLiveClass}
+                  disabled={creatingStream}
+                  className="px-5 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
+                >
+                  {creatingStream ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  ) : (
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                    </span>
+                  )}
+                  {creatingStream ? 'Creando...' : '🔴 Stream'}
+                </button>
+              </div>
+            </div>
 
-              {/* Minimal Stats */}
+            {/* Floating Stats Container */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-6">
               <div className="flex items-center gap-6 text-sm">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-gray-900">{lessons.length}</span>
@@ -1466,7 +1457,12 @@ export default function TeacherClassPage() {
                           
                           {/* Title and Actions */}
                           <div className="flex items-start justify-between mb-4">
-                            <h3 className="font-bold text-lg text-gray-900 group-hover:text-gray-600 transition-colors flex-1 pr-2">{lesson.title}</h3>
+                            <h3 
+                              className="font-bold text-lg text-gray-900 group-hover:text-gray-600 transition-colors flex-1 pr-2"
+                              title={lesson.description || undefined}
+                            >
+                              {lesson.title}
+                            </h3>
                             <div className="flex items-center gap-1 flex-shrink-0" data-action-buttons onClick={(e) => e.stopPropagation()}>
                               {!isReleased(lesson.releaseDate) && !lesson.isUploading && !lesson.isTranscoding && (
                                 <span className="px-2 py-0.5 bg-amber-50 text-amber-600 text-xs font-medium rounded border border-amber-200 mr-1">Programada</span>
@@ -1514,11 +1510,6 @@ export default function TeacherClassPage() {
                               </button>
                             </div>
                           </div>
-                          
-                          {/* Description (if exists) */}
-                          {lesson.description && (
-                            <p className="text-sm text-gray-600 mb-4 line-clamp-2">{lesson.description}</p>
-                          )}
                           
                           {/* Counts - Enhanced Style */}
                           <div className="flex items-center gap-4 text-sm">
