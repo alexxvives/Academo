@@ -754,51 +754,39 @@ export default function TeacherClassPage() {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      <div className="space-y-6">
         {/* Header - Only show when no lesson is selected */}
         {!selectedLesson && (
           <>
-            <div className="md:hidden mb-4">
-              <Link
-                href="/dashboard/teacher/classes"
-                className="text-gray-600 hover:text-gray-900 font-medium flex items-center gap-2 text-sm"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Volver a Clases
-              </Link>
-            </div>
-
-            {/* Class Info with Action Buttons */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <div className="flex items-start justify-between gap-4">
+            {/* Improved Header with Gradient */}
+            <div className="bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl p-8 text-white shadow-xl">
+              <div className="flex items-start justify-between mb-6">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-2xl font-bold text-gray-900">{classData.name}</h1>
-                    {pendingEnrollments.length > 0 && (
-                      <button
-                        onClick={() => setShowPendingRequests(!showPendingRequests)}
-                        className="text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1 text-sm"
-                      >
-                        <span className="w-2 h-2 bg-orange-600 rounded-full animate-pulse"></span>
-                        {pendingEnrollments.length} solicitud{pendingEnrollments.length !== 1 ? 'es' : ''} pendiente{pendingEnrollments.length !== 1 ? 's' : ''}
-                      </button>
-                    )}
-                  </div>
-                  {classData.description && <p className="text-gray-600">{classData.description}</p>}
+                  <Link
+                    href="/dashboard/teacher/classes"
+                    className="inline-flex items-center gap-2 text-white/80 hover:text-white font-medium text-sm mb-3 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Todas las clases
+                  </Link>
+                  <h1 className="text-3xl font-bold mb-2">{classData.name}</h1>
+                  {classData.description && (
+                    <p className="text-white/90 text-lg max-w-2xl">{classData.description}</p>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-2 flex-shrink-0">
+                <div className="flex gap-2 flex-shrink-0">
                   <button
                     onClick={() => { router.push(`/dashboard/teacher/class/${classId}?action=create`); }}
-                    className="px-4 py-2 rounded-lg font-medium text-sm transition-all bg-brand-500 text-white hover:bg-brand-600 whitespace-nowrap"
+                    className="px-4 py-2.5 rounded-lg font-medium text-sm transition-all bg-white text-brand-600 hover:bg-white/90 shadow-lg whitespace-nowrap"
                   >
                     + Crear Lección
                   </button>
                   <button
                     onClick={createLiveClass}
                     disabled={creatingStream}
-                    className="px-4 py-2 rounded-lg font-medium text-sm transition-all bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                    className="px-4 py-2.5 rounded-lg font-medium text-sm transition-all bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap shadow-lg"
                   >
                     {creatingStream ? (
                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
@@ -808,15 +796,46 @@ export default function TeacherClassPage() {
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                       </span>
                     )}
-                    {creatingStream ? 'Creando...' : 'Stream'}
+                    {creatingStream ? 'Creando...' : 'Iniciar Stream'}
                   </button>
                 </div>
+              </div>
+
+              {/* Stats */}
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <span className="font-semibold">{classData.enrollments.filter((e: any) => e.status === 'approved').length}</span>
+                  <span className="text-white/90">Estudiantes</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  <span className="font-semibold">{lessons.length}</span>
+                  <span className="text-white/90">Lecciones</span>
+                </div>
+                {pendingEnrollments.length > 0 && (
+                  <button
+                    onClick={() => setShowPendingRequests(!showPendingRequests)}
+                    className="flex items-center gap-2 bg-orange-500/30 backdrop-blur-sm px-4 py-2 rounded-lg border border-orange-300/50 hover:bg-orange-500/40 transition-colors"
+                  >
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                    </span>
+                    <span className="font-semibold">{pendingEnrollments.length}</span>
+                    <span className="text-white">Solicitud{pendingEnrollments.length !== 1 ? 'es' : ''}</span>
+                  </button>
+                )}
               </div>
             </div>
           </>
         )}
 
-        {/* Pending Enrollment Requests */}
+        {/* Pending Enrollment Requests - Keep original */}
         {pendingEnrollments.length > 0 && showPendingRequests && !selectedLesson && (
           <div className="bg-gradient-to-br from-blue-50/50 to-indigo-50/50 border border-blue-200 rounded-xl overflow-hidden">
             <div className="bg-gradient-to-r from-blue-500/10 to-indigo-500/10 px-6 py-3 border-b border-blue-200">
