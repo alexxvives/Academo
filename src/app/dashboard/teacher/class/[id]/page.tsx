@@ -755,38 +755,38 @@ export default function TeacherClassPage() {
   return (
     <>
       <div className="space-y-6">
-        {/* Header - Only show when no lesson is selected */}
+        {/* Clean Minimalist Header - Focus on Lessons */}
         {!selectedLesson && (
           <>
-            {/* Improved Header with Gradient */}
-            <div className="bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl p-8 text-white shadow-xl">
+            <div className="bg-white border-b border-gray-100 pb-6 mb-8">
+              <Link
+                href="/dashboard/teacher/classes"
+                className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 text-sm mb-4 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Volver a clases
+              </Link>
+
               <div className="flex items-start justify-between mb-6">
                 <div className="flex-1">
-                  <Link
-                    href="/dashboard/teacher/classes"
-                    className="inline-flex items-center gap-2 text-white/80 hover:text-white font-medium text-sm mb-3 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                    Todas las clases
-                  </Link>
-                  <h1 className="text-3xl font-bold mb-2">{classData.name}</h1>
+                  <h1 className="text-4xl font-bold text-gray-900 mb-2">{classData.name}</h1>
                   {classData.description && (
-                    <p className="text-white/90 text-lg max-w-2xl">{classData.description}</p>
+                    <p className="text-gray-600 text-lg max-w-3xl">{classData.description}</p>
                   )}
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex gap-3">
                   <button
                     onClick={() => { router.push(`/dashboard/teacher/class/${classId}?action=create`); }}
-                    className="px-4 py-2.5 rounded-lg font-medium text-sm transition-all bg-white text-brand-600 hover:bg-white/90 shadow-lg whitespace-nowrap"
+                    className="px-5 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-all"
                   >
-                    + Crear Lección
+                    + Nueva Lección
                   </button>
                   <button
                     onClick={createLiveClass}
                     disabled={creatingStream}
-                    className="px-4 py-2.5 rounded-lg font-medium text-sm transition-all bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap shadow-lg"
+                    className="px-5 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
                   >
                     {creatingStream ? (
                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
@@ -796,39 +796,37 @@ export default function TeacherClassPage() {
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                       </span>
                     )}
-                    {creatingStream ? 'Creando...' : 'Iniciar Stream'}
+                    {creatingStream ? 'Creando...' : '🔴 Stream'}
                   </button>
                 </div>
               </div>
 
-              {/* Stats */}
-              <div className="flex flex-wrap gap-4">
-                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                  <span className="font-semibold">{classData.enrollments.filter((e: any) => e.status === 'approved').length}</span>
-                  <span className="text-white/90">Estudiantes</span>
+              {/* Minimal Stats */}
+              <div className="flex items-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-gray-900">{lessons.length}</span>
+                  <span className="text-gray-600">lecciones</span>
                 </div>
-                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                  <span className="font-semibold">{lessons.length}</span>
-                  <span className="text-white/90">Lecciones</span>
+                <div className="h-4 w-px bg-gray-200"></div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-gray-900">{classData.enrollments.filter((e: any) => e.status === 'approved').length}</span>
+                  <span className="text-gray-600">estudiantes</span>
                 </div>
                 {pendingEnrollments.length > 0 && (
-                  <button
-                    onClick={() => setShowPendingRequests(!showPendingRequests)}
-                    className="flex items-center gap-2 bg-orange-500/30 backdrop-blur-sm px-4 py-2 rounded-lg border border-orange-300/50 hover:bg-orange-500/40 transition-colors"
-                  >
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                    </span>
-                    <span className="font-semibold">{pendingEnrollments.length}</span>
-                    <span className="text-white">Solicitud{pendingEnrollments.length !== 1 ? 'es' : ''}</span>
-                  </button>
+                  <>
+                    <div className="h-4 w-px bg-gray-200"></div>
+                    <button
+                      onClick={() => setShowPendingRequests(!showPendingRequests)}
+                      className="flex items-center gap-2 text-red-600 hover:text-red-700 transition-colors"
+                    >
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                      </span>
+                      <span className="font-semibold">{pendingEnrollments.length}</span>
+                      <span>solicitud{pendingEnrollments.length !== 1 ? 'es' : ''}</span>
+                    </button>
+                  </>
                 )}
               </div>
             </div>
