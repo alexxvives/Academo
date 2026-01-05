@@ -79,8 +79,8 @@ export default function AdminDashboard() {
       <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Panel de Administración</h1>
-          <p className="text-gray-500 mt-1">Monitorea y gestiona toda la plataforma</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Panel de Administración</h1>
+          <p className="text-sm text-gray-500 mt-1">AKADEMO Platform</p>
         </div>
 
         {/* Stats Cards */}

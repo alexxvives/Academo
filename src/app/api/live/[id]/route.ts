@@ -51,7 +51,16 @@ export async function PATCH(
   try {
     const session = await requireRole(['ADMIN', 'TEACHER']);
     const { id } = await params;
-    const { status, title, description } = await request.json();
+    
+    // Parse body with error handling
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return errorResponse(`JSON Parse Error: ${e}`, 400);
+    }
+    
+    const { status, title, description } = body;
 
     const db = await getDB();
     const now = new Date().toISOString();
@@ -68,25 +77,52 @@ export async function PATCH(
       return errorResponse('Not authorized', 403);
     }
 
-    // Update stream
-    await db.prepare(`
+    // Build update query dynamically based on provided fields
+    const updates: string[] = [];
+    const bindParams: any[] = [];
+    
+    if (status !== undefined && status !== null) {
+      updates.push('status = ?');
+      bindParams.push(status);
+      if (status === 'live') {
+        updates.push('startedAt = ?');
+        bindParams.push(now);
+      } else if (status === 'ended') {
+        updates.push('endedAt = ?');
+        bindParams.push(now);
+      }
+    }
+    
+    // Check if title is a valid string with content
+    if (title !== undefined && title !== null && typeof title === 'string' && title.trim().length > 0) {
+      updates.push('title = ?');
+      bindParams.push(title.trim());
+    } else if (title !== undefined) {
+      // Title was provided but invalid
+      return errorResponse(`Invalid title: type=${typeof title}, value=${JSON.stringify(title)}, isNull=${title === null}, isEmpty=${typeof title === 'string' && title.trim().length === 0}`, 400);
+    }
+    
+    if (description !== undefined && description !== null) {
+      updates.push('description = ?');
+      bindParams.push(description);
+    }
+    
+    if (updates.length === 0) {
+      return errorResponse(`No valid fields to update. Received: status=${status}, title=${JSON.stringify(title)}, description=${JSON.stringify(description)}`, 400);
+    }
+    
+    // LiveStream table doesn't have updatedAt column, skip it
+    bindParams.push(id);
+    
+    const result = await db.prepare(`
       UPDATE LiveStream 
-      SET status = COALESCE(?, status),
-          title = COALESCE(?, title),
-          description = COALESCE(?, description),
-          startedAt = CASE WHEN ? = 'live' THEN ? ELSE startedAt END,
-          endedAt = CASE WHEN ? = 'ended' THEN ? ELSE endedAt END,
-          updatedAt = ?
+      SET ${updates.join(', ')}
       WHERE id = ?
-    `).bind(
-      status,
-      title,
-      description,
-      status, now,
-      status, now,
-      now,
-      id
-    ).run();
+    `).bind(...bindParams).run();
+    
+    if (!result.success) {
+      return errorResponse(`Database update failed: meta=${JSON.stringify(result.meta)}`, 500);
+    }
 
     return Response.json(successResponse({ updated: true }));
   } catch (error) {

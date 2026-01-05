@@ -9,6 +9,10 @@ interface Stats {
   totalLessons: number;
 }
 
+interface AcademyInfo {
+  name: string;
+}
+
 export default function AcademyDashboard() {
   const [stats, setStats] = useState<Stats>({ 
     totalTeachers: 0, 
@@ -16,6 +20,7 @@ export default function AcademyDashboard() {
     totalStudents: 0,
     totalLessons: 0 
   });
+  const [academyInfo, setAcademyInfo] = useState<AcademyInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,17 +31,25 @@ export default function AcademyDashboard() {
     try {
       setLoading(true);
       
-      const [teachersRes, classesRes, studentsRes, lessonsRes] = await Promise.all([
+      const [teachersRes, classesRes, studentsRes, lessonsRes, academyRes] = await Promise.all([
         fetch('/api/academies/teachers'),
         fetch('/api/academies/classes'),
         fetch('/api/academies/students'),
-        fetch('/api/lessons')
+        fetch('/api/lessons'),
+        fetch('/api/academies')
       ]);
       
       const teachers = teachersRes.ok ? await teachersRes.json() : [];
       const classes = classesRes.ok ? await classesRes.json() : [];
       const students = studentsRes.ok ? await studentsRes.json() : [];
       const lessons = lessonsRes.ok ? (await lessonsRes.json()).data || [] : [];
+      
+      if (academyRes.ok) {
+        const academyData = await academyRes.json();
+        if (academyData.success && academyData.data && academyData.data.length > 0) {
+          setAcademyInfo({ name: academyData.data[0].name });
+        }
+      }
       
       setStats({
         totalTeachers: Array.isArray(teachers) ? teachers.length : teachers.data?.length || 0,
@@ -55,8 +68,8 @@ export default function AcademyDashboard() {
     <>
       <div className="max-w-7xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 text-sm mt-1">Resumen de tu academia</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Panel de Control</h1>
+          <p className="text-sm text-gray-500 mt-1">{academyInfo?.name || 'Academia'}</p>
         </div>
 
         {loading ? (

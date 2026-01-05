@@ -17,6 +17,7 @@ interface Class {
 
 export default function TeacherClasses() {
   const [classes, setClasses] = useState<Class[]>([]);
+  const [academyName, setAcademyName] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,10 +26,20 @@ export default function TeacherClasses() {
 
   const loadClasses = async () => {
     try {
-      const res = await fetch('/api/classes');
-      const result = await res.json();
-      if (result.success) {
-        setClasses(result.data || []);
+      const [classesRes, membershipRes] = await Promise.all([
+        fetch('/api/classes'),
+        fetch('/api/requests/teacher')
+      ]);
+      
+      const classesResult = await classesRes.json();
+      if (classesResult.success) {
+        setClasses(classesResult.data || []);
+      }
+      
+      // Get academy name from membership
+      const membershipResult = await membershipRes.json();
+      if (Array.isArray(membershipResult) && membershipResult.length > 0) {
+        setAcademyName(membershipResult[0].academyName);
       }
     } catch (error) {
       console.error('Error loading classes:', error);
@@ -52,8 +63,8 @@ export default function TeacherClasses() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Mis Clases</h1>
-            <p className="text-gray-500 mt-1">Gestiona tus clases y contenido</p>
+            <h1 className="text-2xl font-semibold text-gray-900">Mis Clases</h1>
+            {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
           </div>
         </div>
 

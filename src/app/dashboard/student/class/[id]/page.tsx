@@ -81,6 +81,7 @@ export default function ClassPage() {
   const [lessonRating, setLessonRating] = useState<number | null>(null);
   const [ratingHover, setRatingHover] = useState<number>(0);
   const [activeStream, setActiveStream] = useState<ActiveStream | null>(null);
+  const [showPendingWarning, setShowPendingWarning] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -112,9 +113,12 @@ export default function ClassPage() {
   useEffect(() => {
     if (lessons.length === 0) return;
 
+    console.log('[URL Params] Processing - lessonParam:', lessonParam, 'watchVideoId:', watchVideoId);
+
     if (lessonParam) {
       const lesson = lessons.find(l => l.id === lessonParam);
       if (lesson) {
+        console.log('[URL Params] Found lesson:', lesson.title, 'with', lesson.videos.length, 'videos');
         setSelectedLesson(lesson);
         // Fetch rating for this lesson
         fetch(`/api/lessons/rating?lessonId=${lesson.id}`)
@@ -125,14 +129,21 @@ export default function ClassPage() {
         if (watchVideoId) {
           const video = lesson.videos.find(v => v.id === watchVideoId);
           if (video) {
+            console.log('[URL Params] Setting selected video from URL:', video.title, 'ID:', video.id);
             setSelectedVideo(video);
+          } else {
+            console.warn('[URL Params] Video not found in lesson:', watchVideoId);
           }
         } else if (lesson.videos.length > 0) {
           // Auto-select first video
+          console.log('[URL Params] Auto-selecting first video:', lesson.videos[0].title);
           setSelectedVideo(lesson.videos[0]);
         }
+      } else {
+        console.warn('[URL Params] Lesson not found:', lessonParam);
       }
     } else {
+      console.log('[URL Params] No lesson selected');
       setSelectedLesson(null);
       setSelectedVideo(null);
       setLessonRating(null);
@@ -209,7 +220,8 @@ export default function ClassPage() {
     
     // Block content access if enrollment is pending
     if (enrollmentStatus === 'PENDING') {
-      alert('Your enrollment is pending approval. You can view lessons but cannot access content yet.');
+      setShowPendingWarning(true);
+      setTimeout(() => setShowPendingWarning(false), 4000);
       return;
     }
     
@@ -239,7 +251,18 @@ export default function ClassPage() {
 
   const selectVideoInLesson = (video: Video) => {
     if (!selectedLesson) return;
-    router.push(`/dashboard/student/class/${classId}?lesson=${selectedLesson.id}&watch=${video.id}`);
+    
+    console.log('[Video Switch] Starting video switch');
+    console.log('[Video Switch] Current video:', selectedVideo?.id, selectedVideo?.title);
+    console.log('[Video Switch] Target video:', video.id, video.title);
+    console.log('[Video Switch] Lesson:', selectedLesson.id);
+    
+    // Use hard page reload to ensure video player resets completely
+    const newUrl = `/dashboard/student/class/${classId}?lesson=${selectedLesson.id}&watch=${video.id}`;
+    console.log('[Video Switch] Navigating to:', newUrl);
+    
+    // Force full page reload
+    window.location.href = newUrl;
   };
 
   const isPdfDocument = (doc: Document) => {
@@ -281,28 +304,22 @@ export default function ClassPage() {
         {/* Header - Same style as teacher */}
         {!selectedLesson && classData && (
           <>
-            {/* Title */}
+            {/* Title and Stats */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">{classData.name}</h1>
+                <div className="flex items-center gap-4 flex-wrap mb-2">
+                  <h1 className="text-2xl font-semibold text-gray-900">{classData.name}</h1>
+                  {/* Stats badge inline with title */}
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-1.5">
+                      <span className="font-semibold text-blue-900">{lessons.length}</span>
+                      <span className="text-blue-700">lecciones</span>
+                    </div>
+                  </div>
+                </div>
                 {classData.description && (
                   <p className="text-gray-600 text-lg max-w-3xl">{classData.description}</p>
                 )}
-              </div>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="flex items-center gap-4 mb-6">
-              <div className="bg-white rounded-xl border border-gray-200 px-5 py-3 flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{lessons.length}</p>
-                  <p className="text-xs text-gray-500">Lecciones</p>
-                </div>
               </div>
             </div>
           </>
@@ -348,21 +365,38 @@ export default function ClassPage() {
 
         {/* Pending Enrollment Notice */}
         {enrollmentStatus === 'PENDING' && (
-          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
+          <div className="bg-white border-2 border-amber-300 rounded-xl p-5">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               <div className="flex-1">
-                <h3 className="font-semibold text-yellow-900 mb-1">Inscripción Pendiente de Aprobación</h3>
-                <p className="text-sm text-yellow-800 mb-3">
-                  Tu solicitud para unirte a esta clase está esperando la aprobación del profesor. Puedes ver las lecciones a continuación, pero no podrás acceder a videos o documentos hasta que tu inscripción sea aprobada.
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">Solicitud Pendiente</h3>
+                <p className="text-sm text-gray-600">
+                  Tu solicitud está esperando aprobación. Puedes ver las lecciones, pero el contenido estará disponible una vez que el profesor apruebe tu inscripción.
                 </p>
-                <p className="text-xs text-yellow-700">
-                  El profesor revisará tu solicitud pronto y te notificará una vez aprobada.
-                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Custom Pending Warning Toast */}
+        {showPendingWarning && (
+          <div className="fixed top-20 right-4 z-50 animate-slide-in-right">
+            <div className="bg-white border-2 border-amber-400 rounded-lg shadow-lg p-4 max-w-sm">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">Inscripción pendiente</p>
+                  <p className="text-xs text-gray-600 mt-1">El contenido estará disponible tras la aprobación del profesor</p>
+                </div>
+                <button onClick={() => setShowPendingWarning(false)} className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -407,9 +441,6 @@ export default function ClassPage() {
                       </button>
                     ))}
                   </div>
-                  {lessonRating && (
-                    <span className="text-sm text-gray-500">Tu calificación: {lessonRating}/5</span>
-                  )}
                 </div>
                 <p className="text-xs text-gray-500 mt-1 ml-1">Tu calificación es anónima y no será vista por el profesor</p>
               </div>
@@ -439,7 +470,7 @@ export default function ClassPage() {
 
                 {/* Video Player */}
                 {selectedVideo && (
-                  <div className="rounded-lg overflow-hidden max-w-4xl mx-auto">
+                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                     <ProtectedVideoPlayer
                       videoUrl={selectedVideo.upload?.storageType === 'bunny' ? '' : `/api/video/stream/${selectedVideo.id}`}
                       videoId={selectedVideo.id}
@@ -469,7 +500,7 @@ export default function ClassPage() {
             {selectedLesson.documents.length > 0 && (
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 className="font-medium text-gray-900 mb-4">
-                  Documentos ({selectedLesson.documents.length})
+                  Documentos
                 </h3>
                 
                 <div className="space-y-3">
@@ -562,61 +593,87 @@ export default function ClassPage() {
                     }
                   }
                   
+                  // Format date with capitalized month (like teacher version)
+                  const formatDate = (d: string) => {
+                    const date = new Date(d);
+                    const formatted = date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+                    // Split by 'de' to find the month part and capitalize it
+                    const parts = formatted.split(' de ');
+                    if (parts.length === 2) {
+                      const month = parts[1];
+                      return `${parts[0]} de ${month.charAt(0).toUpperCase()}${month.slice(1)}`;
+                    }
+                    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+                  };
+
                   return (
                     <div
                       key={lesson.id}
                       onClick={() => isReleased && selectLesson(lesson)}
                       className={`bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden transition-all duration-300 group border border-gray-200 shadow-sm ${
                         isReleased
-                          ? 'hover:border-brand-400 hover:shadow-lg hover:shadow-brand-500/10 cursor-pointer hover:scale-[1.02]'
+                          ? 'hover:border-brand-400 hover:shadow-xl hover:scale-[1.02] cursor-pointer'
                           : 'opacity-60 cursor-not-allowed'
                       }`}
                     >
-                      <div className="p-5 flex flex-col h-full relative">
-                        {/* Release Date - Top Right */}
-                        <div className="absolute top-3 right-3 flex items-center gap-1.5 text-xs text-gray-600 bg-white/90 px-2.5 py-1.5 rounded-lg backdrop-blur-sm border border-gray-200 z-10 shadow-sm">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-gray-700 font-medium">{new Date(lesson.releaseDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      <div className="flex flex-col h-full">
+                        {/* Header with Title */}
+                        <div className="px-4 pt-4 pb-3 relative">
+                          {/* Status Badge */}
+                          {!isReleased && (
+                            <span className="absolute top-3 right-3 px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded border border-amber-200 z-10 shadow-sm">PRÓXIMAMENTE</span>
+                          )}
+                          
+                          <h3 
+                            className="text-lg font-bold text-gray-900 line-clamp-2"
+                            title={lesson.description || undefined}
+                          >
+                            {lesson.title}
+                          </h3>
                         </div>
-                        
-                        {/* Status Badge */}
-                        {!isReleased && (
-                          <span className="absolute top-14 right-3 px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded border border-amber-200 z-10 shadow-sm">PRÓXIMAMENTE</span>
-                        )}
-                        
-                        {/* Title */}
-                        <h3 
-                          className="font-bold text-lg text-gray-900 group-hover:text-brand-600 transition-colors mb-3 line-clamp-2 pr-32"
-                          title={lesson.description || undefined}
-                        >
-                          {lesson.title}
-                        </h3>
-                        
-                        {/* Video Thumbnail */}
-                        {thumbnailUrl && videoCount > 0 ? (
-                          <div className="relative w-full h-40 bg-gray-200 rounded-lg overflow-hidden mb-3">
-                            <img 
-                              src={thumbnailUrl} 
-                              alt={lesson.title}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                // Hide image on error and show placeholder
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
-                            {/* Play overlay */}
-                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                              <div className="w-14 h-14 rounded-full bg-white group-hover:bg-brand-500 group-hover:scale-110 transition-all flex items-center justify-center shadow-lg">
-                                <svg className="w-6 h-6 text-gray-900 group-hover:text-white ml-1 transition-colors" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+
+                        {/* Thumbnail with play button overlay and content badges */}
+                        <div className="relative" style={{ height: '160px' }}>
+                          {thumbnailUrl && videoCount > 0 ? (
+                            <>
+                              <img 
+                                src={thumbnailUrl} 
+                                alt={lesson.title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Hide image on error and show placeholder
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                              {/* Date Badge - Top Right */}
+                              <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5 text-xs bg-gray-100/90 text-gray-600 px-2.5 py-1.5 rounded-lg backdrop-blur-sm border border-gray-300/50 shadow-lg">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
+                                <span className="font-medium">
+                                  {lesson.releaseDate ? formatDate(lesson.releaseDate) : 'Sin fecha'}
+                                </span>
                               </div>
+                              {/* Play Button Overlay */}
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                                <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                                  <svg className="w-8 h-8 text-brand-600 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                                  </svg>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                              <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                              </svg>
                             </div>
-                            
-                            {/* Content Icons - Overlaid on bottom of thumbnail */}
-                            <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent flex items-center gap-2">
+                          )}
+                          
+                          {/* Content Badge Overlay on Thumbnail - Bottom */}
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                            <div className="flex items-center gap-2">
                               {videoCount > 0 && (
                                 <div className="flex items-center gap-1.5 bg-blue-500/90 px-2.5 py-1 rounded-lg border border-blue-400/50">
                                   <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -635,27 +692,45 @@ export default function ClassPage() {
                               )}
                             </div>
                           </div>
-                        ) : null}
-                        
-                        {/* Progress Bar with Stars and % */}
+                        </div>
+
+                        {/* Progress section - Student's personal progress */}
                         {videoCount > 0 && totalMax > 0 && isReleased && (
-                          <div className="mb-4 bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
-                            <div className="flex items-center justify-between text-sm mb-2">
+                          <div className="px-4 py-3 space-y-2">
+                            <div className="flex items-center justify-between text-sm">
                               <div className="flex items-center gap-1">
-                                <span className="text-yellow-500 text-base">{'★'.repeat(Math.round(overallProgress / 20))}</span>
-                                <span className="text-gray-300 text-base">{'★'.repeat(5 - Math.round(overallProgress / 20))}</span>
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <svg
+                                    key={star}
+                                    className={`w-4 h-4 ${star <= Math.round(overallProgress / 20) ? 'text-yellow-500' : 'text-gray-300'}`}
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                  </svg>
+                                ))}
                               </div>
-                              <span className="text-gray-900 font-bold text-sm">{Math.round(overallProgress)}% ({remainingMinutes}min restantes)</span>
+                              <span className="text-gray-600 font-semibold">
+                                {Math.round(overallProgress)}% completado
+                              </span>
                             </div>
                             <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                               <div 
-                                className="h-full bg-gradient-to-r from-brand-500 to-brand-400 rounded-full transition-all duration-500"
-                                style={{ width: `${overallProgress}%` }}
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{ 
+                                  width: `${overallProgress}%`,
+                                  background: overallProgress >= 90 
+                                    ? 'linear-gradient(to right, #ef4444, #dc2626)' // red
+                                    : overallProgress >= 75 
+                                    ? 'linear-gradient(to right, #eab308, #ef4444)' // yellow to red
+                                    : overallProgress >= 50 
+                                    ? 'linear-gradient(to right, #22c55e, #eab308)' // green to yellow
+                                    : 'linear-gradient(to right, #15803d, #22c55e)' // dark green to green
+                                }}
                               />
                             </div>
                           </div>
                         )}
-
                       </div>
                     </div>
                   );

@@ -384,7 +384,7 @@ export async function fetchVideoFromUrl(
   sourceUrl: string,
   title: string,
   collectionId?: string
-): Promise<{ guid: string; title: string }> {
+): Promise<{ id: string; guid?: string; title?: string; success: boolean }> {
   const config = getConfig();
   
   const response = await fetch(

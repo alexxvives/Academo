@@ -83,7 +83,10 @@ export async function POST(request: Request) {
     const body = await request.text();
     const payload = JSON.parse(body);
     
-    console.log('Zoom webhook received:', payload.event);
+    console.log('===== ZOOM WEBHOOK RECEIVED =====');
+    console.log('Event:', payload.event);
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Full payload:', JSON.stringify(payload, null, 2));
 
     // Handle endpoint URL validation FIRST (before signature check)
     // Zoom validation requests don't have signature headers
@@ -132,7 +135,9 @@ export async function POST(request: Request) {
 
     // Handle meeting ended event - auto-end the stream
     if (payload.event === 'meeting.ended') {
+      console.log('\n>>> Handling meeting.ended event');
       await handleMeetingEnded(payload);
+      console.log('>>> meeting.ended handler completed\n');
     }
 
     // Handle recording transcript completed (optional)
@@ -148,12 +153,21 @@ export async function POST(request: Request) {
 }
 
 async function handleRecordingCompleted(payload: ZoomWebhookPayload) {
+  console.log('\n===== HANDLING RECORDING COMPLETED =====');
   const { object } = payload.payload;
   const meetingId = String(object.id);
   const recordings = object.recording_files || [];
   const downloadToken = payload.download_token || object.download_token;
 
-  console.log(`Recording completed for meeting ${meetingId}:`, recordings.length, 'files');
+  console.log('Meeting ID:', meetingId);
+  console.log('Topic:', object.topic);
+  console.log('Recording files count:', recordings.length);
+  console.log('Recording files:', JSON.stringify(recordings.map(r => ({
+    type: r.recording_type,
+    file_type: r.file_type,
+    size: r.file_size
+  })), null, 2));
+  console.log('Download token present:', !!downloadToken);
 
   const db = await getDB();
 
@@ -172,9 +186,17 @@ async function handleRecordingCompleted(payload: ZoomWebhookPayload) {
   } | null;
 
   if (!liveStream) {
-    console.warn('No LiveStream found for Zoom meeting:', meetingId);
+    console.error('❌ ERROR: No LiveStream found for Zoom meeting:', meetingId);
+    console.log('This means the meeting was not initiated through the platform');
     return;
   }
+  
+  console.log('✓ LiveStream found:', {
+    id: liveStream.id,
+    classId: liveStream.classId,
+    teacherId: liveStream.teacherId,
+    title: liveStream.title
+  });
 
   // Find the best MP4 recording (prefer shared_screen_with_speaker_view or gallery_view)
   const mp4Recordings = recordings.filter(r => r.file_type === 'MP4');
@@ -194,36 +216,65 @@ async function handleRecordingCompleted(payload: ZoomWebhookPayload) {
   }
 
   if (!bestRecording) {
-    console.warn('No MP4 recording found for meeting:', meetingId);
+    console.error('❌ ERROR: No MP4 recording found for meeting:', meetingId);
+    console.log('Available recordings:', recordings.map(r => `${r.file_type} (${r.recording_type})`));
+    console.log('Total recording files:', recordings.length);
+    console.log('Full recording data:', JSON.stringify(recordings, null, 2));
+    
+    // Update stream status to show no recording available
+    await db.prepare(`
+      UPDATE LiveStream SET status = 'recording_failed', endedAt = ?
+      WHERE id = ?
+    `).bind(new Date().toISOString(), liveStream.id).run();
+    console.log('❌ Stream marked as recording_failed in database');
     return;
   }
 
-  console.log('Best recording:', bestRecording.recording_type, bestRecording.file_size);
+  console.log('✓ Best recording selected:', {
+    type: bestRecording.recording_type,
+    size: bestRecording.file_size,
+    id: bestRecording.id
+  });
 
   try {
     // Get authenticated download URL
+    console.log('\n--- Getting download URL ---');
     let downloadUrl = bestRecording.download_url;
     if (downloadToken) {
+      console.log('Using download token from webhook payload');
       downloadUrl += `?access_token=${downloadToken}`;
     } else {
+      console.log('Fetching download URL via Zoom API');
       downloadUrl = await getZoomRecordingDownloadUrl(bestRecording.download_url);
     }
+    console.log('Download URL ready (length):', downloadUrl.length);
 
     // Upload to Bunny Stream from URL
-    const videoTitle = `${object.topic} - ${new Date(object.start_time).toLocaleDateString('es-ES')}`;
+    const videoTitle = 'Stream iniciado';
     
-    console.log('Uploading recording to Bunny Stream:', videoTitle);
+    console.log('\n--- Uploading to Bunny Stream ---');
+    console.log('Video title:', videoTitle);
+    console.log('Starting upload...');
     
     const bunnyVideo = await fetchVideoFromUrl(downloadUrl, videoTitle);
     
-    console.log('Bunny video created:', bunnyVideo.guid);
+    console.log('✓ Bunny video created successfully!');
+    const videoId = bunnyVideo.id || bunnyVideo.guid;
+    console.log('Video ID:', videoId);
+    console.log('Video details:', JSON.stringify(bunnyVideo, null, 2));
+
+    if (!videoId) {
+      throw new Error('Bunny Stream API did not return video ID');
+    }
 
     // Update LiveStream with recording info
+    console.log('\n--- Updating database ---');
     await db.prepare(`
       UPDATE LiveStream 
       SET recordingId = ?, status = 'ended', endedAt = ?
       WHERE id = ?
-    `).bind(bunnyVideo.guid, new Date().toISOString(), liveStream.id).run();
+    `).bind(videoId, new Date().toISOString(), liveStream.id).run();
+    console.log('✓ LiveStream updated with Bunny Stream ID');
 
     // Create a notification for the teacher that recording is ready
     const notificationId = generateId();
@@ -238,19 +289,23 @@ async function handleRecordingCompleted(payload: ZoomWebhookPayload) {
       JSON.stringify({
         liveStreamId: liveStream.id,
         classId: liveStream.classId,
-        bunnyGuid: bunnyVideo.guid,
+        bunnyGuid: videoId,
       }),
       new Date().toISOString()
     ).run();
 
-    console.log('Recording uploaded and notification created');
+    console.log('✓ Recording uploaded and notification created');
 
     // Automatically fetch participant count after recording is processed
+    console.log('\n--- Fetching participants ---');
     try {
-      console.log('Fetching participants for meeting:', meetingId);
+      console.log('Meeting ID:', meetingId);
+      console.log('Calling getZoomMeetingParticipants...');
       const participantsData = await getZoomMeetingParticipants(meetingId);
+      console.log('Participants API response:', participantsData ? 'SUCCESS' : 'NULL');
       
       if (participantsData && participantsData.participants.length > 0) {
+        console.log('✓ Received', participantsData.participants.length, 'participant records');
         await db.prepare(`
           UPDATE LiveStream 
           SET participantCount = ?, participantsFetchedAt = ?, participantsData = ?
@@ -264,22 +319,31 @@ async function handleRecordingCompleted(payload: ZoomWebhookPayload) {
         
         console.log(`Stored ${participantsData.total_records} participants for stream ${liveStream.id}`);
       } else {
-        console.log('No participants data available yet for meeting:', meetingId);
+        console.log('⚠️ No participants data available yet for meeting:', meetingId);
+        console.log('API returned empty or null data');
       }
     } catch (participantError) {
-      console.error('Failed to fetch participants (non-critical):', participantError);
+      console.error('❌ Failed to fetch participants (non-critical):', participantError);
+      console.error('Error type:', participantError instanceof Error ? participantError.name : typeof participantError);
+      console.error('Error message:', participantError instanceof Error ? participantError.message : String(participantError));
       // Don't fail the whole webhook if participant fetching fails
     }
 
   } catch (error) {
-    console.error('Failed to upload recording to Bunny:', error);
+    console.error('\n❌ RECORDING UPLOAD FAILED ❌');
+    console.error('Error type:', error instanceof Error ? error.name : typeof error);
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     
     // Update LiveStream status to indicate recording failed
     await db.prepare(`
       UPDATE LiveStream SET status = 'recording_failed', endedAt = ?
       WHERE id = ?
     `).bind(new Date().toISOString(), liveStream.id).run();
+    console.log('Stream status updated to recording_failed');
   }
+  
+  console.log('===== RECORDING COMPLETED HANDLER FINISHED =====\n');
 }
 
 // Handle meeting.started event - set stream to active and notify students
@@ -328,7 +392,7 @@ async function handleMeetingStarted(payload: ZoomWebhookPayload) {
   // Now notify all enrolled students
   try {
     const enrollments = await db.prepare(`
-      SELECT ce.studentId
+      SELECT ce.userId
       FROM ClassEnrollment ce
       WHERE ce.classId = ? AND ce.status = 'APPROVED'
     `).bind(liveStream.classId).all();
@@ -351,7 +415,7 @@ async function handleMeetingStarted(payload: ZoomWebhookPayload) {
         VALUES (?, ?, 'live_class', ?, ?, ?, 0, ?)
       `).bind(
         notificationId,
-        student.studentId,
+        student.userId,
         `🔴 Clase en vivo: ${liveStream.title}`,
         `${teacherName} ha iniciado una clase en vivo en ${liveStream.className}. ¡Únete ahora!`,
         notificationData,

@@ -33,8 +33,17 @@ export default function LessonsList({
   onEditLesson,
   onDeleteLesson,
 }: LessonsListProps) {
-  const formatDate = (d: string) => 
-    new Date(d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+  const formatDate = (d: string) => {
+    const date = new Date(d);
+    const formatted = date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+    // Split by 'de' to find the month part and capitalize it
+    const parts = formatted.split(' de ');
+    if (parts.length === 2) {
+      const month = parts[1];
+      return `${parts[0]} de ${month.charAt(0).toUpperCase()}${month.slice(1)}`;
+    }
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  };
   
   const isReleased = (d: string) => new Date(d) <= new Date();
 
@@ -66,12 +75,12 @@ export default function LessonsList({
                   if (target.closest('[data-action-buttons]')) {
                     return; // Don't navigate if clicking action buttons area
                   }
-                  if (!lesson.isUploading && !lesson.isTranscoding) {
+                  if (!lesson.isUploading) {
                     onSelectLesson(lesson);
                   }
                 }}
                 className={`bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden transition-all duration-300 group border border-gray-200 shadow-sm ${
-                  lesson.isUploading || lesson.isTranscoding
+                  lesson.isUploading
                     ? 'cursor-default'
                     : 'hover:border-brand-400 hover:shadow-xl hover:shadow-brand-500/10 cursor-pointer hover:scale-[1.02]'
                 }`}
@@ -89,11 +98,11 @@ export default function LessonsList({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (!lesson.isUploading && !lesson.isTranscoding) {
+                              if (!lesson.isUploading) {
                                 onEditLesson(lesson);
                               }
                             }}
-                            disabled={lesson.isUploading || lesson.isTranscoding === 1}
+                            disabled={lesson.isUploading}
                             className="p-2 bg-brand-50 text-brand-600 rounded-lg hover:bg-brand-100 hover:scale-105 transition-all border border-brand-200 disabled:opacity-40 disabled:cursor-not-allowed"
                             title="Editar lección"
                           >
@@ -104,11 +113,11 @@ export default function LessonsList({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (!lesson.isUploading && !lesson.isTranscoding) {
+                              if (!lesson.isUploading) {
                                 onDeleteLesson(lesson.id);
                               }
                             }}
-                            disabled={lesson.isUploading || lesson.isTranscoding === 1}
+                            disabled={lesson.isUploading}
                             className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 hover:scale-105 transition-all border border-red-200 disabled:opacity-40 disabled:cursor-not-allowed"
                             title="Eliminar lección"
                           >
@@ -205,8 +214,19 @@ export default function LessonsList({
                         </div>
                         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-green-500 transition-all"
-                            style={{ width: `${lesson.avgProgress || 0}%` }}
+                            className="h-full transition-all"
+                            style={{ 
+                              width: `${lesson.avgProgress || 0}%`,
+                              background: (lesson.avgProgress || 0) >= 75
+                                ? 'linear-gradient(to right, #15803d, #166534)' // dark green
+                                : (lesson.avgProgress || 0) >= 50
+                                ? 'linear-gradient(to right, #22c55e, #15803d)' // green to dark green
+                                : (lesson.avgProgress || 0) >= 25
+                                ? 'linear-gradient(to right, #eab308, #22c55e)' // yellow to green
+                                : (lesson.avgProgress || 0) >= 10
+                                ? 'linear-gradient(to right, #ef4444, #eab308)' // red to yellow
+                                : 'linear-gradient(to right, #dc2626, #ef4444)' // dark red to red
+                            }}
                           />
                         </div>
                       </>

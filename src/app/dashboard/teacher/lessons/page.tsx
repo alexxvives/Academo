@@ -18,10 +18,24 @@ interface Lesson {
 export default function TeacherLessons() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
+  const [academyName, setAcademyName] = useState<string>('');
 
   useEffect(() => {
     loadLessons();
+    loadAcademyName();
   }, []);
+
+  const loadAcademyName = async () => {
+    try {
+      const res = await fetch('/api/requests/teacher');
+      const result = await res.json();
+      if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+        setAcademyName(result.data[0].academyName || '');
+      }
+    } catch (error) {
+      console.error('Failed to load academy name:', error);
+    }
+  };
 
   const loadLessons = async () => {
     try {
@@ -73,8 +87,8 @@ export default function TeacherLessons() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Mis Lecciones</h1>
-            <p className="text-gray-500 mt-1">Todas las lecciones de tus clases</p>
+            <h1 className="text-2xl font-semibold text-gray-900">Mis Lecciones</h1>
+            {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
           </div>
           <Link
             href="/dashboard/teacher/classes"

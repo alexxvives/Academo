@@ -8,10 +8,10 @@ export async function POST(request: NextRequest) {
     const user = await requireRole(['TEACHER']);
     const db = await getDB();
 
-    const { streamId, videoPath } = await request.json();
+    const { streamId, videoPath, title: customTitle, description: customDescription, releaseDate: customReleaseDate } = await request.json();
 
-    if (!streamId || !videoPath) {
-      return errorResponse('Stream ID and video path required', 400);
+    if (!streamId) {
+      return errorResponse('Stream ID required', 400);
     }
 
     // Verify the stream exists and belongs to a class the teacher owns
@@ -47,42 +47,50 @@ export async function POST(request: NextRequest) {
       minute: '2-digit'
     });
 
-    // Create the lesson
+    // Create the lesson with custom or default values
+    const lessonTitle = customTitle || `[Grabación] ${stream.title}`;
+    const lessonDescription = customDescription || `Grabación de la clase en vivo del ${streamDate}`;
+    const lessonReleaseDate = customReleaseDate || new Date().toISOString();
+    
     await db.prepare(`
       INSERT INTO Lesson (id, classId, title, description, releaseDate, maxWatchTimeMultiplier, watermarkIntervalMins, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, datetime('now'), 2.0, 5, datetime('now'), datetime('now'))
+      VALUES (?, ?, ?, ?, ?, 2.0, 5, datetime('now'), datetime('now'))
     `).bind(
       lessonId,
       stream.classId,
-      `[Grabación] ${stream.title}`,
-      `Grabación de la clase en vivo del ${streamDate}`
+      lessonTitle,
+      lessonDescription,
+      lessonReleaseDate
     ).run();
 
-    // Create the upload record
-    await db.prepare(`
-      INSERT INTO Upload (id, fileName, fileSize, mimeType, storagePath, uploadedById, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `).bind(
-      uploadId,
-      `${stream.title}.mp4`,
-      0, // We don't know the exact size from the upload
-      'video/mp4',
-      videoPath,
-      user.id
-    ).run();
+    // Only create upload and video if videoPath is provided
+    if (videoPath) {
+      // Create the upload record
+      await db.prepare(`
+        INSERT INTO Upload (id, fileName, fileSize, mimeType, storagePath, uploadedById, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      `).bind(
+        uploadId,
+        `${stream.title}.mp4`,
+        0, // We don't know the exact size from the upload
+        'video/mp4',
+        videoPath,
+        user.id
+      ).run();
 
-    // Create the video record linked to lesson and upload
-    await db.prepare(`
-      INSERT INTO Video (id, title, description, lessonId, uploadId, durationSeconds, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-    `).bind(
-      videoId,
-      stream.title,
-      `Grabación de stream en vivo`,
-      lessonId,
-      uploadId,
-      durationSeconds
-    ).run();
+      // Create the video record linked to lesson and upload
+      await db.prepare(`
+        INSERT INTO Video (id, title, description, lessonId, uploadId, durationSeconds, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      `).bind(
+        videoId,
+        stream.title,
+        `Grabación de stream en vivo`,
+        lessonId,
+        uploadId,
+        durationSeconds
+      ).run();
+    }
 
     // Update the stream with the recording reference
     await db.prepare(`

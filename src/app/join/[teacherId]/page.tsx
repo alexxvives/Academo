@@ -30,7 +30,7 @@ export default function JoinPage() {
   // Auth state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [showLogin, setShowLogin] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -41,6 +41,11 @@ export default function JoinPage() {
   });
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  
+  // Email verification state
+  const [verificationStep, setVerificationStep] = useState<'form' | 'verify' | 'complete'>('form');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationSent, setVerificationSent] = useState(false);
   
   // Selected class
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
@@ -84,6 +89,82 @@ export default function JoinPage() {
     }
   };
 
+  const sendVerificationCode = async () => {
+    setAuthLoading(true);
+    setAuthError(null);
+
+    try {
+      const response = await fetch('/api/auth/send-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email }),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        setVerificationStep('verify');
+        setVerificationSent(true);
+        // For testing: show code in console
+        if (result.data.code) {
+          console.log('Verification code:', result.data.code);
+        }
+      } else {
+        setAuthError(result.error || 'Error al enviar código');
+      }
+    } catch (e) {
+      setAuthError('Error de conexión');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const verifyCode = async () => {
+    setAuthLoading(true);
+    setAuthError(null);
+
+    try {
+      const response = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, code: verificationCode }),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        // Now register the user
+        await completeRegistration();
+      } else {
+        setAuthError(result.error || 'Código inválido');
+      }
+    } catch (e) {
+      setAuthError('Error de conexión');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const completeRegistration = async () => {
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, role: 'STUDENT' }),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        setIsLoggedIn(true);
+        setCurrentUser(result.data.user);
+        setVerificationStep('complete');
+        await checkAuth();
+      } else {
+        setAuthError(result.error || 'Error al registrarse');
+      }
+    } catch (e) {
+      setAuthError('Error de conexión');
+    }
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthLoading(true);
@@ -106,22 +187,9 @@ export default function JoinPage() {
           setAuthError(result.error || 'Credenciales incorrectas');
         }
       } else {
-        // Register as student
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...formData, role: 'STUDENT' }),
-        });
-        const result = await response.json();
-        
-        if (result.success) {
-          setIsLoggedIn(true);
-          setCurrentUser(result.data.user);
-          // Re-check auth to ensure session is loaded
-          await checkAuth();
-        } else {
-          setAuthError(result.error || 'Error al registrarse');
-        }
+        // Registration with email verification
+        await sendVerificationCode();
+        return; // Don't set loading to false here
       }
     } catch (e) {
       setAuthError('Error de conexión');
@@ -216,95 +284,164 @@ export default function JoinPage() {
         {!isLoggedIn ? (
           /* Auth Form */
           <div className="bg-white rounded-2xl shadow-lg p-8">
-            <div className="flex mb-6">
-              <button
-                onClick={() => setShowLogin(true)}
-                className={`flex-1 py-2 text-center font-medium border-b-2 transition-colors ${
-                  showLogin ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500'
-                }`}
-              >
-                Iniciar Sesión
-              </button>
-              <button
-                onClick={() => setShowLogin(false)}
-                className={`flex-1 py-2 text-center font-medium border-b-2 transition-colors ${
-                  !showLogin ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500'
-                }`}
-              >
-                Registrarse
-              </button>
-            </div>
-
-            {authError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg">
-                {authError}
-              </div>
-            )}
-
-            <form onSubmit={handleAuth} className="space-y-4">
-              {!showLogin && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                    <input
-                      type="text"
-                      required={!showLogin}
-                      value={formData.firstName}
-                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      autoComplete="given-name"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-                      placeholder="Juan"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
-                    <input
-                      type="text"
-                      required={!showLogin}
-                      value={formData.lastName}
-                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      autoComplete="family-name"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-                      placeholder="García"
-                    />
-                  </div>
+            {verificationStep === 'form' ? (
+              <>
+                <div className="flex mb-6">
+                  <button
+                    onClick={() => setShowLogin(true)}
+                    className={`flex-1 py-2 text-center font-medium border-b-2 transition-colors ${
+                      showLogin ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500'
+                    }`}
+                  >
+                    Iniciar Sesión
+                  </button>
+                  <button
+                    onClick={() => setShowLogin(false)}
+                    className={`flex-1 py-2 text-center font-medium border-b-2 transition-colors ${
+                      !showLogin ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500'
+                    }`}
+                  >
+                    Registrarse
+                  </button>
                 </div>
-              )}
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  autoComplete="email"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-                  placeholder="tu@email.com"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                <input
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  autoComplete={showLogin ? "current-password" : "new-password"}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-                  placeholder="••••••••"
-                />
-              </div>
-              
-              <button
-                type="submit"
-                disabled={authLoading}
-                className="w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50"
-              >
-                {authLoading ? 'Cargando...' : showLogin ? 'Iniciar Sesión' : 'Registrarse'}
-              </button>
-            </form>
+
+                {authError && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg">
+                    {authError}
+                  </div>
+                )}
+
+                <form onSubmit={handleAuth} className="space-y-4">
+                  {!showLogin && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                        <input
+                          type="text"
+                          required={!showLogin}
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                          autoComplete="given-name"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                          placeholder="Juan"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
+                        <input
+                          type="text"
+                          required={!showLogin}
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                          autoComplete="family-name"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                          placeholder="García"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      autoComplete="email"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                      placeholder="tu@email.com"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                    <input
+                      type="password"
+                      required
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      autoComplete={showLogin ? "current-password" : "new-password"}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50"
+                  >
+                    {authLoading ? 'Cargando...' : showLogin ? 'Iniciar Sesión' : 'Continuar'}
+                  </button>
+                </form>
+              </>
+            ) : verificationStep === 'verify' ? (
+              <>
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Verifica tu email</h2>
+                  <p className="text-gray-600 text-sm">
+                    Hemos enviado un código de 6 dígitos a<br />
+                    <strong>{formData.email}</strong>
+                  </p>
+                </div>
+
+                {authError && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg">
+                    {authError}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 text-center">
+                      Ingresa el código de verificación
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                      className="w-full px-4 py-3 text-center text-2xl font-bold border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 tracking-widest"
+                      placeholder="000000"
+                      autoComplete="off"
+                    />
+                  </div>
+
+                  <button
+                    onClick={verifyCode}
+                    disabled={authLoading || verificationCode.length !== 6}
+                    className="w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {authLoading ? 'Verificando...' : 'Verificar y Crear Cuenta'}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setVerificationStep('form');
+                      setVerificationCode('');
+                      setAuthError(null);
+                    }}
+                    className="w-full py-2 text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    Cambiar email
+                  </button>
+
+                  <button
+                    onClick={sendVerificationCode}
+                    disabled={authLoading}
+                    className="w-full py-2 text-sm text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
+                  >
+                    Reenviar código
+                  </button>
+                </div>
+              </>
+            ) : null}
           </div>
         ) : (
           /* Class Selection */

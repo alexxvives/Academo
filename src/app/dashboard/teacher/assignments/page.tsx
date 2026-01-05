@@ -1,12 +1,32 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 export default function TeacherAssignments() {
+  const [academyName, setAcademyName] = useState<string>('');
+
+  useEffect(() => {
+    loadAcademyName();
+  }, []);
+
+  const loadAcademyName = async () => {
+    try {
+      const res = await fetch('/api/requests/teacher');
+      const result = await res.json();
+      if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+        setAcademyName(result.data[0].academyName || '');
+      }
+    } catch (error) {
+      console.error('Failed to load academy name:', error);
+    }
+  };
+
   return (
     <>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Tareas</h1>
-          <p className="text-gray-500 mt-1">Crea y gestiona las tareas de tus clases</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Tareas</h1>
+          {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">

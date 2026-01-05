@@ -498,9 +498,9 @@ export default function DashboardLayout({
   const roleLabel = role === 'ADMIN' ? 'Admin' : role === 'TEACHER' ? 'Teacher' : role === 'STUDENT' ? 'Student' : 'Academy';
 
   return (
-    <div className="dashboard-layout min-h-screen bg-gray-50 flex">
+    <div className="dashboard-layout h-screen bg-gray-50 flex overflow-hidden">
       {/* Sidebar Desktop */}
-      <aside className="hidden lg:flex flex-col bg-[#1a1d29] w-64">
+      <aside className="hidden lg:flex flex-col bg-[#1a1d29] w-64 h-screen">
         {/* Logo */}
         <div className="h-20 flex items-center justify-center px-4">
           <Link href={`/dashboard/${role.toLowerCase()}`}>
@@ -574,7 +574,7 @@ export default function DashboardLayout({
             <Link
               href={
                 role === 'ACADEMY' ? '/dashboard/academy/teachers' :
-                role === 'STUDENT' ? '/dashboard/student/classes' :
+                role === 'STUDENT' ? '/dashboard/student/explore' :
                 '/dashboard/admin'
               }
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#b1e787] hover:bg-[#9dd46f] text-gray-900 rounded-xl transition-all shadow-lg font-semibold"
@@ -625,22 +625,6 @@ export default function DashboardLayout({
                 </p>
                 <p className="text-xs text-gray-400 truncate">{user.email}</p>
               </div>
-              {role === 'STUDENT' && (
-                <button
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className="relative p-2 hover:bg-gray-800/50 rounded-lg transition-colors"
-                  title="Notificaciones"
-                >
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center px-1 font-medium">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </button>
-              )}
             </div>
             <button
               onClick={handleLogout}
@@ -777,7 +761,7 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Notification Panel */}
         {role === 'STUDENT' && showNotifications && (
           <div className="fixed inset-x-0 lg:right-0 lg:left-auto lg:w-96 top-4 bg-white border border-gray-200 lg:rounded-lg shadow-xl z-40 max-h-96 overflow-y-auto lg:m-4">
@@ -842,7 +826,7 @@ export default function DashboardLayout({
         )}
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto bg-gray-100">
+        <main className="flex-1 overflow-y-auto bg-gray-100">
           <div className="py-12 pl-20 pr-20">
             {children}
           </div>

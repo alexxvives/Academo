@@ -17,10 +17,24 @@ interface StudentProgress {
 export default function TeacherProgress() {
   const [students, setStudents] = useState<StudentProgress[]>([]);
   const [loading, setLoading] = useState(true);
+  const [academyName, setAcademyName] = useState<string>('');
 
   useEffect(() => {
     loadProgress();
+    loadAcademyName();
   }, []);
+
+  const loadAcademyName = async () => {
+    try {
+      const res = await fetch('/api/requests/teacher');
+      const result = await res.json();
+      if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+        setAcademyName(result.data[0].academyName || '');
+      }
+    } catch (error) {
+      console.error('Failed to load academy name:', error);
+    }
+  };
 
   const loadProgress = async () => {
     try {
@@ -86,8 +100,8 @@ export default function TeacherProgress() {
     <>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Progreso de Estudiantes</h1>
-          <p className="text-gray-500 mt-1">Tiempo de visualización y actividad por estudiante</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Progreso de Estudiantes</h1>
+          {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
         </div>
 
         {students.length > 0 && (

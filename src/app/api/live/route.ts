@@ -41,7 +41,7 @@ async function notifyEnrolledStudents(
         VALUES (?, ?, 'live_class', ?, ?, ?, 0, ?)
       `).bind(
         notificationId,
-        student.studentId,
+        student.userId,
         `🔴 Clase en vivo: ${title}`,
         `${teacherName} ha iniciado una clase en vivo en ${className}. ¡Únete ahora!`,
         notificationData,
@@ -87,8 +87,17 @@ export async function GET(request: Request) {
 // Create a new live class with Zoom meeting (automatic)
 export async function POST(request: Request) {
   try {
+    console.log('\n========================================');
+    console.log('CREATE LIVE STREAM REQUEST');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('========================================');
+    
     const session = await requireRole(['ADMIN', 'TEACHER']);
     const { classId, title } = await request.json();
+    
+    console.log('Session user:', session.id);
+    console.log('Class ID:', classId);
+    console.log('Title:', title);
 
     if (!classId || !title) {
       return errorResponse('Class ID and title are required');
@@ -97,6 +106,7 @@ export async function POST(request: Request) {
     const db = await getDB();
 
     // Get class info and teacher name for notifications
+    console.log('\n--- Fetching class info ---');
     const classInfo = await db.prepare(`
       SELECT c.name as className, u.firstName, u.lastName
       FROM Class c
@@ -104,19 +114,35 @@ export async function POST(request: Request) {
       WHERE c.id = ?
     `).bind(classId).first() as { className: string; firstName: string; lastName: string } | null;
 
+    if (!classInfo) {
+      console.error('❌ Class not found:', classId);
+      return errorResponse('Class not found', 404);
+    }
+    
+    console.log('✓ Class found:', classInfo.className);
+
     const teacherName = classInfo ? `${classInfo.firstName} ${classInfo.lastName}` : 'Tu profesor';
     const className = classInfo?.className || 'tu clase';
+    console.log('Teacher:', teacherName);
 
     // Create Zoom meeting automatically
+    console.log('\n--- Creating Zoom meeting ---');
     let zoomMeeting;
     try {
+      console.log('Calling createZoomMeeting with topic:', title);
       zoomMeeting = await createZoomMeeting({
         topic: title,
         duration: 120, // 2 hours default
         waitingRoom: false,
       });
+      console.log('✓ Zoom meeting created successfully');
+      console.log('Meeting ID:', zoomMeeting.id);
+      console.log('Join URL:', zoomMeeting.join_url);
+      console.log('Start URL length:', zoomMeeting.start_url?.length || 0);
     } catch (zoomError: any) {
-      console.error('Zoom API error:', zoomError);
+      console.error('❌ Zoom API error:', zoomError);
+      console.error('Error message:', zoomError.message);
+      console.error('Error code:', zoomError.code);
       return errorResponse(`Error al crear reunión de Zoom: ${zoomError.message}`, 400);
     }
 
@@ -124,6 +150,8 @@ export async function POST(request: Request) {
     const id = generateId();
     const now = new Date().toISOString();
 
+    console.log('\n--- Saving to database ---');
+    console.log('LiveStream ID:', id);
     try {
       await db.prepare(`
         INSERT INTO LiveStream (id, classId, teacherId, title, roomName, roomUrl, zoomLink, zoomMeetingId, zoomStartUrl, status, createdAt)
@@ -140,8 +168,10 @@ export async function POST(request: Request) {
         zoomMeeting.start_url,
         now  // createdAt
       ).run();
+      console.log('✓ LiveStream saved to database');
     } catch (dbError: any) {
-      console.error('Database error:', dbError);
+      console.error('❌ Database error:', dbError);
+      console.error('Error message:', dbError.message);
       // Try to delete the Zoom meeting if DB fails
       try {
         await deleteZoomMeeting(zoomMeeting.id);
@@ -163,9 +193,17 @@ export async function POST(request: Request) {
 
     // Students will be notified when meeting.started webhook fires
     // This ensures notifications only go out when teacher actually joins
+    
+    console.log('\n✅ LIVE STREAM CREATED SUCCESSFULLY');
+    console.log('Stream ID:', id);
+    console.log('Zoom Meeting ID:', zoomMeeting.id);
+    console.log('========================================\n');
 
     return Response.json(successResponse(liveClass), { status: 201 });
   } catch (error) {
+    console.error('\n❌ LIVE STREAM CREATION FAILED');
+    console.error('Error:', error);
+    console.error('========================================\n');
     return handleApiError(error);
   }
 }

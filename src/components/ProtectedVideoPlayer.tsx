@@ -25,8 +25,6 @@ const hiddenControlsStyle = `
   [id^="video-container"] video,
   .plyr video {
     object-fit: contain !important;
-    transform: none !important;
-    -webkit-transform: none !important;
   }
   
   /* Override Plyr's default video wrapper sizing which can cause zoom */
@@ -139,6 +137,7 @@ export default function ProtectedVideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [signedHlsUrl, setSignedHlsUrl] = useState<string | null>(null);
+  const [playbackRate, setPlaybackRate] = useState(1);
 
   // Fetch signed URL for Bunny videos
   useEffect(() => {
@@ -239,11 +238,13 @@ export default function ProtectedVideoPlayer({
   // Track play time - use refs to avoid dependency issues
   const isPlayingRef = useRef(isPlaying);
   const canPlayRef = useRef(canPlay);
+  const playbackRateRef = useRef(playbackRate);
   
   useEffect(() => {
     isPlayingRef.current = isPlaying;
     canPlayRef.current = canPlay;
-  }, [isPlaying, canPlay]);
+    playbackRateRef.current = playbackRate;
+  }, [isPlaying, canPlay, playbackRate]);
 
   // Track play time - separate effect that only depends on isPlaying
   useEffect(() => {
@@ -260,8 +261,11 @@ export default function ProtectedVideoPlayer({
           return;
         }
 
+        // Multiply by playback rate so time passes faster at higher speeds
+        const increment = playbackRateRef.current;
+
         setPlayState(prev => {
-          const newTotal = (prev?.totalWatchTimeSeconds || 0) + 1;
+          const newTotal = (prev?.totalWatchTimeSeconds || 0) + increment;
           return {
             ...prev,
             totalWatchTimeSeconds: newTotal,
@@ -269,7 +273,7 @@ export default function ProtectedVideoPlayer({
           };
         });
         
-        playTimeTracker.current += 1;
+        playTimeTracker.current += increment;
         
         // Save every 5 seconds
         if (playTimeTracker.current >= 5) {
@@ -388,6 +392,12 @@ export default function ProtectedVideoPlayer({
           setIsPlaying(false);
           setIsLocked(true);
         }
+      });
+
+      // Track playback rate changes
+      plyr.on('ratechange', () => {
+        const rate = plyr.speed;
+        setPlaybackRate(rate);
       });
 
       plyr.on('loadedmetadata', async () => {

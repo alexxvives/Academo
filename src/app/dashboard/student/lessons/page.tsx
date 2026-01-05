@@ -74,7 +74,7 @@ export default function StudentLessons() {
     <>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Mis Lecciones</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Mis Lecciones</h1>
           <p className="text-gray-500 mt-1">Todas las lecciones de tus clases</p>
         </div>
 

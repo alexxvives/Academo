@@ -29,6 +29,7 @@ interface ActiveStream {
 export default function StudentClassesPage() {
   const [enrolledClasses, setEnrolledClasses] = useState<EnrolledClass[]>([]);
   const [activeStreams, setActiveStreams] = useState<ActiveStream[]>([]);
+  const [academyName, setAcademyName] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,7 +61,7 @@ export default function StudentClassesPage() {
       ]);
 
       if (classesResult.success && Array.isArray(classesResult.data)) {
-        setEnrolledClasses(classesResult.data.map((c: any) => ({
+        const classes = classesResult.data.map((c: any) => ({
           id: c.id,
           slug: c.slug,
           name: c.name,
@@ -72,7 +73,11 @@ export default function StudentClassesPage() {
           studentCount: c._count?.enrollments || 0,
           createdAt: c.createdAt,
           enrollmentStatus: c.enrollmentStatus || 'APPROVED',
-        })));
+        }));
+        setEnrolledClasses(classes);
+        if (classes.length > 0) {
+          setAcademyName(classes[0].academyName);
+        }
       }
 
       if (streamsResult.success && Array.isArray(streamsResult.data)) {
@@ -126,7 +131,8 @@ export default function StudentClassesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Mis Clases</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Mis Clases</h1>
+          {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
         </div>
         <Link
           href="/dashboard/student/explore"

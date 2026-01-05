@@ -117,7 +117,7 @@ export default function AcademyClassesPage() {
     <div className="max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{academy.name}</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{academy.name}</h1>
           <p className="text-gray-600 text-sm mt-1">{academy.description || 'Selecciona una clase para solicitar inscripción'}</p>
         </div>
         <Link

@@ -45,6 +45,15 @@ export default function ClassHeader({
                 <span className="font-semibold text-green-900">{approvedCount}</span>
                 <span className="text-green-700">estudiantes</span>
               </div>
+              {pendingCount > 0 && (
+                <button
+                  onClick={onTogglePendingRequests}
+                  className="px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg flex items-center gap-1.5 hover:bg-red-100 transition-colors"
+                >
+                  <span className="font-semibold text-red-900">{pendingCount}</span>
+                  <span className="text-red-700">solicitud{pendingCount !== 1 ? 'es' : ''}</span>
+                </button>
+              )}
             </div>
           </div>
           {classData.description && (
@@ -71,33 +80,10 @@ export default function ClassHeader({
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
               </span>
             )}
-            {creatingStream ? 'Creando...' : '🔴 Stream'}
+            {creatingStream ? 'Creando...' : 'Stream'}
           </button>
         </div>
       </div>
-
-      {/* Pending Requests Notification */}
-      {pendingCount > 0 && (
-        <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-xl p-4">
-          <button
-            onClick={onTogglePendingRequests}
-            className="flex items-center gap-3 text-left w-full hover:opacity-80 transition-opacity"
-          >
-            <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
-            </span>
-            <div>
-              <p className="font-semibold text-red-900">
-                {pendingCount} solicitud{pendingCount !== 1 ? 'es' : ''} pendiente{pendingCount !== 1 ? 's' : ''}
-              </p>
-              <p className="text-sm text-red-700">
-                {showPendingRequests ? 'Haz clic para ocultar' : 'Haz clic para revisar'}
-              </p>
-            </div>
-          </button>
-        </div>
-      )}
     </>
   );
 }

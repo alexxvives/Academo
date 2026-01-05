@@ -25,11 +25,6 @@ export default function StudentsList({ enrollments }: StudentsListProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {approvedEnrollments.map(e => (
             <div key={e.id} className="bg-white rounded-xl border border-gray-200 p-3 hover:shadow-md transition-shadow relative">
-              {/* Enrollment date badge on top right */}
-              <div className="absolute top-2 right-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md border border-gray-200">
-                <span>{new Date(e.enrolledAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
-              </div>
-              
               <div className="flex items-center gap-3">
                 <div className="relative w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                   {e.student.firstName[0]}{e.student.lastName[0]}

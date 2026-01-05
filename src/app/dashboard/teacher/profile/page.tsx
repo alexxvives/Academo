@@ -20,10 +20,24 @@ export default function TeacherProfile() {
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '' });
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [academyName, setAcademyName] = useState<string>('');
 
   useEffect(() => {
     loadProfile();
+    loadAcademyName();
   }, []);
+
+  const loadAcademyName = async () => {
+    try {
+      const res = await fetch('/api/requests/teacher');
+      const result = await res.json();
+      if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+        setAcademyName(result.data[0].academyName || '');
+      }
+    } catch (error) {
+      console.error('Failed to load academy name:', error);
+    }
+  };
 
   const loadProfile = async () => {
     try {
@@ -77,8 +91,8 @@ export default function TeacherProfile() {
     <>
       <div className="max-w-4xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Mi Perfil</h1>
-          <p className="text-gray-500 mt-1">Gestiona tu información personal y configuración</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Mi Perfil</h1>
+          {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
         </div>
 
         {/* Profile Info */}

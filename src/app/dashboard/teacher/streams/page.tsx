@@ -21,16 +21,31 @@ interface Stream {
 
 export default function StreamsPage() {
   const [streams, setStreams] = useState<Stream[]>([]);
+  const [academyName, setAcademyName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [uploadingStreamId, setUploadingStreamId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitleValue, setEditingTitleValue] = useState<string>('');
+  const [fetchingParticipantsId, setFetchingParticipantsId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadStreams();
+    loadAcademyName();
   }, []);
+
+  const loadAcademyName = async () => {
+    try {
+      const response = await fetch('/api/requests/teacher');
+      const result = await response.json();
+      if (Array.isArray(result) && result.length > 0) {
+        setAcademyName(result[0].academyName);
+      }
+    } catch (error) {
+      console.error('Error loading academy name:', error);
+    }
+  };
 
   const loadStreams = async () => {
     try {
@@ -62,6 +77,9 @@ export default function StreamsPage() {
       return;
     }
 
+    // Exit edit mode immediately for better UX
+    setEditingTitleId(null);
+
     try {
       const response = await fetch(`/api/live/${streamId}`, {
         method: 'PATCH',
@@ -74,11 +92,15 @@ export default function StreamsPage() {
         setStreams(streams.map(s => 
           s.id === streamId ? { ...s, title: editingTitleValue.trim() } : s
         ));
+      } else {
+        // Show the actual error message from the API
+        alert(`Error al actualizar el título: ${result.error || 'Error desconocido'}`);
+        console.error('API Error:', result);
       }
     } catch (error) {
       console.error('Error updating title:', error);
+      alert(`Error al actualizar el título: ${error}`);
     } finally {
-      setEditingTitleId(null);
       setEditingTitleValue('');
     }
   };
@@ -86,6 +108,27 @@ export default function StreamsPage() {
   const handleCancelEdit = () => {
     setEditingTitleId(null);
     setEditingTitleValue('');
+  };
+
+  const handleFetchParticipants = async (streamId: string) => {
+    setFetchingParticipantsId(streamId);
+    try {
+      const response = await fetch(`/api/zoom/participants?streamId=${streamId}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        // Refresh streams to show updated participant count
+        loadStreams();
+        alert(`Se obtuvieron ${result.data.participantCount} participantes`);
+      } else {
+        alert(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error fetching participants:', error);
+      alert('Error al obtener participantes');
+    } finally {
+      setFetchingParticipantsId(null);
+    }
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,13 +224,14 @@ export default function StreamsPage() {
   };
 
   const formatDate = (date: string): string => {
-    return new Date(date).toLocaleDateString('es-ES', {
+    const formatted = new Date(date).toLocaleDateString('es-ES', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   };
 
   const getStatusBadge = (status: string) => {
@@ -249,8 +293,8 @@ export default function StreamsPage() {
     <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Historial de Streams</h1>
-          <p className="text-gray-600 mt-1">Gestiona y visualiza el historial de tus clases en vivo</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Historial de Streams</h1>
+          {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
         </div>
 
         {/* Stats Cards */}
@@ -315,12 +359,13 @@ export default function StreamsPage() {
           </div>
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stream
-                  </th>
+            <div className="max-h-[600px] overflow-y-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                  <tr>
+                    <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      TÍTULO
+                    </th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Clase
                   </th>
@@ -350,51 +395,37 @@ export default function StreamsPage() {
                           <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                         )}
                         {editingTitleId === stream.id ? (
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              value={editingTitleValue}
-                              onChange={(e) => setEditingTitleValue(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveTitle(stream.id);
-                                if (e.key === 'Escape') handleCancelEdit();
-                              }}
-                              className="px-2 py-1 border border-blue-300 rounded text-sm font-medium text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              autoFocus
-                            />
-                            <button
-                              onClick={() => handleSaveTitle(stream.id)}
-                              className="p-1 text-green-600 hover:bg-green-50 rounded transition-colors"
-                              title="Guardar"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={handleCancelEdit}
-                              className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
-                              title="Cancelar"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          </div>
+                          <input
+                            type="text"
+                            value={editingTitleValue}
+                            onChange={(e) => setEditingTitleValue(e.target.value)}
+                            onBlur={() => handleSaveTitle(stream.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleSaveTitle(stream.id);
+                              } else if (e.key === 'Escape') {
+                                setEditingTitleId(null);
+                                setEditingTitleValue('');
+                              }
+                            }}
+                            autoFocus
+                            className="px-2 py-1 border border-blue-500 rounded text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
                         ) : (
-                          <div className="flex items-center gap-2 group">
+                          <div className="flex items-center gap-2">
                             <span className="font-medium text-gray-900">{stream.title}</span>
-                            {stream.status === 'ended' && (
-                              <button
-                                onClick={() => handleEditTitle(stream.id, stream.title)}
-                                className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
-                                title="Editar título"
-                              >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                </svg>
-                              </button>
-                            )}
+                            <button
+                              onClick={() => {
+                                setEditingTitleId(stream.id);
+                                setEditingTitleValue(stream.title);
+                              }}
+                              className="text-gray-400 hover:text-gray-600 transition-colors"
+                              title="Editar título"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                            </button>
                           </div>
                         )}
                       </div>
@@ -419,7 +450,23 @@ export default function StreamsPage() {
                         ) : stream.participantsFetchedAt ? (
                           <span className="text-sm text-gray-400">0</span>
                         ) : stream.status === 'ended' ? (
-                          <span className="text-xs text-gray-400 italic">Procesando...</span>
+                          fetchingParticipantsId === stream.id ? (
+                            <div className="flex items-center gap-2">
+                              <span className="w-4 h-4 border-2 border-brand-600/30 border-t-brand-600 rounded-full animate-spin" />
+                              <span className="text-xs text-gray-400">Obteniendo...</span>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleFetchParticipants(stream.id)}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-brand-600 bg-brand-50 rounded-lg hover:bg-brand-100 transition-colors"
+                              title="Obtener participantes de Zoom"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                              </svg>
+                              Obtener
+                            </button>
+                          )
                         ) : (
                           <span className="text-sm text-gray-400">—</span>
                         )}
@@ -472,6 +519,7 @@ export default function StreamsPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 

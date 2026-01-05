@@ -53,20 +53,21 @@ export default function AcademyStreamsPage() {
   const endedCount = streams.filter(s => s.status === 'ENDED').length;
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    const formatted = new Date(dateString).toLocaleDateString('es-ES', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   };
 
   return (
     <>
       <div className="max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Streams en Vivo</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Streams en Vivo</h1>
           <p className="text-gray-600 text-sm">Gestiona todos los streams de la academia</p>
         </div>
 

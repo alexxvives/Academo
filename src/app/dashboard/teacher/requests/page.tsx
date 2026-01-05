@@ -13,12 +13,26 @@ interface PendingEnrollment {
 
 export default function TeacherRequestsPage() {
   const [pendingEnrollments, setPendingEnrollments] = useState<PendingEnrollment[]>([]);
+  const [academyName, setAcademyName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadPendingEnrollments();
+    loadAcademyName();
   }, []);
+
+  const loadAcademyName = async () => {
+    try {
+      const response = await fetch('/api/requests/teacher');
+      const result = await response.json();
+      if (Array.isArray(result) && result.length > 0) {
+        setAcademyName(result[0].academyName);
+      }
+    } catch (error) {
+      console.error('Error loading academy name:', error);
+    }
+  };
 
   const loadPendingEnrollments = async () => {
     try {
@@ -101,8 +115,8 @@ export default function TeacherRequestsPage() {
     <>
       <div>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Solicitudes de Inscripción</h1>
-          <p className="text-gray-600 text-sm mt-1">Revisa y aprueba las solicitudes de estudiantes</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Solicitudes de Inscripción</h1>
+          {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
         </div>
 
         {loading ? (
@@ -145,7 +159,10 @@ export default function TeacherRequestsPage() {
                           <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <span>Solicitado {new Date(enrollment.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                          <span>Solicitado {(() => {
+                            const formatted = new Date(enrollment.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+                            return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+                          })()}</span>
                         </div>
                       </div>
                     </div>

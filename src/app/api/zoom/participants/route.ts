@@ -6,9 +6,17 @@ import { getZoomMeetingParticipants } from '@/lib/zoom';
 // GET: Fetch participant data for a specific stream (manual trigger)
 export async function GET(request: Request) {
   try {
+    console.log('\n========================================');
+    console.log('MANUAL PARTICIPANT FETCH REQUEST');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('========================================');
+    
     const session = await requireRole(['ADMIN', 'TEACHER']);
     const { searchParams } = new URL(request.url);
     const streamId = searchParams.get('streamId');
+    
+    console.log('Session user:', session.id);
+    console.log('Stream ID:', streamId);
 
     if (!streamId) {
       return errorResponse('Stream ID required');
