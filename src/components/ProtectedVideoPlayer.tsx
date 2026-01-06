@@ -73,6 +73,7 @@ export default function ProtectedVideoPlayer({
   const [isLoading, setIsLoading] = useState(true);
   const [signedHlsUrl, setSignedHlsUrl] = useState<string | null>(null);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [transcodingStatus, setTranscodingStatus] = useState<string | null>(null);
 
   // Fetch signed URL for Bunny videos
   useEffect(() => {
@@ -84,6 +85,31 @@ export default function ProtectedVideoPlayer({
 
     async function fetchSignedUrl() {
       try {
+        // First check transcoding status
+        const statusResponse = await fetch(`/api/bunny/video/${bunnyGuid}/status`);
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          if (statusData.status === 'finished') {
+            setTranscodingStatus('finished');
+          } else if (statusData.status === 'processing') {
+            setTranscodingStatus('processing');
+            setIsLoading(false);
+            // Poll for status updates every 5 seconds
+            const pollInterval = setInterval(async () => {
+              const pollResponse = await fetch(`/api/bunny/video/${bunnyGuid}/status`);
+              if (pollResponse.ok) {
+                const pollData = await pollResponse.json();
+                if (pollData.status === 'finished') {
+                  setTranscodingStatus('finished');
+                  clearInterval(pollInterval);
+                  window.location.reload(); // Reload to load the video
+                }
+              }
+            }, 5000);
+            return () => clearInterval(pollInterval);
+          }
+        }
+
         const response = await fetch(`/api/bunny/video/${bunnyGuid}/stream`);
         const data = await response.json();
         console.log('Stream API response:', data);
@@ -563,12 +589,39 @@ export default function ProtectedVideoPlayer({
           </div>
         )}
 
-        {/* Loading Indicator - Full video size */}
-        {isLoading && (
+        {/* Loading/Transcoding Indicator - Full video size */}
+        {isLoading && transcodingStatus !== 'processing' && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-40">
             <div className="flex flex-col items-center gap-3">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
               <span className="text-white text-sm">Cargando video...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Transcoding Status Indicator */}
+        {transcodingStatus === 'processing' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-40">
+            <div className="flex flex-col items-center gap-4 max-w-md px-6">
+              <div className="relative">
+                <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-white text-lg font-semibold mb-2">Video en proceso de transcodificación</h3>
+                <p className="text-gray-400 text-sm mb-3">
+                  El video se está procesando y optimizando para su reproducción.
+                  Este proceso puede tardar unos minutos dependiendo de la duración del video.
+                </p>
+                <div className="flex items-center justify-center gap-2 text-blue-400 text-xs">
+                  <div className="animate-pulse w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <span>Actualizando automáticamente...</span>
+                </div>
+              </div>
             </div>
           </div>
         )}
