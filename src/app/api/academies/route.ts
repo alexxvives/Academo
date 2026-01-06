@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const session = await requireRole(['ADMIN', 'TEACHER', 'STUDENT']);
+    const session = await requireRole(['ADMIN', 'TEACHER', 'ACADEMY', 'STUDENT']);
 
     let academies;
 
@@ -37,6 +37,10 @@ export async function GET(request: Request) {
       academies = await academyQueries.findAllWithCounts();
     } else if (session.role === 'TEACHER') {
       // Teachers see their own academies
+      const rawAcademies = await academyQueries.findByOwner(session.id);
+      academies = rawAcademies;
+    } else if (session.role === 'ACADEMY') {
+      // Academy owners see their own academies
       const rawAcademies = await academyQueries.findByOwner(session.id);
       academies = rawAcademies;
     } else {

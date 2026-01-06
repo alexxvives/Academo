@@ -103,8 +103,8 @@ export default function AcademyRequestsPage() {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-6">
+      <div className="space-y-6">
+        <div>
           <h1 className="text-2xl font-semibold text-gray-900">Solicitudes de Inscripción</h1>
           <p className="text-gray-600 text-sm mt-1">Revisa y aprueba las solicitudes de estudiantes de toda la academia</p>
         </div>

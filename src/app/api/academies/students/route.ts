@@ -7,19 +7,20 @@ export async function GET(request: Request) {
     const session = await requireRole(['ACADEMY', 'ADMIN']);
     const db = await getDB();
 
-    // Get all academies where this user is associated via Teacher table
+    // Get all academies where this user is the owner (ACADEMY role) or via Teacher table (ADMIN sees all)
     let academyIds: string[] = [];
     
     if (session.role === 'ACADEMY') {
-      const academies = await db
-        .prepare('SELECT DISTINCT academyId FROM Teacher WHERE userId = ?')
+      // Get academies owned by this user
+      const ownedAcademies = await db
+        .prepare('SELECT id FROM Academy WHERE ownerId = ?')
         .bind(session.id)
         .all();
-      academyIds = (academies.results || []).map((a: any) => a.academyId);
-    }
-
-    if (academyIds.length === 0 && session.role !== 'ADMIN') {
-      return Response.json([]);
+      academyIds = (ownedAcademies.results || []).map((a: any) => a.id);
+      
+      if (academyIds.length === 0) {
+        return Response.json({ success: true, data: [] });
+      }
     }
 
     // Get students enrolled in classes of these academies

@@ -102,8 +102,10 @@ export default function JoinPage() {
       const result = await response.json();
 
       if (result.success) {
-        setVerificationStep('verify');
-        setVerificationSent(true);
+        // Redirect to dedicated verification page with registration data
+        const returnUrl = `/join/${teacherId}`;
+        const registrationData = { ...formData, role: 'STUDENT' };
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}&returnUrl=${encodeURIComponent(returnUrl)}&regData=${encodeURIComponent(JSON.stringify(registrationData))}`);
         // For testing: show code in console
         if (result.data.code) {
           console.log('Verification code:', result.data.code);

@@ -502,13 +502,14 @@ export default function DashboardLayout({
       {/* Sidebar Desktop */}
       <aside className="hidden lg:flex flex-col bg-[#1a1d29] w-64 h-screen">
         {/* Logo */}
-        <div className="h-20 flex items-center justify-center px-4">
-          <Link href={`/dashboard/${role.toLowerCase()}`}>
+        <div className="h-20 flex items-center justify-center px-4 gap-2">
+          <Link href={`/dashboard/${role.toLowerCase()}`} className="flex items-center gap-2">
             <img 
-              src="/logo/AKADEMO_logo.svg" 
+              src="/logo/AKADEMO_logo_OTHER2.svg" 
               alt="Akademo" 
               className="h-8 w-auto object-contain"
             />
+            <span className="text-lg font-bold text-gray-400 font-[family-name:var(--font-montserrat)]">AKADEMO</span>
           </Link>
         </div>
 
@@ -657,13 +658,15 @@ export default function DashboardLayout({
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
           <Link
             href={`/dashboard/${role.toLowerCase()}`}
-            className="flex items-center gap-3"
+            className="flex items-center gap-2"
             onClick={() => setMobileMenuOpen(false)}
           >
-            <div className="w-9 h-9 bg-gradient-to-br from-brand-500 to-brand-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
-              AH
-            </div>
-            <span className="font-semibold text-gray-900 text-lg">Akademo</span>
+            <img 
+              src="/logo/AKADEMO_logo_OTHER2.svg" 
+              alt="Akademo" 
+              className="h-7 w-auto object-contain"
+            />
+            <span className="font-semibold text-gray-900 text-lg font-[family-name:var(--font-montserrat)]">AKADEMO</span>
           </Link>
           <button
             onClick={() => setMobileMenuOpen(false)}

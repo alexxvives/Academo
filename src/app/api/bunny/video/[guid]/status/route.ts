@@ -16,16 +16,49 @@ export async function GET(
     
     const { guid } = await params;
     
+    console.log('[status] Checking status for Bunny video:', guid);
+    
     // Get status from Bunny
-    const video = await getBunnyVideo(guid);
+    let video;
+    try {
+      video = await getBunnyVideo(guid);
+      console.log('[status] Bunny API response:', {
+        guid: video.guid,
+        status: video.status,
+        length: video.length,
+      });
+    } catch (bunnyError: any) {
+      console.error('[status] Bunny API error:', bunnyError.message);
+      // Return error but don't throw 500 - Bunny might be temporarily unavailable
+      return Response.json(successResponse({
+        guid,
+        status: -1,
+        statusText: 'error_checking_status',
+        isReady: false,
+        duration: 0,
+        error: 'Could not reach Bunny Stream API',
+      }));
+    }
     
-    // Update database with new status
-    // Find upload by bunnyGuid and update status
-    await uploadQueries.updateBunnyStatusByGuid(guid, video.status);
-    
-    // If video is finished transcoding and has a duration, update the video record
-    if (video.status === 4 && video.length > 0) {
-      await videoQueries.updateDurationByBunnyGuid(guid, video.length);
+    // Update database with new status - wrap in try/catch so failures don't block response
+    try {
+      // Check if Upload record exists
+      const upload = await uploadQueries.findByBunnyGuid(guid);
+      if (upload) {
+        await uploadQueries.updateBunnyStatusByGuid(guid, video.status);
+        console.log('[status] Updated Upload status to:', video.status);
+      } else {
+        console.warn('[status] No Upload record found for bunnyGuid:', guid);
+      }
+      
+      // If video is finished transcoding and has a duration, update the video record
+      if (video.status === 4 && video.length > 0) {
+        await videoQueries.updateDurationByBunnyGuid(guid, video.length);
+        console.log('[status] Updated Video duration to:', video.length);
+      }
+    } catch (dbError: any) {
+      console.error('[status] Database update error (non-fatal):', dbError.message);
+      // Don't fail the request - we still want to return the status
     }
     
     return Response.json(successResponse({
@@ -36,7 +69,7 @@ export async function GET(
       duration: video.length,
     }));
   } catch (error: any) {
-    console.error('Bunny status check error:', error);
+    console.error('[status] Unexpected error:', error);
     return Response.json({ 
       success: false, 
       error: error.message || 'Unknown error'

@@ -178,9 +178,9 @@ export async function GET(request: Request) {
           l.createdAt
         FROM Lesson l
         JOIN Class c ON l.classId = c.id
-        JOIN Teacher t ON c.academyId = t.academyId
+        JOIN Academy a ON c.academyId = a.id
         JOIN User u ON c.teacherId = u.id
-        WHERE t.userId = ?
+        WHERE a.ownerId = ?
         ORDER BY l.createdAt DESC
       `).bind(session.id).all();
       

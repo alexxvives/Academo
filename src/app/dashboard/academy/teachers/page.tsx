@@ -148,9 +148,6 @@ export default function AcademyTeachers() {
                           </>
                         )}
                       </button>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Para clases de {teacher.name}
-                      </div>
                     </td>
                   </tr>
                 ))}

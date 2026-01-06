@@ -235,11 +235,11 @@ function HomePageContent() {
               {/* Logo - Left */}
               <div className="flex items-center gap-2">
                 <img 
-                  src="/logo/AKADEMO_logo_OTHER.svg"
+                  src="/logo/AKADEMO_logo_OTHER2.svg"
                   alt="AKADEMO" 
                   className="h-7 sm:h-9 w-auto transition-all"
                 />
-                <span className={`text-lg sm:text-xl font-bold transition-colors ${
+                <span className={`text-lg sm:text-xl font-bold transition-colors font-[family-name:var(--font-montserrat)] ${
                   isScrolled ? 'text-gray-900' : 'text-white'
                 }`}>AKADEMO</span>
               </div>

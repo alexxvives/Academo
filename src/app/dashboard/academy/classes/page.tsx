@@ -151,7 +151,7 @@ export default function AcademyClassesPage() {
           <button
             onClick={openCreateModal}
             disabled={teachers.length === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             title={teachers.length === 0 ? 'Debes tener al menos un profesor para crear clases' : ''}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

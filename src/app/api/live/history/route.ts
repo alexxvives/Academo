@@ -25,15 +25,17 @@ export async function GET(request: Request) {
           ls.endedAt,
           ls.zoomMeetingId,
           ls.recordingId,
-          CASE WHEN l.id IS NOT NULL THEN ls.recordingId ELSE NULL END as validRecordingId,
+          l.id as lessonId,
+          CASE WHEN l.id IS NOT NULL THEN l.id ELSE NULL END as validRecordingId,
           ls.participantCount,
           ls.participantsFetchedAt
         FROM LiveStream ls
         JOIN Class c ON ls.classId = c.id
         JOIN User u ON ls.teacherId = u.id
-        JOIN Teacher t ON c.academyId = t.academyId
-        LEFT JOIN Lesson l ON ls.recordingId = l.id
-        WHERE t.userId = ?
+        JOIN Academy a ON c.academyId = a.id
+        LEFT JOIN Video v ON v.uploadId IN (SELECT id FROM Upload WHERE bunnyGuid = ls.recordingId)
+        LEFT JOIN Lesson l ON v.lessonId = l.id
+        WHERE a.ownerId = ?
         ORDER BY ls.createdAt DESC
       `).bind(session.id).all();
       
@@ -54,12 +56,14 @@ export async function GET(request: Request) {
         ls.endedAt,
         ls.zoomMeetingId,
         ls.recordingId,
-        CASE WHEN l.id IS NOT NULL THEN ls.recordingId ELSE NULL END as validRecordingId,
+        l.id as lessonId,
+        CASE WHEN l.id IS NOT NULL THEN l.id ELSE NULL END as validRecordingId,
         ls.participantCount,
         ls.participantsFetchedAt
       FROM LiveStream ls
       JOIN Class c ON ls.classId = c.id
-      LEFT JOIN Lesson l ON ls.recordingId = l.id
+      LEFT JOIN Video v ON v.uploadId IN (SELECT id FROM Upload WHERE bunnyGuid = ls.recordingId)
+      LEFT JOIN Lesson l ON v.lessonId = l.id
       WHERE ls.teacherId = ?
       ORDER BY ls.createdAt DESC
     `).bind(session.id).all();

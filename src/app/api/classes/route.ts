@@ -17,11 +17,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     const data = createClassSchema.parse(body);
 
-    // For ACADEMY role, verify they own this academy via Teacher table
+    // For ACADEMY role, verify they own this academy
     if (session.role === 'ACADEMY') {
       const db = await getDB();
       const ownsAcademy = await db
-        .prepare('SELECT 1 FROM Teacher WHERE userId = ? AND academyId = ?')
+        .prepare('SELECT 1 FROM Academy WHERE ownerId = ? AND id = ?')
         .bind(session.id, data.academyId)
         .first();
 

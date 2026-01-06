@@ -27,8 +27,7 @@ export default function StreamsPage() {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitleValue, setEditingTitleValue] = useState<string>('');
-  const [fetchingParticipantsId, setFetchingParticipantsId] = useState<string | null>(null);
-  const [fetchingRecordingId, setFetchingRecordingId] = useState<string | null>(null);
+  const [creatingLessonId, setCreatingLessonId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -111,33 +110,12 @@ export default function StreamsPage() {
     setEditingTitleValue('');
   };
 
-  const handleFetchParticipants = async (streamId: string) => {
-    setFetchingParticipantsId(streamId);
-    try {
-      const response = await fetch(`/api/zoom/participants?streamId=${streamId}`);
-      const result = await response.json();
-      
-      if (result.success) {
-        // Refresh streams to show updated participant count
-        loadStreams();
-        alert(`Se obtuvieron ${result.data.participantCount} participantes`);
-      } else {
-        alert(`Error: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Error fetching participants:', error);
-      alert('Error al obtener participantes');
-    } finally {
-      setFetchingParticipantsId(null);
-    }
-  };
-
-  const handleFetchRecording = async (streamId: string) => {
-    if (!confirm('¿Obtener grabación de Zoom para este stream?')) return;
+  const handleCreateLesson = async (streamId: string) => {
+    if (!confirm('¿Crear lección desde esta grabación?')) return;
     
-    setFetchingRecordingId(streamId);
+    setCreatingLessonId(streamId);
     try {
-      const response = await fetch('/api/zoom/recording', {
+      const response = await fetch('/api/live/create-lesson', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ streamId }),
@@ -146,16 +124,15 @@ export default function StreamsPage() {
       const result = await response.json();
       
       if (result.success) {
-        loadStreams();
-        alert(result.data.message || 'Grabación obtenida exitosamente');
+        await loadStreams();
       } else {
         alert(`Error: ${result.error}`);
       }
     } catch (error) {
-      console.error('Error fetching recording:', error);
-      alert('Error al obtener grabación');
+      console.error('Error creating lesson:', error);
+      alert('Error al crear lección');
     } finally {
-      setFetchingRecordingId(null);
+      setCreatingLessonId(null);
     }
   };
 
@@ -223,7 +200,6 @@ export default function StreamsPage() {
 
       // Refresh streams list
       await loadStreams();
-      alert('¡Grabación subida y lección creada exitosamente!');
 
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -508,14 +484,8 @@ export default function StreamsPage() {
                         </span>
                       ) : stream.status === 'active' || stream.status === 'scheduled' ? (
                         <span className="text-gray-400 text-sm">En progreso</span>
-                      ) : stream.status === 'ended' && stream.zoomMeetingId ? (
-                        <button
-                          onClick={() => handleFetchRecording(stream.id)}
-                          disabled={fetchingRecordingId === stream.id}
-                          className="text-brand-600 hover:text-brand-700 text-xs font-medium disabled:opacity-50"
-                        >
-                          {fetchingRecordingId === stream.id ? 'Obteniendo...' : 'Obtener'}
-                        </button>
+                      ) : stream.status === 'ended' ? (
+                        <span className="text-xs text-gray-500">Procesando...</span>
                       ) : (
                         <span className="text-xs text-gray-500">No disponible</span>
                       )}
@@ -532,6 +502,14 @@ export default function StreamsPage() {
                           </svg>
                           Ver lección
                         </Link>
+                      ) : stream.recordingId ? (
+                        <button
+                          onClick={() => handleCreateLesson(stream.id)}
+                          disabled={creatingLessonId === stream.id}
+                          className="text-brand-600 hover:text-brand-700 text-xs font-medium disabled:opacity-50"
+                        >
+                          {creatingLessonId === stream.id ? 'Creando...' : 'Crear Lección'}
+                        </button>
                       ) : (
                         <span className="text-gray-400 text-sm">—</span>
                       )}

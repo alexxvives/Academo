@@ -117,14 +117,15 @@ export async function POST(request: NextRequest) {
       }));
     }
 
-    // No existing lesson - just update stream with Bunny GUID for future use
+    // No existing lesson - save Bunny GUID to recordingId for future lesson creation
     await db.prepare(`
-      UPDATE LiveStream SET status = 'ended'
+      UPDATE LiveStream 
+      SET status = 'ended', recordingId = ?
       WHERE id = ?
-    `).bind(streamId).run();
+    `).bind(videoGuid, streamId).run();
 
     return Response.json(successResponse({
-      message: 'Recording uploaded to Bunny Stream. Create a lesson to use it.',
+      message: 'Grabación subida a Bunny Stream. La lección usará este video ya transcodificado.',
       bunnyGuid: videoGuid,
     }));
 

@@ -555,7 +555,8 @@ export default function ClassPage() {
                 <p className="text-gray-500 text-sm">El profesor aún no ha creado lecciones para esta clase.</p>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+              <div className="max-h-[600px] overflow-y-auto pr-2">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                 {lessons.map((lesson) => {
                   const isReleased = new Date(lesson.releaseDate) <= new Date();
                   const videoCount = lesson.videos?.length || 0;
@@ -735,6 +736,7 @@ export default function ClassPage() {
                     </div>
                   );
                 })}
+                </div>
               </div>
             )}
           </div>

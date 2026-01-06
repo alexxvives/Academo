@@ -27,7 +27,6 @@ export default function AcademyStreamsPage() {
   const [loading, setLoading] = useState(true);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitleValue, setEditingTitleValue] = useState<string>('');
-  const [fetchingParticipantsId, setFetchingParticipantsId] = useState<string | null>(null);
 
   useEffect(() => {
     loadStreams();
@@ -78,33 +77,6 @@ export default function AcademyStreamsPage() {
     } catch (error) {
       console.error('Error updating title:', error);
       alert('Error al actualizar el título');
-    }
-  };
-
-  const handleFetchParticipants = async (streamId: string) => {
-    setFetchingParticipantsId(streamId);
-    try {
-      const response = await fetch('/api/zoom/participants', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ streamId }),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        setStreams(streams.map(s => 
-          s.id === streamId 
-            ? { ...s, participantCount: result.data.participantCount, participantsFetchedAt: new Date().toISOString() } 
-            : s
-        ));
-      } else {
-        alert(`Error obteniendo participantes: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Error fetching participants:', error);
-      alert('Error obteniendo participantes');
-    } finally {
-      setFetchingParticipantsId(null);
     }
   };
 
