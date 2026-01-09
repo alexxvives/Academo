@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate",
     "pages:build": "npx @opennextjs/cloudflare build",
     "preview": "npx @opennextjs/cloudflare preview",
     "deploy": "npx @opennextjs/cloudflare deploy",
@@ -15,13 +14,8 @@
     "db:migrate": "wrangler d1 migrations apply akademo-db --remote",
     "db:migrate:local": "wrangler d1 migrations apply akademo-db --local"
   },
-  "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
-  },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.14.0",
-    "@prisma/adapter-d1": "^7.0.1",
-    "@prisma/client": "^5.20.0",
     "bcryptjs": "^2.4.3",
     "hls.js": "^1.6.15",
     "next": "14.2.15",
@@ -43,9 +37,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.15",
     "postcss": "^8.4.47",
-    "prisma": "^5.20.0",
     "tailwindcss": "^3.4.14",
-    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
