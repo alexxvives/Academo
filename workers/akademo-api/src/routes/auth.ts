@@ -79,8 +79,8 @@ auth.post('/register', async (c) => {
         .run();
     }
 
-    // Create session
-    const sessionId = Buffer.from(userId).toString('base64');
+    // Create session (use btoa for base64 encoding in Workers)
+    const sessionId = btoa(userId);
     setCookie(c, 'academy_session', sessionId, {
       httpOnly: true,
       secure: true,
@@ -105,47 +105,61 @@ auth.post('/register', async (c) => {
 
 // POST /auth/login
 auth.post('/login', async (c) => {
-  const { email, password } = await c.req.json();
+  try {
+    console.log('[Login] Request received');
+    const { email, password } = await c.req.json();
 
-  if (!email || !password) {
-    return c.json(errorResponse('Email and password are required'), 400);
+    if (!email || !password) {
+      console.log('[Login] Missing email or password');
+      return c.json(errorResponse('Email and password are required'), 400);
+    }
+
+    console.log('[Login] Looking up user:', email);
+    // Find user
+    const user = await c.env.DB
+      .prepare('SELECT * FROM User WHERE email = ?')
+      .bind(email.toLowerCase())
+      .first();
+
+    if (!user) {
+      console.log('[Login] User not found');
+      return c.json(errorResponse('Invalid credentials'), 401);
+    }
+
+    console.log('[Login] User found, verifying password');
+    // Verify password
+    const isValid = await bcrypt.compare(password, user.password as string);
+    if (!isValid) {
+      console.log('[Login] Invalid password');
+      return c.json(errorResponse('Invalid credentials'), 401);
+    }
+
+    console.log('[Login] Password valid, creating session');
+    // Create session (use btoa for base64 encoding in Workers)
+    const sessionId = btoa(user.id as string);
+    
+    setCookie(c, 'academy_session', sessionId, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+      domain: '.akademo-edu.com', // Share cookie with frontend
+    });
+
+    console.log('[Login] Success for user:', user.id);
+    return c.json(successResponse({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+    }));
+  } catch (error: any) {
+    console.error('[Login] Error:', error);
+    console.error('[Login] Error stack:', error.stack);
+    return c.json(errorResponse(error.message || 'Login failed'), 500);
   }
-
-  // Find user
-  const user = await c.env.DB
-    .prepare('SELECT * FROM User WHERE email = ?')
-    .bind(email.toLowerCase())
-    .first();
-
-  if (!user) {
-    return c.json(errorResponse('Invalid credentials'), 401);
-  }
-
-  // Verify password
-  const isValid = await bcrypt.compare(password, user.password as string);
-  if (!isValid) {
-    return c.json(errorResponse('Invalid credentials'), 401);
-  }
-
-  // Create session
-  const sessionId = Buffer.from(user.id as string).toString('base64');
-  
-  setCookie(c, 'academy_session', sessionId, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'Lax',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-    path: '/',
-    domain: '.akademo-edu.com', // Share cookie with frontend
-  });
-
-  return c.json(successResponse({
-    id: user.id,
-    email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    role: user.role,
-  }));
 });
 
 // POST /auth/logout

@@ -173,7 +173,7 @@ bunny.get('/video/:guid/stream', async (c) => {
     const expires = Math.floor(Date.now() / 1000) + 3600; // 1 hour
 
     // Create token (simplified - real implementation needs proper signing)
-    const token = Buffer.from(`${guid}-${expires}-${tokenKey}`).toString('base64');
+    const token = btoa(`${guid}-${expires}-${tokenKey}`);
 
     const streamUrl = `https://${cdnHostname}/${guid}/playlist.m3u8?token=${token}&expires=${expires}`;
 

@@ -171,7 +171,7 @@ export async function generateBunnyStreamToken(videoGuid: string, expirationSeco
   for (let i = 0; i < hashArray.length; i++) {
     binary += String.fromCharCode(hashArray[i]);
   }
-  const base64Hash = globalThis.btoa ? globalThis.btoa(binary) : Buffer.from(binary, 'binary').toString('base64');
+  const base64Hash = btoa(binary);
   
   // URL-safe base64: replace + with -, / with _, remove =
   const token = base64Hash.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');

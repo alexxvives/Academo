@@ -24,7 +24,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 }
 
 export async function createSession(userId: string): Promise<string> {
-  const sessionId = Buffer.from(userId).toString('base64');
+  const sessionId = btoa(userId);
   const cookieStore = await cookies();
   
   cookieStore.set(SESSION_COOKIE_NAME, sessionId, {
@@ -52,7 +52,7 @@ export async function getSession(): Promise<SessionUser | null> {
 
   // Simple session: decode base64 userId
   try {
-    const userId = Buffer.from(sessionId, 'base64').toString('utf-8');
+    const userId = atob(sessionId);
     console.log('[getSession] Decoded userId:', userId);
     
     const user = await userQueries.findById(userId) as any;
