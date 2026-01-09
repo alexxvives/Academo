@@ -44,9 +44,9 @@ export default function AuthModal({ mode, onClose }: AuthModalProps) {
       if (result.success) {
         onClose();
         
-        // Use role directly from login response - simpler and more reliable
-        if (result.data?.user?.role) {
-          const role = result.data.user.role.toLowerCase();
+        // Redirect based on role from API response
+        if (result.data?.role) {
+          const role = result.data.role.toLowerCase();
           window.location.href = `/dashboard/${role}`;
         } else {
           console.error('Login response:', result);
