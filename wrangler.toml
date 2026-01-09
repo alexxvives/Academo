@@ -25,6 +25,9 @@ bucket_name = "akademo-storage"
 [vars]
 STORAGE_TYPE = "r2"
 
+# API Worker URL (for frontend to call backend)
+NEXT_PUBLIC_API_URL = "https://akademo-api.alexxvives.workers.dev"
+
 # Bunny Stream for video hosting
 BUNNY_STREAM_LIBRARY_ID = "571240"
 BUNNY_STREAM_API_KEY = "93fa73e5-fd14-4d81-b3431ad52c89-f75a-452a"
