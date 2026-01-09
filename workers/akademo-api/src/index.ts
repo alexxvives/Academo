@@ -19,6 +19,7 @@ import liveRoutes from './routes/live';
 import bunnyRoutes from './routes/bunny';
 import storageRoutes from './routes/storage';
 import webhookRoutes from './routes/webhooks';
+import studentRoutes from './routes/students';
 import { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -54,6 +55,7 @@ app.route('/academies', academyRoutes);
 app.route('/explore', exploreRoutes);
 app.route('/approvals', approvalRoutes);
 app.route('/users', userRoutes);
+app.route('/students', studentRoutes);
 app.route('/documents', documentRoutes);
 app.route('/notifications', notificationRoutes);
 app.route('/ratings', ratingRoutes);

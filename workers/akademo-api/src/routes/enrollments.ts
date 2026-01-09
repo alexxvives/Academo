@@ -5,11 +5,81 @@ import { successResponse, errorResponse } from '../lib/utils';
 
 const enrollments = new Hono<{ Bindings: Bindings }>();
 
-// GET /enrollments - Get user's enrollments
+// GET /enrollments - Get user's enrollments OR enrollments for a specific class
 enrollments.get('/', async (c) => {
   try {
     const session = await requireAuth(c);
+    const classId = c.req.query('classId');
 
+    // If classId provided, return enrollments for that class (TEACHER only)
+    if (classId) {
+      if (session.role !== 'TEACHER' && session.role !== 'ACADEMY') {
+        return c.json(errorResponse('Not authorized'), 403);
+      }
+
+      // Verify teacher owns this class
+      if (session.role === 'TEACHER') {
+        const classCheck = await c.env.DB
+          .prepare('SELECT id FROM Class WHERE id = ? AND teacherId = ?')
+          .bind(classId, session.id)
+          .first();
+
+        if (!classCheck) {
+          return c.json(errorResponse('Class not found or not authorized'), 403);
+        }
+      }
+
+      // Get enrollments with student details (nested structure for frontend)
+      const result = await c.env.DB
+        .prepare(`
+          SELECT 
+            e.id,
+            e.classId,
+            e.userId,
+            e.status,
+            e.documentSigned,
+            e.createdAt,
+            e.updatedAt,
+            u.id as student_id,
+            u.firstName as student_firstName,
+            u.lastName as student_lastName,
+            u.email as student_email,
+            c.name as class_name,
+            c.id as class_id
+          FROM ClassEnrollment e
+          JOIN User u ON e.userId = u.id
+          JOIN Class c ON e.classId = c.id
+          WHERE e.classId = ? AND e.status = 'APPROVED'
+          ORDER BY e.createdAt DESC
+        `)
+        .bind(classId)
+        .all();
+
+      // Transform to nested structure expected by frontend
+      const enrollments = (result.results || []).map((row: any) => ({
+        id: row.id,
+        classId: row.classId,
+        userId: row.userId,
+        status: row.status,
+        documentSigned: row.documentSigned,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        student: {
+          id: row.student_id,
+          firstName: row.student_firstName,
+          lastName: row.student_lastName,
+          email: row.student_email,
+        },
+        class: {
+          id: row.class_id,
+          name: row.class_name,
+        },
+      }));
+
+      return c.json(successResponse(enrollments));
+    }
+
+    // Otherwise, return user's own enrollments
     const result = await c.env.DB
       .prepare(`
         SELECT 
@@ -77,11 +147,19 @@ enrollments.get('/pending', async (c) => {
       // Get pending enrollments for owned academies
       query = `
         SELECT 
-          e.*,
-          u.firstName as studentFirstName,
-          u.lastName as studentLastName,
-          u.email as studentEmail,
-          c.name as className,
+          e.id,
+          e.classId,
+          e.userId,
+          e.status,
+          e.documentSigned,
+          e.createdAt as enrolledAt,
+          e.updatedAt,
+          u.id as student_id,
+          u.firstName as student_firstName,
+          u.lastName as student_lastName,
+          u.email as student_email,
+          c.name as class_name,
+          c.id as class_id,
           a.name as academyName
         FROM ClassEnrollment e
         JOIN User u ON e.userId = u.id
@@ -95,11 +173,19 @@ enrollments.get('/pending', async (c) => {
       // Get pending enrollments for teacher's classes
       query = `
         SELECT 
-          e.*,
-          u.firstName as studentFirstName,
-          u.lastName as studentLastName,
-          u.email as studentEmail,
-          c.name as className,
+          e.id,
+          e.classId,
+          e.userId,
+          e.status,
+          e.documentSigned,
+          e.createdAt as enrolledAt,
+          e.updatedAt,
+          u.id as student_id,
+          u.firstName as student_firstName,
+          u.lastName as student_lastName,
+          u.email as student_email,
+          c.name as class_name,
+          c.id as class_id,
           a.name as academyName
         FROM ClassEnrollment e
         JOIN User u ON e.userId = u.id
@@ -115,7 +201,29 @@ enrollments.get('/pending', async (c) => {
 
     const result = await c.env.DB.prepare(query).bind(...params).all();
 
-    return c.json(successResponse(result.results || []));
+    // Transform to nested structure expected by frontend
+    const enrollments = (result.results || []).map((row: any) => ({
+      id: row.id,
+      classId: row.classId,
+      userId: row.userId,
+      status: row.status,
+      documentSigned: row.documentSigned,
+      enrolledAt: row.enrolledAt,
+      updatedAt: row.updatedAt,
+      student: {
+        id: row.student_id,
+        firstName: row.student_firstName,
+        lastName: row.student_lastName,
+        email: row.student_email,
+      },
+      class: {
+        id: row.class_id,
+        name: row.class_name,
+      },
+      academyName: row.academyName,
+    }));
+
+    return c.json(successResponse(enrollments));
   } catch (error: any) {
     console.error('[Pending Enrollments] Error:', error);
     return c.json(errorResponse(error.message || 'Internal server error'), 500);

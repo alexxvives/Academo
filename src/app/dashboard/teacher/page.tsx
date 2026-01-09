@@ -133,7 +133,7 @@ export default function TeacherDashboard() {
         const allStudents: EnrolledStudent[] = [];
         for (const cls of classList) {
           try {
-            const enrollRes = await fetch(`/api/enrollments?classId=${cls.id}`);
+            const enrollRes = await apiClient(`/enrollments?classId=${cls.id}`);
             const enrollData = await enrollRes.json();
             if (enrollData.success && Array.isArray(enrollData.data)) {
               const studentsInClass = enrollData.data.map((e: any) => ({
