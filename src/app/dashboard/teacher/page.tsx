@@ -347,8 +347,8 @@ export default function TeacherDashboard() {
         {enrolledStudents.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             {/* Engagement Metrics - TOP LEFT (moved from right) */}
-            <div className="bg-white rounded-lg p-6 border border-gray-100">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">Participación</h3>
+            <div className="bg-white rounded-lg p-6 border border-gray-100 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-6 text-center">Participación</h3>
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between mb-2">

@@ -14,6 +14,7 @@ interface Teacher {
 
 export default function AcademyTeachers() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [academyName, setAcademyName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -23,11 +24,19 @@ export default function AcademyTeachers() {
 
   const loadTeachers = async () => {
     try {
-      const res = await apiClient('/academies/teachers');
-      const json = await res.json();
-      // API returns { success: true, data: [...] }
-      const data = json.success && json.data ? json.data : json;
+      const [teachersRes, academiesRes] = await Promise.all([
+        apiClient('/academies/teachers'),
+        apiClient('/academies')
+      ]);
+      
+      const teachersJson = await teachersRes.json();
+      const data = teachersJson.success && teachersJson.data ? teachersJson.data : teachersJson;
       setTeachers(Array.isArray(data) ? data : []);
+      
+      const academiesJson = await academiesRes.json();
+      if (academiesJson.success && Array.isArray(academiesJson.data) && academiesJson.data.length > 0) {
+        setAcademyName(academiesJson.data[0].name);
+      }
     } catch (error) {
       console.error('Error loading teachers:', error);
     } finally {
@@ -56,7 +65,7 @@ export default function AcademyTeachers() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Profesores</h1>
-            <p className="text-gray-500 mt-1">Gestiona los profesores de tu academia</p>
+            {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500 bg-white px-4 py-2 rounded-lg border border-gray-200">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

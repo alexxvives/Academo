@@ -15,6 +15,7 @@ interface Teacher {
 interface Class {
   id: string;
   name: string;
+  slug?: string;
   description: string | null;
   teacherName: string | null;
   teacherEmail: string | null;
@@ -25,11 +26,13 @@ interface Class {
   videoCount: number;
   lessonCount: number;
   documentCount: number;
+  avgRating?: number | null;
 }
 
 export default function AcademyClassesPage() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [academyName, setAcademyName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -44,9 +47,10 @@ export default function AcademyClassesPage() {
 
   const loadData = async () => {
     try {
-      const [classesRes, teachersRes] = await Promise.all([
+      const [classesRes, teachersRes, academiesRes] = await Promise.all([
         apiClient('/academies/classes'),
-        apiClient('/academies/teachers')
+        apiClient('/academies/teachers'),
+        apiClient('/academies')
       ]);
       
       if (classesRes.ok) {
@@ -54,6 +58,13 @@ export default function AcademyClassesPage() {
         // API returns { success: true, data: [...] }
         const data = json.success && json.data ? json.data : json;
         setClasses(Array.isArray(data) ? data : []);
+      }
+      
+      if (academiesRes.ok) {
+        const academiesJson = await academiesRes.json();
+        if (academiesJson.success && Array.isArray(academiesJson.data) && academiesJson.data.length > 0) {
+          setAcademyName(academiesJson.data[0].name);
+        }
       }
       
       if (teachersRes.ok) {
@@ -154,7 +165,7 @@ export default function AcademyClassesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Clases</h1>
-            <p className="text-gray-600 text-sm mt-1">Gestiona todas las clases de tu academia</p>
+            {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
           </div>
           <button
             onClick={openCreateModal}
@@ -200,14 +211,24 @@ export default function AcademyClassesPage() {
             {classes.map((cls) => (
               <Link
                 key={cls.id}
-                href={`/dashboard/academy/class/${cls.id}`}
+                href={`/dashboard/teacher/class/${cls.slug || cls.id}`}
                 className="block bg-white rounded-xl border-2 border-gray-200 hover:border-brand-400 hover:shadow-xl transition-all p-6 group"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-brand-600 transition-colors">
-                      {cls.name}
-                    </h3>
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-xl font-bold text-gray-900 group-hover:text-brand-600 transition-colors">
+                        {cls.name}
+                      </h3>
+                      {cls.avgRating != null && cls.avgRating > 0 && (
+                        <div className="flex items-center gap-1.5 px-2 py-1">
+                          <svg className="w-5 h-5 text-amber-500 fill-current" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <span className="text-sm font-bold text-gray-900">{cls.avgRating.toFixed(1)}</span>
+                        </div>
+                      )}
+                    </div>
                     {cls.description ? (
                       <p className="text-sm text-gray-600 mb-4 line-clamp-2">{cls.description}</p>
                     ) : (
@@ -311,19 +332,26 @@ export default function AcademyClassesPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Profesor asignado *
                 </label>
-                <select
-                  value={formData.teacherId}
-                  onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Selecciona un profesor</option>
-                  {teachers.map((teacher) => (
-                    <option key={teacher.userId} value={teacher.userId}>
-                      {teacher.firstName} {teacher.lastName} ({teacher.email})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={formData.teacherId}
+                    onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
+                    className="appearance-none w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  >
+                    <option value="">Selecciona un profesor</option>
+                    {teachers.map((teacher) => (
+                      <option key={teacher.userId} value={teacher.userId}>
+                        {teacher.firstName} {teacher.lastName} ({teacher.email})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               {error && (
@@ -389,19 +417,26 @@ export default function AcademyClassesPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Profesor asignado *
                 </label>
-                <select
-                  value={formData.teacherId}
-                  onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                >
-                  <option value="">Selecciona un profesor</option>
-                  {teachers.map((teacher) => (
-                    <option key={teacher.userId} value={teacher.userId}>
-                      {teacher.firstName} {teacher.lastName} ({teacher.email})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={formData.teacherId}
+                    onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
+                    className="appearance-none w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  >
+                    <option value="">Selecciona un profesor</option>
+                    {teachers.map((teacher) => (
+                      <option key={teacher.userId} value={teacher.userId}>
+                        {teacher.firstName} {teacher.lastName} ({teacher.email})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               {error && (
