@@ -10,6 +10,7 @@ export interface BunnyUploadProgress {
 export interface BunnyUploadOptions {
   file: File;
   title: string;
+  collectionName?: string; // Optional: Academy name for organizing videos
   onProgress?: (progress: BunnyUploadProgress) => void;
   signal?: AbortSignal;
 }
@@ -22,6 +23,7 @@ export interface BunnyUploadResult {
 export async function uploadToBunny({
   file,
   title,
+  collectionName,
   onProgress,
   signal,
 }: BunnyUploadOptions): Promise<BunnyUploadResult> {
@@ -31,6 +33,7 @@ export async function uploadToBunny({
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       title,
+      collectionName,
       fileName: file.name,
     }),
     signal,

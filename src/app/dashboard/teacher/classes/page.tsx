@@ -163,23 +163,6 @@ export default function TeacherClasses() {
                             </div>
                           )}
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleToggleFeedback(cls.id);
-                          }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-brand-50 to-purple-50 border-2 border-brand-200 text-brand-800 rounded-lg hover:from-brand-100 hover:to-purple-100 hover:border-brand-300 transition-all text-xs font-semibold shadow-sm hover:shadow-md group/btn"
-                          title="Ver comentarios de estudiantes"
-                        >
-                          <svg className="w-4 h-4 text-brand-600 group-hover/btn:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                          </svg>
-                          <span>Feedback</span>
-                          <svg className={`w-3 h-3 transition-transform ${openFeedbackDropdown === cls.id ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
                       </div>
                     {cls.description ? (
                       <p className="text-sm text-gray-600 mb-4 line-clamp-2">{cls.description}</p>

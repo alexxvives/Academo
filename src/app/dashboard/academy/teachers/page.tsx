@@ -24,7 +24,9 @@ export default function AcademyTeachers() {
   const loadTeachers = async () => {
     try {
       const res = await apiClient('/academies/teachers');
-      const data = await res.json();
+      const json = await res.json();
+      // API returns { success: true, data: [...] }
+      const data = json.success && json.data ? json.data : json;
       setTeachers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error loading teachers:', error);

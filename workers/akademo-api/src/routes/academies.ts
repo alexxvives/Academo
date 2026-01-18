@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { Bindings } from '../types';
-import { requireAuth } from '../lib/auth';
+import { requireAuth, getSession } from '../lib/auth';
 import { successResponse, errorResponse } from '../lib/utils';
 
 const academies = new Hono<{ Bindings: Bindings }>();
@@ -8,13 +8,32 @@ const academies = new Hono<{ Bindings: Bindings }>();
 // GET /academies - List academies
 academies.get('/', async (c) => {
   try {
-    const session = await requireAuth(c);
+    const session = await getSession(c);
+    const publicMode = c.req.query('publicMode') === 'true'; // For signup page
+    console.log('[Academies] GET request, session:', session ? `${session.role} (${session.id})` : 'null', 'publicMode:', publicMode);
 
     let query = '';
     let params: any[] = [];
 
-    if (session.role === 'ADMIN') {
+    // Force public mode for signup page, regardless of session
+    if (publicMode) {
+      console.log('[Academies] Using PUBLIC query (forced by publicMode parameter)');
+      query = `
+        SELECT 
+          a.id,
+          a.name,
+          a.description,
+          a.createdAt,
+          COUNT(DISTINCT c.id) as classCount
+        FROM Academy a
+        LEFT JOIN Class c ON a.id = c.academyId
+        WHERE a.status = 'APPROVED'
+        GROUP BY a.id
+        ORDER BY a.name ASC
+      `;
+    } else if (session && session.role === 'ADMIN') {
       // Admin sees all with counts
+      console.log('[Academies] Using ADMIN query');
       query = `
         SELECT 
           a.*,
@@ -26,8 +45,9 @@ academies.get('/', async (c) => {
         GROUP BY a.id
         ORDER BY a.createdAt DESC
       `;
-    } else if (session.role === 'ACADEMY' || session.role === 'TEACHER') {
+    } else if (session && (session.role === 'ACADEMY' || session.role === 'TEACHER')) {
       // Academy owners see their own
+      console.log('[Academies] Using ACADEMY/TEACHER query for user:', session.id);
       query = `
         SELECT 
           a.*,
@@ -42,19 +62,29 @@ academies.get('/', async (c) => {
       `;
       params = [session.id];
     } else {
-      // Students see all (for browsing)
+      // Public/students see only approved academies (for signup/browsing)
+      console.log('[Academies] Using PUBLIC query (no session or student role)');
       query = `
         SELECT 
-          a.*,
+          a.id,
+          a.name,
+          a.description,
+          a.createdAt,
           COUNT(DISTINCT c.id) as classCount
         FROM Academy a
         LEFT JOIN Class c ON a.id = c.academyId
+        WHERE a.status = 'APPROVED'
         GROUP BY a.id
-        ORDER BY a.createdAt DESC
+        ORDER BY a.name ASC
       `;
     }
 
+    console.log('[Academies] Executing query:', query.substring(0, 100) + '...');
     const result = await c.env.DB.prepare(query).bind(...params).all();
+    console.log('[Academies] Query result:', result.results?.length || 0, 'academies found');
+    if (result.results && result.results.length > 0) {
+      console.log('[Academies] First academy:', result.results[0]);
+    }
 
     return c.json(successResponse(result.results || []));
   } catch (error: any) {
@@ -96,7 +126,207 @@ academies.post('/', async (c) => {
   }
 });
 
+// GET /academies/students - Get all students across academies
+// IMPORTANT: This must come BEFORE /:id route to avoid being captured as an ID
+academies.get('/students', async (c) => {
+  try {
+    const session = await requireAuth(c);
+
+    if (!['ADMIN', 'ACADEMY'].includes(session.role)) {
+      return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    let query = '';
+    let params: any[] = [];
+
+    if (session.role === 'ADMIN') {
+      query = `
+        SELECT DISTINCT
+          u.id, u.email, u.firstName, u.lastName,
+          a.id as academyId, a.name as academyName,
+          c.id as classId, c.name as className,
+          ce.status as enrollmentStatus
+        FROM User u
+        JOIN ClassEnrollment ce ON u.id = ce.userId
+        JOIN Class c ON ce.classId = c.id
+        JOIN Academy a ON c.academyId = a.id
+        WHERE u.role = 'STUDENT'
+        ORDER BY u.lastName, u.firstName
+      `;
+    } else {
+      // Academy owners see students in their academies
+      query = `
+        SELECT DISTINCT
+          u.id, u.email, u.firstName, u.lastName,
+          a.id as academyId, a.name as academyName,
+          c.id as classId, c.name as className,
+          ce.status as enrollmentStatus
+        FROM User u
+        JOIN ClassEnrollment ce ON u.id = ce.userId
+        JOIN Class c ON ce.classId = c.id
+        JOIN Academy a ON c.academyId = a.id
+        WHERE u.role = 'STUDENT' AND a.ownerId = ?
+        ORDER BY u.lastName, u.firstName
+      `;
+      params = [session.id];
+    }
+
+    const result = await c.env.DB.prepare(query).bind(...params).all();
+
+    return c.json(successResponse(result.results || []));
+  } catch (error: any) {
+    console.error('[Academy Students] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
+// GET /academies/teachers - Get all teachers
+// IMPORTANT: This must come BEFORE /:id route to avoid being captured as an ID
+academies.get('/teachers', async (c) => {
+  try {
+    const session = await requireAuth(c);
+
+    if (!['ADMIN', 'ACADEMY'].includes(session.role)) {
+      return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    // Get academy ID for ACADEMY role
+    let academyId: string | null = null;
+    if (session.role === 'ACADEMY') {
+      const academyResult = await c.env.DB.prepare(
+        'SELECT id FROM Academy WHERE ownerId = ?'
+      ).bind(session.id).first<{ id: string }>();
+      
+      if (!academyResult) {
+        return c.json(errorResponse('Academy not found'), 404);
+      }
+      academyId = academyResult.id;
+    }
+
+    // Get teachers with their class and student counts
+    let teachersQuery = '';
+    let params: any[] = [];
+
+    if (session.role === 'ADMIN') {
+      teachersQuery = `
+        SELECT DISTINCT
+          u.id, u.email, u.firstName, u.lastName, u.createdAt,
+          t.academyId
+        FROM User u
+        LEFT JOIN Teacher t ON u.id = t.userId
+        WHERE u.role = 'TEACHER'
+        ORDER BY u.lastName, u.firstName
+      `;
+    } else {
+      // Academy owners see only teachers in their academy
+      teachersQuery = `
+        SELECT DISTINCT
+          u.id, u.email, u.firstName, u.lastName, u.createdAt
+        FROM User u
+        JOIN Teacher t ON u.id = t.userId
+        WHERE u.role = 'TEACHER' AND t.academyId = ?
+        ORDER BY u.lastName, u.firstName
+      `;
+      params = [academyId];
+    }
+
+    const teachersResult = await c.env.DB.prepare(teachersQuery).bind(...params).all();
+    const teachers = teachersResult.results || [];
+
+    // Get class and student counts for each teacher
+    const teachersWithCounts = await Promise.all(
+      teachers.map(async (teacher: any) => {
+        // Count classes taught by this teacher
+        const classCountResult = await c.env.DB.prepare(
+          `SELECT COUNT(*) as count FROM Class WHERE teacherId = ?`
+        ).bind(teacher.id).first<{ count: number }>();
+        
+        const classCount = classCountResult?.count || 0;
+
+        // Count students enrolled in this teacher's classes
+        const studentCountResult = await c.env.DB.prepare(
+          `SELECT COUNT(DISTINCT ce.userId) as count
+           FROM ClassEnrollment ce
+           JOIN Class c ON ce.classId = c.id
+           WHERE c.teacherId = ? AND ce.status = 'APPROVED'`
+        ).bind(teacher.id).first<{ count: number }>();
+        
+        const studentCount = studentCountResult?.count || 0;
+
+        return {
+          id: teacher.id,
+          email: teacher.email,
+          name: `${teacher.firstName} ${teacher.lastName}`,
+          classCount,
+          studentCount,
+          createdAt: teacher.createdAt,
+        };
+      })
+    );
+
+    return c.json(successResponse(teachersWithCounts));
+  } catch (error: any) {
+    console.error('[Academy Teachers] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
+// GET /academies/classes - Get classes for academies
+// IMPORTANT: This must come BEFORE /:id route to avoid being captured as an ID
+academies.get('/classes', async (c) => {
+  try {
+    const session = await requireAuth(c);
+
+    let query = '';
+    let params: any[] = [];
+
+    if (session.role === 'ADMIN') {
+      query = `
+        SELECT 
+          c.*,
+          a.name as academyName,
+          u.firstName as teacherFirstName,
+          u.lastName as teacherLastName,
+          COUNT(DISTINCT ce.id) as studentCount
+        FROM Class c
+        JOIN Academy a ON c.academyId = a.id
+        LEFT JOIN User u ON c.teacherId = u.id
+        LEFT JOIN ClassEnrollment ce ON c.id = ce.classId AND ce.status = 'APPROVED'
+        GROUP BY c.id
+        ORDER BY c.createdAt DESC
+      `;
+    } else if (session.role === 'ACADEMY') {
+      query = `
+        SELECT 
+          c.*,
+          a.name as academyName,
+          u.firstName as teacherFirstName,
+          u.lastName as teacherLastName,
+          COUNT(DISTINCT ce.id) as studentCount
+        FROM Class c
+        JOIN Academy a ON c.academyId = a.id
+        LEFT JOIN User u ON c.teacherId = u.id
+        LEFT JOIN ClassEnrollment ce ON c.id = ce.classId AND ce.status = 'APPROVED'
+        WHERE a.ownerId = ?
+        GROUP BY c.id
+        ORDER BY c.createdAt DESC
+      `;
+      params = [session.id];
+    } else {
+      return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    const result = await c.env.DB.prepare(query).bind(...params).all();
+
+    return c.json(successResponse(result.results || []));
+  } catch (error: any) {
+    console.error('[Academy Classes] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
 // GET /academies/:id - Get academy details
+// IMPORTANT: This must come AFTER specific routes like /students, /teachers, /classes
 academies.get('/:id', async (c) => {
   try {
     const session = await requireAuth(c);
@@ -172,155 +402,30 @@ academies.patch('/:id', async (c) => {
   }
 });
 
-// GET /academies/students - Get all students across academies
-academies.get('/students', async (c) => {
+// GET /academies/:id/classes - Get classes for an academy (public for signup)
+academies.get('/:id/classes', async (c) => {
   try {
-    const session = await requireAuth(c);
+    const academyId = c.req.param('id');
 
-    if (!['ADMIN', 'ACADEMY'].includes(session.role)) {
-      return c.json(errorResponse('Not authorized'), 403);
-    }
-
-    let query = '';
-    let params: any[] = [];
-
-    if (session.role === 'ADMIN') {
-      query = `
-        SELECT DISTINCT
-          u.id, u.email, u.firstName, u.lastName,
-          a.id as academyId, a.name as academyName,
-          c.id as classId, c.name as className,
-          ce.status as enrollmentStatus
-        FROM User u
-        JOIN ClassEnrollment ce ON u.id = ce.userId
-        JOIN Class c ON ce.classId = c.id
-        JOIN Academy a ON c.academyId = a.id
-        WHERE u.role = 'STUDENT'
-        ORDER BY u.lastName, u.firstName
-      `;
-    } else {
-      // Academy owners see students in their academies
-      query = `
-        SELECT DISTINCT
-          u.id, u.email, u.firstName, u.lastName,
-          a.id as academyId, a.name as academyName,
-          c.id as classId, c.name as className,
-          ce.status as enrollmentStatus
-        FROM User u
-        JOIN ClassEnrollment ce ON u.id = ce.userId
-        JOIN Class c ON ce.classId = c.id
-        JOIN Academy a ON c.academyId = a.id
-        WHERE u.role = 'STUDENT' AND a.ownerId = ?
-        ORDER BY u.lastName, u.firstName
-      `;
-      params = [session.id];
-    }
-
-    const result = await c.env.DB.prepare(query).bind(...params).all();
-
-    return c.json(successResponse(result.results || []));
-  } catch (error: any) {
-    console.error('[Academy Students] Error:', error);
-    return c.json(errorResponse(error.message || 'Internal server error'), 500);
-  }
-});
-
-// GET /academies/teachers - Get all teachers
-academies.get('/teachers', async (c) => {
-  try {
-    const session = await requireAuth(c);
-
-    if (!['ADMIN', 'ACADEMY'].includes(session.role)) {
-      return c.json(errorResponse('Not authorized'), 403);
-    }
-
-    let query = '';
-    let params: any[] = [];
-
-    if (session.role === 'ADMIN') {
-      query = `
-        SELECT DISTINCT
-          u.id, u.email, u.firstName, u.lastName,
-          a.id as academyId, a.name as academyName
-        FROM User u
-        LEFT JOIN Teacher t ON u.id = t.userId
-        LEFT JOIN Academy a ON t.academyId = a.id
-        WHERE u.role = 'TEACHER'
-        ORDER BY u.lastName, u.firstName
-      `;
-    } else {
-      // Academy owners see teachers in their academies
-      query = `
-        SELECT DISTINCT
-          u.id, u.email, u.firstName, u.lastName,
-          a.id as academyId, a.name as academyName
-        FROM User u
-        JOIN Teacher t ON u.id = t.userId
-        JOIN Academy a ON t.academyId = a.id
-        WHERE u.role = 'TEACHER' AND a.ownerId = ?
-        ORDER BY u.lastName, u.firstName
-      `;
-      params = [session.id];
-    }
-
-    const result = await c.env.DB.prepare(query).bind(...params).all();
-
-    return c.json(successResponse(result.results || []));
-  } catch (error: any) {
-    console.error('[Academy Teachers] Error:', error);
-    return c.json(errorResponse(error.message || 'Internal server error'), 500);
-  }
-});
-
-// GET /academies/classes - Get classes for academies
-academies.get('/classes', async (c) => {
-  try {
-    const session = await requireAuth(c);
-
-    let query = '';
-    let params: any[] = [];
-
-    if (session.role === 'ADMIN') {
-      query = `
+    // Public endpoint - no auth required for signup flow
+    const classes = await c.env.DB
+      .prepare(`
         SELECT 
-          c.*,
-          a.name as academyName,
-          u.firstName as teacherFirstName,
-          u.lastName as teacherLastName,
-          COUNT(DISTINCT ce.id) as studentCount
+          c.id,
+          c.name,
+          c.description,
+          u.firstName || ' ' || u.lastName as teacherName
         FROM Class c
-        JOIN Academy a ON c.academyId = a.id
         LEFT JOIN User u ON c.teacherId = u.id
-        LEFT JOIN ClassEnrollment ce ON c.id = ce.classId AND ce.status = 'APPROVED'
-        GROUP BY c.id
-        ORDER BY c.createdAt DESC
-      `;
-    } else if (session.role === 'ACADEMY') {
-      query = `
-        SELECT 
-          c.*,
-          a.name as academyName,
-          u.firstName as teacherFirstName,
-          u.lastName as teacherLastName,
-          COUNT(DISTINCT ce.id) as studentCount
-        FROM Class c
-        JOIN Academy a ON c.academyId = a.id
-        LEFT JOIN User u ON c.teacherId = u.id
-        LEFT JOIN ClassEnrollment ce ON c.id = ce.classId AND ce.status = 'APPROVED'
-        WHERE a.ownerId = ?
-        GROUP BY c.id
-        ORDER BY c.createdAt DESC
-      `;
-      params = [session.id];
-    } else {
-      return c.json(errorResponse('Not authorized'), 403);
-    }
+        WHERE c.academyId = ?
+        ORDER BY c.name ASC
+      `)
+      .bind(academyId)
+      .all();
 
-    const result = await c.env.DB.prepare(query).bind(...params).all();
-
-    return c.json(successResponse(result.results || []));
+    return c.json(successResponse(classes.results || []));
   } catch (error: any) {
-    console.error('[Academy Classes] Error:', error);
+    console.error('[Academy Classes List] Error:', error);
     return c.json(errorResponse(error.message || 'Internal server error'), 500);
   }
 });

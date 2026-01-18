@@ -230,6 +230,45 @@ enrollments.get('/pending', async (c) => {
   }
 });
 
+// GET /enrollments/rejected - Get rejected enrollments count
+enrollments.get('/rejected', async (c) => {
+  try {
+    const session = await requireAuth(c);
+
+    if (!['TEACHER', 'ACADEMY'].includes(session.role)) {
+      return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    let query = '';
+    let params: any[] = [];
+
+    if (session.role === 'TEACHER') {
+      query = `
+        SELECT COUNT(*) as count
+        FROM ClassEnrollment e
+        JOIN Class c ON e.classId = c.id
+        WHERE c.teacherId = ? AND e.status = 'REJECTED'
+      `;
+      params = [session.id];
+    } else if (session.role === 'ACADEMY') {
+      query = `
+        SELECT COUNT(*) as count
+        FROM ClassEnrollment e
+        JOIN Class c ON e.classId = c.id
+        JOIN Academy a ON c.academyId = a.id
+        WHERE a.ownerId = ? AND e.status = 'REJECTED'
+      `;
+      params = [session.id];
+    }
+
+    const result = await c.env.DB.prepare(query).bind(...params).first();
+    return c.json(successResponse({ count: result?.count || 0 }));
+  } catch (error: any) {
+    console.error('[Rejected Enrollments] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
 // PUT /enrollments/pending - Approve/Reject pending enrollment
 enrollments.put('/pending', async (c) => {
   try {

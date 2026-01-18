@@ -25,6 +25,7 @@ interface LessonsListProps {
   onSelectLesson: (lesson: Lesson) => void;
   onEditLesson: (lesson: Lesson) => void;
   onDeleteLesson: (lessonId: string) => void;
+  onToggleRelease: (lesson: Lesson) => void;
 }
 
 export default function LessonsList({
@@ -32,6 +33,7 @@ export default function LessonsList({
   onSelectLesson,
   onEditLesson,
   onDeleteLesson,
+  onToggleRelease,
 }: LessonsListProps) {
   const formatDate = (d: string) => {
     const date = new Date(d);
@@ -81,6 +83,8 @@ export default function LessonsList({
                   }
                 }}
                 className={`bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden transition-all duration-300 group border border-gray-200 shadow-sm ${
+                  !isReleased(lesson.releaseDate) ? 'opacity-70 grayscale sepia-[.2]' : ''
+                } ${
                   lesson.isUploading
                     ? 'cursor-default'
                     : 'hover:border-brand-400 hover:shadow-xl hover:shadow-brand-500/10 cursor-pointer hover:scale-[1.02]'
@@ -133,6 +137,43 @@ export default function LessonsList({
 
                   {/* Thumbnail with play button overlay and content badges */}
                   <div className="relative" style={{ height: '160px' }}>
+                    {/* Date Badge - Always visible, handles hidden state internally */}
+                    {(isReleased(lesson.releaseDate)) && (
+                      <div className={`absolute top-2 left-2 z-10 flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg backdrop-blur-sm shadow-lg border border-gray-300/50 bg-white/90 text-gray-900`}>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="font-medium">
+                          {formatDate(lesson.releaseDate)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Visibility Toggle - Top Right */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleRelease(lesson);
+                      }}
+                      className={`absolute top-2 right-2 z-10 p-1.5 rounded-lg backdrop-blur-sm shadow-lg transition-all border ${
+                        isReleased(lesson.releaseDate)
+                          ? 'bg-white/90 text-gray-900 border-gray-300' 
+                          : 'bg-gray-800/90 text-gray-400 border-gray-700'
+                      }`}
+                      title={isReleased(lesson.releaseDate) ? "Visible: Click para ocultar" : "Oculto: Click para publicar"}
+                    >
+                      {isReleased(lesson.releaseDate) ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                      )}
+                    </button>
+
                     {(lesson.firstVideoBunnyGuid || lesson.firstVideoUpload?.bunnyGuid) ? (
                       <>
                         <img
@@ -149,19 +190,7 @@ export default function LessonsList({
                             </span>
                           </div>
                         )}
-                        {/* Date Badge - Top Right - Color changes based on release status */}
-                        <div className={`absolute top-2 right-2 z-10 flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg backdrop-blur-sm shadow-lg ${
-                          isReleased(lesson.releaseDate)
-                            ? 'bg-gray-100/90 text-gray-600 border border-gray-300/50'
-                            : 'bg-red-500/90 text-white border border-red-400/50'
-                        }`}>
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span className="font-medium">
-                            {lesson.releaseDate ? formatDate(lesson.releaseDate) : 'Sin fecha'}
-                          </span>
-                        </div>
+                        
                         {/* Play Button Overlay - Only show when not uploading/transcoding */}
                         {!lesson.isUploading && !lesson.isTranscoding && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
@@ -174,7 +203,18 @@ export default function LessonsList({
                         )}
                       </>
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                      <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center relative">
+                        {/* Date Badge for document-only lessons */}
+                        {(isReleased(lesson.releaseDate)) && (
+                          <div className={`absolute top-2 left-2 z-10 flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg backdrop-blur-sm shadow-lg border border-gray-300/50 bg-white/90 text-gray-900`}>
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span className="font-medium">
+                              {formatDate(lesson.releaseDate)}
+                            </span>
+                          </div>
+                        )}
                         <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
                         </svg>

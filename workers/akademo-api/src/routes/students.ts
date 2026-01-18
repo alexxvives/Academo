@@ -25,6 +25,10 @@ students.get('/progress', async (c) => {
           u.firstName,
           u.lastName,
           u.email,
+          (SELECT c2.name FROM Class c2 
+           JOIN ClassEnrollment e2 ON e2.classId = c2.id 
+           WHERE e2.userId = u.id AND c2.teacherId = ? AND e2.status = 'APPROVED' 
+           LIMIT 1) as className,
           COUNT(DISTINCT c.id) as classCount,
           COUNT(DISTINCT vps.videoId) as lessonsCompleted,
           COUNT(DISTINCT l.id) as totalLessons,
@@ -40,7 +44,7 @@ students.get('/progress', async (c) => {
         GROUP BY u.id, u.firstName, u.lastName, u.email
         ORDER BY u.lastName, u.firstName
       `;
-      params = [session.id];
+      params = [session.id, session.id];
     } else if (session.role === 'ACADEMY') {
       // Get aggregated progress for all students in academy owner's classes
       query = `
@@ -49,6 +53,10 @@ students.get('/progress', async (c) => {
           u.firstName,
           u.lastName,
           u.email,
+          (SELECT c2.name FROM Class c2 
+           JOIN ClassEnrollment e2 ON e2.classId = c2.id 
+           WHERE e2.userId = u.id AND e2.status = 'APPROVED' 
+           LIMIT 1) as className,
           COUNT(DISTINCT c.id) as classCount,
           COUNT(DISTINCT vps.videoId) as lessonsCompleted,
           COUNT(DISTINCT l.id) as totalLessons,

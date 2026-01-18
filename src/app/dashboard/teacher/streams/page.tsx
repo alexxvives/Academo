@@ -545,32 +545,6 @@ export default function StreamsPage() {
                                 </svg>
                               </button>
                             </div>
-                            {/* Action Buttons for Scheduled/Active Streams */}
-                            {(stream.status === 'scheduled' || stream.status === 'active') && stream.zoomStartUrl && (
-                              <div className="flex gap-2 mt-1">
-                                <a
-                                  href={stream.zoomStartUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded inline-flex items-center gap-1 transition-colors"
-                                >
-                                  <span>🎥</span> Unirse como Anfitrión
-                                </a>
-                                {stream.zoomLink && (
-                                  <button
-                                    onClick={() => {
-                                      if (stream.zoomLink) {
-                                        navigator.clipboard.writeText(stream.zoomLink);
-                                        alert('Link de estudiante copiado');
-                                      }
-                                    }}
-                                    className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded inline-flex items-center gap-1 transition-colors"
-                                  >
-                                    <span>🔗</span> Copiar Link
-                                  </button>
-                                )}
-                              </div>
-                            )}
                           </div>
                         )}
                       </div>
@@ -619,16 +593,7 @@ export default function StreamsPage() {
                           Disponible
                         </span>
                       ) : (stream.status === 'ended' || stream.status === 'active') ? (
-                        <button
-                          onClick={() => syncRecording(stream.id)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded text-xs font-semibold transition-colors group/btn"
-                          title="Buscar grabación en Zoom manualmente"
-                        >
-                          <svg className="w-3.5 h-3.5 group-hover/btn:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                          Sync
-                        </button>
+                        <span className="text-gray-400 text-sm">Procesando...</span>
                       ) : (
                         <span className="text-gray-400 text-sm">—</span>
                       )}
@@ -680,7 +645,7 @@ export default function StreamsPage() {
         <ConfirmModal
           isOpen={confirmModal.isOpen}
           title="Eliminar Stream"
-          message={`¿Estás seguro que deseas eliminar el stream "${confirmModal.streamTitle}"? Esta acción también eliminará la grabación de Bunny y no se puede deshacer.`}
+          message={`¿Estás seguro que deseas eliminar el stream "${confirmModal.streamTitle}"? Esta acción no se puede deshacer.`}
           confirmText="Eliminar"
           cancelText="Cancelar"
           type="danger"

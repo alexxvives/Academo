@@ -345,14 +345,26 @@ lessons.patch('/:id', async (c) => {
       updates.push('description = ?');
       values.push(body.description || null);
     }
+    
+    // Check if resetTimers flag is set (lesson being moved to future)
+    const resetTimers = body.resetTimers === true;
+    
     if (body.releaseDate !== undefined) {
       updates.push('releaseDate = ?');
       values.push(body.releaseDate);
     }
+    
+    // Check if multiplier is being increased
+    let multiplierIncreased = false;
     if (body.maxWatchTimeMultiplier !== undefined) {
+      const oldMultiplier = lesson.maxWatchTimeMultiplier || 2.0;
+      const newMultiplier = body.maxWatchTimeMultiplier;
+      multiplierIncreased = newMultiplier > oldMultiplier;
+      
       updates.push('maxWatchTimeMultiplier = ?');
       values.push(body.maxWatchTimeMultiplier);
     }
+    
     if (body.watermarkIntervalMins !== undefined) {
       updates.push('watermarkIntervalMins = ?');
       values.push(body.watermarkIntervalMins);
@@ -374,6 +386,57 @@ lessons.patch('/:id', async (c) => {
       .prepare(`UPDATE Lesson SET ${updates.join(', ')} WHERE id = ?`)
       .bind(...values)
       .run();
+
+    // If multiplier increased, reset all BLOCKED video play states for this lesson
+    if (multiplierIncreased) {
+      // Get all videos in this lesson
+      const videos = await c.env.DB
+        .prepare('SELECT id FROM Video WHERE lessonId = ?')
+        .bind(lessonId)
+        .all();
+      
+      if (videos.results && videos.results.length > 0) {
+        const videoIds = videos.results.map((v: any) => v.id);
+        
+        // Reset BLOCKED states by setting status to ACTIVE and keeping totalWatchTimeSeconds unchanged
+        // This allows students to continue watching from where they were blocked
+        for (const videoId of videoIds) {
+          await c.env.DB
+            .prepare(`
+              UPDATE VideoPlayState 
+              SET status = 'ACTIVE', updatedAt = datetime('now')
+              WHERE videoId = ? AND status = 'BLOCKED'
+            `)
+            .bind(videoId)
+            .run();
+        }
+        
+        console.log(`[Lesson Update] Unblocked videos for lesson ${lessonId} due to multiplier increase`);
+      }
+    }
+    
+    // If resetTimers flag is set (lesson moved to future), reset ALL video play states
+    if (resetTimers) {
+      // Get all videos in this lesson
+      const videos = await c.env.DB
+        .prepare('SELECT id FROM Video WHERE lessonId = ?')
+        .bind(lessonId)
+        .all();
+      
+      if (videos.results && videos.results.length > 0) {
+        const videoIds = videos.results.map((v: any) => v.id);
+        
+        // Delete all play states for these videos (reset to fresh state)
+        for (const videoId of videoIds) {
+          await c.env.DB
+            .prepare('DELETE FROM VideoPlayState WHERE videoId = ?')
+            .bind(videoId)
+            .run();
+        }
+        
+        console.log(`[Lesson Update] Reset all timers for lesson ${lessonId} due to reschedule to future`);
+      }
+    }
 
     const updated = await c.env.DB
       .prepare('SELECT * FROM Lesson WHERE id = ?')
@@ -474,7 +537,37 @@ lessons.delete('/:id', async (c) => {
       return c.json(errorResponse('Not authorized'), 403);
     }
 
-    // Delete lesson (cascade will handle videos/documents/play states)
+    // Get all videos for this lesson to delete from Bunny
+    const videos = await c.env.DB
+      .prepare('SELECT v.id, u.bunnyGuid FROM Video v JOIN Upload u ON v.uploadId = u.id WHERE v.lessonId = ?')
+      .bind(lessonId)
+      .all();
+
+    // Delete videos from Bunny CDN
+    const apiKey = c.env.BUNNY_STREAM_API_KEY;
+    const libraryId = c.env.BUNNY_STREAM_LIBRARY_ID;
+
+    for (const video of (videos.results || [])) {
+      const bunnyGuid = (video as any).bunnyGuid;
+      if (bunnyGuid) {
+        try {
+          const deleteUrl = `https://video.bunnycdn.com/library/${libraryId}/videos/${bunnyGuid}`;
+          const response = await fetch(deleteUrl, {
+            method: 'DELETE',
+            headers: { 'AccessKey': apiKey },
+          });
+          if (!response.ok) {
+            console.error(`[Delete Lesson] Failed to delete video ${bunnyGuid} from Bunny:`, await response.text());
+          } else {
+            console.log(`[Delete Lesson] Deleted video ${bunnyGuid} from Bunny`);
+          }
+        } catch (err) {
+          console.error(`[Delete Lesson] Error deleting video ${bunnyGuid} from Bunny:`, err);
+        }
+      }
+    }
+
+    // Delete lesson (cascade will handle videos/documents/play states in DB)
     await c.env.DB
       .prepare('DELETE FROM Lesson WHERE id = ?')
       .bind(lessonId)
@@ -986,6 +1079,103 @@ lessons.get('/:id/ratings', async (c) => {
     return c.json(successResponse(ratings.results || []));
   } catch (error: any) {
     console.error('[Lesson Ratings] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
+// GET /lessons/:id/student-times - Get all student video times for a lesson
+lessons.get('/:id/student-times', async (c) => {
+  try {
+    const session = await requireAuth(c);
+    const lessonId = c.req.param('id');
+
+    if (!['ADMIN', 'TEACHER', 'ACADEMY'].includes(session.role)) {
+      return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    // Verify lesson access
+    const lesson = await c.env.DB
+      .prepare('SELECT l.*, c.teacherId, a.ownerId FROM Lesson l JOIN Class c ON l.classId = c.id JOIN Academy a ON c.academyId = a.id WHERE l.id = ?')
+      .bind(lessonId)
+      .first() as any;
+
+    if (!lesson) {
+      return c.json(errorResponse('Lesson not found'), 404);
+    }
+
+    if (session.role === 'TEACHER' && lesson.teacherId !== session.id) {
+      return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    if (session.role === 'ACADEMY' && lesson.ownerId !== session.id) {
+      return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    // Get all videos for this lesson
+    const videos = await c.env.DB
+      .prepare('SELECT id, title, durationSeconds FROM Video WHERE lessonId = ? ORDER BY createdAt')
+      .bind(lessonId)
+      .all();
+
+    if (!videos.results || videos.results.length === 0) {
+      return c.json(successResponse([]));
+    }
+
+    // Get all enrolled students for this class
+    const students = await c.env.DB
+      .prepare(`
+        SELECT DISTINCT u.id, u.firstName, u.lastName
+        FROM User u
+        JOIN ClassEnrollment ce ON u.id = ce.userId
+        WHERE ce.classId = ? AND ce.status = 'APPROVED'
+        ORDER BY u.firstName, u.lastName
+      `)
+      .bind(lesson.classId)
+      .all();
+
+    if (!students.results || students.results.length === 0) {
+      return c.json(successResponse([]));
+    }
+
+    // Build student times data
+    const studentTimesData = await Promise.all(
+      students.results.map(async (student: any) => {
+        const videoTimes = await Promise.all(
+          videos.results.map(async (video: any) => {
+            const playState = await c.env.DB
+              .prepare('SELECT * FROM VideoPlayState WHERE videoId = ? AND studentId = ?')
+              .bind(video.id, student.id)
+              .first() as any;
+
+            const maxWatchTimeSeconds = (video.durationSeconds || 0) * (lesson.maxWatchTimeMultiplier || 2.0);
+
+            return {
+              videoId: video.id,
+              videoTitle: video.title,
+              totalWatchTimeSeconds: playState?.totalWatchTimeSeconds || 0,
+              maxWatchTimeSeconds,
+              status: playState?.status || 'ACTIVE',
+            };
+          })
+        );
+
+        // Only include students who have watched at least one video
+        const hasWatchedAny = videoTimes.some(v => v.totalWatchTimeSeconds > 0);
+
+        return {
+          studentId: student.id,
+          studentName: `${student.firstName} ${student.lastName}`,
+          videos: hasWatchedAny ? videoTimes : [],
+        };
+      })
+    );
+
+    // Filter out students who haven't watched any videos
+    const filteredData = studentTimesData.filter(s => s.videos.length > 0);
+
+    return c.json(successResponse(filteredData));
+  } catch (error: any) {
+    console.error('[Student Times] Error:', error);
     return c.json(errorResponse(error.message || 'Internal server error'), 500);
   }
 });

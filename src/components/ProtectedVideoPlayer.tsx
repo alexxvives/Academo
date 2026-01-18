@@ -610,8 +610,7 @@ export default function ProtectedVideoPlayer({
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Límite de Tiempo Alcanzado</h3>
               <p className="text-gray-400 text-sm">
-                Has usado todo tu tiempo disponible para este video 
-                ({formatTime(maxWatchTimeSeconds)}). Contacta a tu profesor si necesitas más tiempo.
+                Contacta a tu profesor si necesitas más tiempo.
               </p>
             </div>
           </div>

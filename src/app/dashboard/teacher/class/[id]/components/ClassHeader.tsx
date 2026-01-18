@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 interface ClassHeaderProps {
   classData: {
     id: string;
@@ -30,8 +32,13 @@ export default function ClassHeader({
 
   return (
     <>
+      {/* Back to classes link */}
+      <Link href="/dashboard/teacher" className="text-sm text-gray-500 hover:text-gray-900 inline-block">
+        ← Volver a clases
+      </Link>
+      
       {/* Title and Actions */}
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-4 mt-0">
         <div className="flex-1">
           <div className="flex items-center gap-4 flex-wrap mb-2">
             <h1 className="text-2xl font-semibold text-gray-900">{classData.name}</h1>

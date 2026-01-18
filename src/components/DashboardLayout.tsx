@@ -1,9 +1,24 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
+import { 
+  ChartNoAxesColumnIncreasingIcon, 
+  BookTextIcon,
+  UserRoundPlusIcon,
+  MessageSquareMoreIcon,
+  ClapIcon,
+  FileTextIcon,
+  ClipboardCheckIcon,
+  ActivityIcon,
+  LogoutIcon,
+  LinkIcon,
+  PlusIcon,
+} from '@/components/ui';
+import { UsersIcon } from '@/components/ui/UsersIcon';
+import { BotMessageSquareIcon } from '@/components/ui/BotMessageSquareIcon';
 
 interface User {
   id: string;
@@ -16,7 +31,8 @@ interface User {
 interface MenuItem {
   label: string;
   href: string;
-  icon: JSX.Element;
+  icon?: JSX.Element;
+  iconType?: 'chart' | 'book' | 'userPlus' | 'message' | 'clap' | 'fileText' | 'clipboard' | 'activity' | 'users' | 'botMessage';
   badge?: number;
   matchPaths?: string[];
 }
@@ -71,6 +87,10 @@ export default function DashboardLayout({
   
   // Pending requests count for teachers
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+
+  // Refs for animated icons
+  const logoutIconRef = useRef<any>(null);
+  const linkIconRef = useRef<any>(null);
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -299,77 +319,45 @@ export default function DashboardLayout({
           {
             label: 'Dashboard',
             href: '/dashboard/teacher',
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            ),
+            iconType: 'chart',
           },
           {
             label: 'Clases',
             href: '/dashboard/teacher/classes',
             matchPaths: ['/dashboard/teacher/class'],
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            ),
+            iconType: 'book',
           },
           {
             label: 'Solicitudes',
             href: '/dashboard/teacher/requests',
             badge: pendingRequestsCount,
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-            ),
+            iconType: 'userPlus',
           },
           {
             label: 'Feedback',
             href: '/dashboard/teacher/feedback',
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
-            ),
+            iconType: 'message',
           },
           {
             label: 'Streams',
             href: '/dashboard/teacher/streams',
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            ),
+            iconType: 'clap',
           },
           {
             label: 'Tareas',
             href: '/dashboard/teacher/assignments',
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-            ),
+            iconType: 'fileText',
           },
           {
             label: 'Calificaciones',
             href: '/dashboard/teacher/grading',
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
-            ),
+            iconType: 'clipboard',
           },
           // Learning Tools
           {
-            label: 'Progreso',
+            label: 'Estudiantes',
             href: '/dashboard/teacher/progress',
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            ),
+            iconType: 'users',
           },
         ];
       case 'STUDENT':
@@ -407,71 +395,38 @@ export default function DashboardLayout({
         ];
       case 'ACADEMY':
         return [
-          // Dashboard
+          // Dashboard with animated icon
           {
             label: 'Dashboard',
             href: '/dashboard/academy',
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            ),
+            iconType: 'chart',
           },
           {
             label: 'Profesores',
             href: '/dashboard/academy/teachers',
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            ),
+            iconType: 'botMessage',
           },
           {
             label: 'Clases',
             href: '/dashboard/academy/classes',
             matchPaths: ['/dashboard/academy/class'],
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            ),
+            iconType: 'book',
           },
           {
             label: 'Solicitudes',
             href: '/dashboard/academy/requests',
             badge: pendingRequestsCount,
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-            ),
+            iconType: 'userPlus',
           },
           {
             label: 'Streams',
             href: '/dashboard/academy/streams',
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            ),
-          },
-          {
-            label: 'Lecciones',
-            href: '/dashboard/academy/lessons',
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-              </svg>
-            ),
+            iconType: 'clap',
           },
           {
             label: 'Estudiantes',
             href: '/dashboard/academy/students',
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            ),
+            iconType: 'users',
           },
         ];
       default:
@@ -480,6 +435,9 @@ export default function DashboardLayout({
   };
 
   const menuItems = getMenuItems();
+
+  // Create refs for animated icons (must be outside map to follow Rules of Hooks)
+  const iconRefs = useRef<{ [key: string]: any }>({});
 
   if (loading) {
     return (
@@ -538,6 +496,41 @@ export default function DashboardLayout({
             // Check if this is "Mis Clases" and there are active streams
             const hasLiveStream = role === 'STUDENT' && item.label === 'Mis Clases' && activeStreams.length > 0;
             
+            // Get or create ref for this menu item
+            if (!iconRefs.current[item.href]) {
+              iconRefs.current[item.href] = { current: null };
+            }
+            const iconRef = iconRefs.current[item.href];
+
+            // Render icon based on type
+            const renderIcon = () => {
+              const iconType = (item as any).iconType;
+              if (iconType === 'chart') {
+                return <ChartNoAxesColumnIncreasingIcon ref={iconRef} size={20} />;
+              } else if (iconType === 'book') {
+                return <BookTextIcon ref={iconRef} size={20} />;
+              } else if (iconType === 'userPlus') {
+                return <UserRoundPlusIcon ref={iconRef} size={20} />;
+              } else if (iconType === 'message') {
+                return <MessageSquareMoreIcon ref={iconRef} size={20} />;
+              } else if (iconType === 'clap') {
+                return <ClapIcon ref={iconRef} size={20} />;
+              } else if (iconType === 'fileText') {
+                return <FileTextIcon ref={iconRef} size={20} />;
+              } else if (iconType === 'clipboard') {
+                return <ClipboardCheckIcon ref={iconRef} size={20} />;
+              } else if (iconType === 'activity') {
+                return <ActivityIcon ref={iconRef} size={20} />;
+              } else if (iconType === 'users') {
+                return <UsersIcon ref={iconRef} size={20} />;
+              } else if (iconType === 'botMessage') {
+                return <BotMessageSquareIcon ref={iconRef} size={20} />;
+              } else if (item.icon) {
+                return item.icon;
+              }
+              return null;
+            };
+
             return (
               <Link
                 key={item.href}
@@ -547,6 +540,16 @@ export default function DashboardLayout({
                     ? 'bg-gray-800/50 text-white'
                     : 'text-gray-400 hover:bg-gray-800/50 hover:text-white'
                 }`}
+                onMouseEnter={() => {
+                  if (iconRef.current?.startAnimation) {
+                    iconRef.current.startAnimation();
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (iconRef.current?.stopAnimation) {
+                    iconRef.current.stopAnimation();
+                  }
+                }}
               >
                 {isActive && (
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#b1e787] rounded-r-full" />
@@ -554,7 +557,7 @@ export default function DashboardLayout({
                 <span className={`relative flex-shrink-0 ${
                   isActive ? 'text-[#b1e787]' : 'text-gray-400 group-hover:text-white'
                 }`}>
-                  {item.icon}
+                  {renderIcon()}
                 </span>
                 <span className="text-sm font-medium">{item.label}</span>
                 {hasLiveStream && (
@@ -603,15 +606,15 @@ export default function DashboardLayout({
           <div className="px-3 py-2 border-t border-gray-800/50">
             <button
               onClick={copyJoinLink}
+              onMouseEnter={() => linkIconRef.current?.startAnimation()}
+              onMouseLeave={() => linkIconRef.current?.stopAnimation()}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
                 linkCopied 
                   ? 'bg-[#b1e787]/20 text-[#b1e787]' 
                   : 'bg-[#b1e787]/10 text-[#b1e787] hover:bg-[#b1e787]/20'
               }`}
             >
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
+              <LinkIcon ref={linkIconRef} size={20} className="flex-shrink-0" />
               <span className="text-sm font-medium truncate">
                 {linkCopied ? '¡Enlace copiado!' : 'Copiar enlace de invitación'}
               </span>
@@ -635,11 +638,11 @@ export default function DashboardLayout({
             </div>
             <button
               onClick={handleLogout}
+              onMouseEnter={() => logoutIconRef.current?.startAnimation()}
+              onMouseLeave={() => logoutIconRef.current?.stopAnimation()}
               className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800/50 rounded-xl transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+              <LogoutIcon ref={logoutIconRef} size={16} />
               Cerrar Sesión
             </button>
           </div>
@@ -733,15 +736,15 @@ export default function DashboardLayout({
           <div className="px-3 py-2">
             <button
               onClick={copyJoinLink}
+              onMouseEnter={() => linkIconRef.current?.startAnimation()}
+              onMouseLeave={() => linkIconRef.current?.stopAnimation()}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                 linkCopied 
                   ? 'bg-green-50 text-green-700' 
                   : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
               }`}
             >
-              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
+              <LinkIcon ref={linkIconRef} size={20} className="flex-shrink-0" />
               <span className="text-sm font-medium">
                 {linkCopied ? '¡Enlace copiado!' : 'Copiar enlace de invitación'}
               </span>
@@ -765,11 +768,11 @@ export default function DashboardLayout({
             </div>
             <button
               onClick={handleLogout}
+              onMouseEnter={() => logoutIconRef.current?.startAnimation()}
+              onMouseLeave={() => logoutIconRef.current?.stopAnimation()}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+              <LogoutIcon ref={logoutIconRef} size={16} />
               Cerrar Sesión
             </button>
           </div>

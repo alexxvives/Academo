@@ -21,20 +21,52 @@ interface Lesson {
 
 export default function AcademyLessonsPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterTeacher, setFilterTeacher] = useState<string>('all');
+  const [filterClass, setFilterClass] = useState<string>('all');
 
   useEffect(() => {
-    loadLessons();
+    loadClasses();
   }, []);
+
+  useEffect(() => {
+    if (classes.length > 0) {
+      loadLessons();
+    }
+  }, [classes]);
+
+  const loadClasses = async () => {
+    try {
+      const response = await apiClient('/academies/classes');
+      const result = await response.json();
+      if (result.success && Array.isArray(result.data)) {
+        setClasses(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading classes:', error);
+    }
+  };
 
   const loadLessons = async () => {
     try {
-      const response = await apiClient('/lessons');
-      const result = await response.json();
-      if (result.success) {
-        setLessons(result.data);
-      }
+      // Load lessons for all classes
+      const allLessons = await Promise.all(
+        classes.map(async (cls) => {
+          const response = await apiClient(`/lessons?classId=${cls.id}`);
+          const result = await response.json();
+          if (result.success && Array.isArray(result.data)) {
+            return result.data.map((lesson: any) => ({
+              ...lesson,
+              className: cls.name,
+              teacherName: cls.teacherFirstName && cls.teacherLastName 
+                ? `${cls.teacherFirstName} ${cls.teacherLastName}` 
+                : 'Sin asignar',
+            }));
+          }
+          return [];
+        })
+      );
+      setLessons(allLessons.flat());
     } catch (error) {
       console.error('Error loading lessons:', error);
     } finally {
@@ -42,18 +74,13 @@ export default function AcademyLessonsPage() {
     }
   };
 
-  const uniqueTeachers = Array.from(new Set(lessons.map(l => l.teacherId)))
-    .map(id => {
-      const teacherLessons = lessons.filter(l => l.teacherId === id);
-      const teacher = teacherLessons[0];
-      const classes = Array.from(new Set(teacherLessons.map(l => l.className))).join(', ');
-      return { ...teacher, classNames: classes };
-    })
+  const uniqueClasses = Array.from(new Set(classes.map(c => c.id)))
+    .map(id => classes.find(c => c.id === id))
     .filter(Boolean);
 
   const filteredLessons = lessons.filter(lesson => {
-    const matchesTeacher = filterTeacher === 'all' || lesson.teacherId === filterTeacher;
-    return matchesTeacher;
+    const matchesClass = filterClass === 'all' || lesson.classId === filterClass;
+    return matchesClass;
   });
 
   const formatDuration = (seconds: number | null) => {
@@ -82,16 +109,16 @@ export default function AcademyLessonsPage() {
         {/* Filters */}
         <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Filtrar por Profesor</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Filtrar por Clase</label>
             <select
-              value={filterTeacher}
-              onChange={(e) => setFilterTeacher(e.target.value)}
+              value={filterClass}
+              onChange={(e) => setFilterClass(e.target.value)}
               className="w-full h-[38px] px-3 py-2 pr-10 border border-gray-200 rounded-lg text-sm bg-white appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20fill%3D%27none%27%20viewBox%3D%270%200%2020%2020%27%3E%3Cpath%20stroke%3D%27%236b7280%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%20stroke-width%3D%271.5%27%20d%3D%27M6%208l4%204%204-4%27%2F%3E%3C%2Fsvg%3E')] bg-[length:1.5em] bg-[right_0.5rem_center] bg-no-repeat"
             >
-              <option value="all">Todos los profesores</option>
-              {uniqueTeachers.map((teacher: any) => (
-                <option key={teacher.teacherId} value={teacher.teacherId}>
-                  {teacher.teacherName} - {teacher.classNames}
+              <option value="all">Todas las clases</option>
+              {uniqueClasses.map((cls: any) => (
+                <option key={cls.id} value={cls.id}>
+                  {cls.name}
                 </option>
               ))}
             </select>
@@ -110,8 +137,8 @@ export default function AcademyLessonsPage() {
             </svg>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No se encontraron lecciones</h3>
             <p className="text-gray-600">
-              {filterTeacher !== 'all'
-                ? 'Intenta ajustar el filtro de profesor.'
+              {filterClass !== 'all'
+                ? 'Intenta ajustar el filtro de clase.'
                 : 'Los profesores pueden crear lecciones desde sus clases.'}
             </p>
           </div>
@@ -186,8 +213,8 @@ export default function AcademyLessonsPage() {
                 <span className="text-blue-700"> total</span>
               </div>
               <div>
-                <span className="font-semibold text-blue-900">{uniqueTeachers.length}</span>
-                <span className="text-blue-700"> profesor{uniqueTeachers.length !== 1 ? 'es' : ''}</span>
+                <span className="font-semibold text-blue-900">{uniqueClasses.length}</span>
+                <span className="text-blue-700"> clase{uniqueClasses.length !== 1 ? 's' : ''}</span>
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 
 interface Teacher {
@@ -18,6 +19,8 @@ interface Class {
   teacherName: string | null;
   teacherEmail: string | null;
   teacherId: string | null;
+  teacherFirstName?: string;
+  teacherLastName?: string;
   studentCount: number;
   videoCount: number;
   lessonCount: number;
@@ -47,19 +50,23 @@ export default function AcademyClassesPage() {
       ]);
       
       if (classesRes.ok) {
-        const data = await classesRes.json();
-        setClasses(data);
+        const json = await classesRes.json();
+        // API returns { success: true, data: [...] }
+        const data = json.success && json.data ? json.data : json;
+        setClasses(Array.isArray(data) ? data : []);
       }
       
       if (teachersRes.ok) {
-        const teacherData = await teachersRes.json();
-        setTeachers(teacherData.map((t: any) => ({
+        const json = await teachersRes.json();
+        // API returns { success: true, data: [...] }
+        const teacherData = json.success && json.data ? json.data : json;
+        setTeachers(Array.isArray(teacherData) ? teacherData.map((t: any) => ({
           id: t.id,
           userId: t.id, // The teacher user id
           firstName: t.name?.split(' ')[0] || '',
           lastName: t.name?.split(' ').slice(1).join(' ') || '',
           email: t.email
-        })));
+        })) : []);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -162,19 +169,7 @@ export default function AcademyClassesPage() {
           </button>
         </div>
 
-        {teachers.length === 0 && !loading && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <div>
-                <p className="font-medium text-amber-800">No tienes profesores</p>
-                <p className="text-sm text-amber-700">Debes crear al menos un profesor antes de poder crear clases.</p>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {loading ? (
           <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
@@ -203,8 +198,9 @@ export default function AcademyClassesPage() {
         ) : (
           <div className="space-y-4">
             {classes.map((cls) => (
-              <div
+              <Link
                 key={cls.id}
+                href={`/dashboard/academy/class/${cls.id}`}
                 className="block bg-white rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:shadow-xl transition-all p-6 group"
               >
                 <div className="flex items-start justify-between">
@@ -223,7 +219,12 @@ export default function AcademyClassesPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                       <span className="font-medium">Profesor:</span>
-                      <span>{cls.teacherName || 'Sin asignar'}</span>
+                      <span>
+                        {cls.teacherFirstName && cls.teacherLastName 
+                          ? `${cls.teacherFirstName} ${cls.teacherLastName}` 
+                          : 'Sin asignar'
+                        }
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-6 text-sm text-gray-500">
@@ -254,7 +255,11 @@ export default function AcademyClassesPage() {
                     </div>
                   </div>
                   <button
-                    onClick={() => openEditModal(cls)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openEditModal(cls);
+                    }}
                     className="ml-4 p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     title="Editar clase"
                   >
@@ -263,7 +268,7 @@ export default function AcademyClassesPage() {
                     </svg>
                   </button>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}

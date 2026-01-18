@@ -29,11 +29,11 @@ bunny.post('/video/create', async (c) => {
   try {
     const session = await requireAuth(c);
 
-    if (!['ADMIN', 'TEACHER'].includes(session.role)) {
+    if (!['ADMIN', 'TEACHER', 'ACADEMY'].includes(session.role)) {
       return c.json(errorResponse('Not authorized'), 403);
     }
 
-    const { title } = await c.req.json();
+    const { title, collectionName, fileName } = await c.req.json();
 
     if (!title) {
       return c.json(errorResponse('title required'), 400);
@@ -42,14 +42,45 @@ bunny.post('/video/create', async (c) => {
     const apiKey = c.env.BUNNY_STREAM_API_KEY;
     const libraryId = c.env.BUNNY_STREAM_LIBRARY_ID;
 
+    // If collectionName provided, get or create the collection
+    let collectionId: string | undefined;
+    if (collectionName) {
+      try {
+        // Get existing collections
+        const listResponse = await bunnyApi(`/library/${libraryId}/collections`, {}, apiKey);
+        const existing = (listResponse.items || []).find((c: any) => c.name === collectionName);
+        
+        if (existing) {
+          collectionId = existing.guid;
+        } else {
+          // Create new collection
+          const newCollection = await bunnyApi(`/library/${libraryId}/collections`, {
+            method: 'POST',
+            body: JSON.stringify({ name: collectionName }),
+          }, apiKey);
+          collectionId = newCollection.guid;
+        }
+      } catch (error: any) {
+        console.error('[Bunny Collection] Failed to get/create collection:', error);
+        // Continue without collection if it fails
+      }
+    }
+
+    // Prepare video creation payload
+    const payload: any = { title };
+    if (collectionId) {
+      payload.collectionId = collectionId;
+    }
+
     const video = await bunnyApi(`/library/${libraryId}/videos`, {
       method: 'POST',
-      body: JSON.stringify({ title }),
+      body: JSON.stringify(payload),
     }, apiKey);
 
     return c.json(successResponse({
       videoGuid: video.guid,
       title: video.title,
+      collectionId: collectionId || null,
       uploadUrl: `https://video.bunnycdn.com/library/${libraryId}/videos/${video.guid}`,
     }));
   } catch (error: any) {
@@ -217,5 +248,53 @@ bunny.get('/video/:guid/stream', async (c) => {
     return c.json(errorResponse(error.message || 'Failed to generate stream URL'), 500);
   }
 });
+
+// GET /bunny/video/:videoGuid - Get video info
+bunny.get('/video/:videoGuid', async (c) => {
+  try {
+    const session = await requireAuth(c);
+    const { videoGuid } = c.req.param();
+
+    if (!videoGuid) {
+      return c.json(errorResponse('videoGuid required'), 400);
+    }
+
+    const apiKey = c.env.BUNNY_STREAM_API_KEY;
+    const libraryId = c.env.BUNNY_STREAM_LIBRARY_ID;
+
+    const video = await bunnyApi(`/library/${libraryId}/videos/${videoGuid}`, {}, apiKey);
+
+    return c.json(successResponse({
+      guid: video.guid,
+      title: video.title,
+      status: video.status,
+      statusText: getStatusText(video.status),
+      isReady: video.status === 4,
+      duration: video.length,
+      thumbnailFileName: video.thumbnailFileName,
+      availableResolutions: video.availableResolutions,
+    }));
+  } catch (error: any) {
+    console.error('[Bunny Get Video] Error:', error);
+    // Return 404 if video doesn't exist
+    if (error.message?.includes('404') || error.message?.includes('not found')) {
+      return c.json(errorResponse('Video not found'), 404);
+    }
+    return c.json(errorResponse(error.message || 'Failed to get video'), 500);
+  }
+});
+
+// Helper to get human-readable status text
+function getStatusText(status: number): string {
+  switch (status) {
+    case 0: return 'Created';
+    case 1: return 'Uploaded';
+    case 2: return 'Processing';
+    case 3: return 'Transcoding';
+    case 4: return 'Ready';
+    case 5: return 'Error';
+    default: return 'Unknown';
+  }
+}
 
 export default bunny;

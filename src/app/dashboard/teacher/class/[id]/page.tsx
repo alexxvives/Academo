@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { multipartUpload } from '@/lib/multipart-upload';
 import { uploadToBunny } from '@/lib/bunny-upload';
 import { getBunnyThumbnailUrl } from '@/lib/bunny-stream';
+import ConfirmModal from '@/components/ConfirmModal';
 
 // Import components
 import ClassHeader from './components/ClassHeader';
@@ -123,7 +124,7 @@ export default function TeacherClassPage() {
     topicId: '' as string,
     videos: [] as { file: File; title: string; description: string; duration: number }[],
     documents: [] as { file: File; title: string; description: string }[],
-    selectedStreamRecording: '' as string,
+    selectedStreamRecordings: [] as string[],
   });
   const [availableStreamRecordings, setAvailableStreamRecordings] = useState<Array<{id: string; title: string; createdAt: string}>>([]);
 
@@ -135,6 +136,14 @@ export default function TeacherClassPage() {
   // Pending Enrollments
   const [pendingEnrollments, setPendingEnrollments] = useState<any[]>([]);
   const [showPendingRequests, setShowPendingRequests] = useState(false);
+
+  // Hide Confirmation
+  const [lessonToHide, setLessonToHide] = useState<Lesson | null>(null);
+  const [showHideConfirm, setShowHideConfirm] = useState(false);
+  
+  // Show Confirmation
+  const [lessonToShow, setLessonToShow] = useState<Lesson | null>(null);
+  const [showShowConfirm, setShowShowConfirm] = useState(false);
 
   // Live Classes (Zoom)
   const [showStreamModal, setShowStreamModal] = useState(false);
@@ -208,10 +217,29 @@ export default function TeacherClassPage() {
 
   // Handle action param for create lesson modal
   useEffect(() => {
-    if (actionParam === 'create') {
+    if (actionParam === 'create' || actionParam === 'create-lesson') {
+      const recordingId = searchParams.get('recordingId');
+      const streamTitle = searchParams.get('streamTitle');
+      
       setShowLessonForm(true);
       setEditingLessonId(null);
-      loadAvailableStreamRecordings();
+      loadAvailableStreamRecordings().then((recordings) => {
+        // If recordingId and streamTitle are provided, find the stream by recordingId and pre-select it
+        if (recordingId && streamTitle && recordings) {
+          // Find the stream that has this recordingId
+          const matchingStream = recordings.find((r: any) => r.recordingId === recordingId);
+          if (matchingStream) {
+            console.log('[Debug] Found matching stream:', matchingStream);
+            setLessonFormData(prev => ({
+              ...prev,
+              selectedStreamRecording: matchingStream.id, // Use stream.id as the value
+              title: decodeURIComponent(streamTitle),
+            }));
+          } else {
+            console.log('[Debug] No matching stream found for recordingId:', recordingId);
+          }
+        }
+      });
     }
   }, [actionParam]);
 
@@ -241,10 +269,12 @@ export default function TeacherClassPage() {
         });
         console.log('[Debug] Filtered recordings:', recordingsForClass);
         setAvailableStreamRecordings(recordingsForClass);
+        return recordingsForClass; // Return the recordings for the useEffect
       }
     } catch (error) {
       console.error('Error loading stream recordings:', error);
     }
+    return null;
   };
 
   // Warn user when trying to close/refresh browser during upload
@@ -507,6 +537,7 @@ export default function TeacherClassPage() {
       const result = await uploadToBunny({
         file: video.file,
         title: video.title || video.file.name,
+        collectionName: classData?.academy?.name, // Use academy name for collection
         onProgress: (progress) => {
           const fileProgress = progress.loaded;
           const totalUploaded = uploadedSize + fileProgress;
@@ -599,13 +630,13 @@ export default function TeacherClassPage() {
     e.preventDefault();
     
     // Check if using stream recording
-    if (lessonFormData.selectedStreamRecording) {
+    if (lessonFormData.selectedStreamRecordings.length > 0) {
       try {
         const response = await apiClient('/live/create-lesson', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            streamId: lessonFormData.selectedStreamRecording,
+            streamId: lessonFormData.selectedStreamRecordings[0], // Use first selected recording
             title: lessonFormData.title || undefined,
             description: lessonFormData.description || undefined,
             releaseDate: lessonFormData.publishImmediately ? undefined : `${lessonFormData.releaseDate}T${lessonFormData.releaseTime}:00`,
@@ -627,7 +658,7 @@ export default function TeacherClassPage() {
             topicId: '',
             videos: [],
             documents: [],
-            selectedStreamRecording: '',
+            selectedStreamRecordings: [],
           });
           await loadData(); // Reload all data including lessons
         } else {
@@ -717,12 +748,25 @@ export default function TeacherClassPage() {
         setLessonFormData({
           title: '', description: '', externalUrl: '', releaseDate: new Date().toISOString().split('T')[0],
           releaseTime: '00:00', publishImmediately: true,
-          maxWatchTimeMultiplier: 2.0, watermarkIntervalMins: 5, topicId: '', videos: [], documents: [], selectedStreamRecording: ''
+          maxWatchTimeMultiplier: 2.0, watermarkIntervalMins: 5, topicId: '', videos: [], documents: [], selectedStreamRecordings: []
         });
         setUploadProgress(0);
         
         // Show success message
-        alert('✅ Lección creada exitosamente');
+        // Show custom success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3 animate-slide-in-from-top';
+        notification.innerHTML = `
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="font-semibold">Lección creada exitosamente</span>
+        `;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+          notification.style.animation = 'slideOut 0.3s ease-in';
+          setTimeout(() => notification.remove(), 300);
+        }, 3000);
         await loadData();
       } else {
         // Remove temp lesson on error
@@ -752,6 +796,46 @@ export default function TeacherClassPage() {
       else alert(result.error || 'Failed to delete');
     } catch (e) {
       alert('Error occurred');
+    }
+  };
+
+  const executeToggleRelease = async (lesson: Lesson, setHidden: boolean) => {
+    try {
+      const newReleaseDate = setHidden 
+        ? '2099-12-31T23:59:59Z' 
+        : new Date().toISOString();
+        
+      const res = await apiClient(`/lessons/${lesson.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          releaseDate: newReleaseDate,
+          resetTimers: false
+        }),
+      });
+      
+      const result = await res.json();
+      if (result.success) {
+        setLessons(prev => prev.map(l => 
+          l.id === lesson.id ? { ...l, releaseDate: newReleaseDate } : l
+        ));
+      } else {
+        alert(result.error || 'Error al cambiar visibilidad');
+      }
+    } catch (e) {
+      console.error('Error toggling release:', e);
+      alert('Error al cambiar visibilidad');
+    }
+  };
+
+  const handleToggleRelease = async (lesson: Lesson) => {
+    const isReleasedNow = new Date(lesson.releaseDate) <= new Date();
+    if (isReleasedNow) {
+      setLessonToHide(lesson);
+      setShowHideConfirm(true);
+    } else {
+      setLessonToShow(lesson);
+      setShowShowConfirm(true);
     }
   };
 
@@ -787,11 +871,18 @@ export default function TeacherClassPage() {
     
     try {
       const releaseDateTime = `${newDate}T${newTime}:00`;
+      const newReleaseDate = new Date(releaseDateTime);
+      const oldReleaseDate = new Date(reschedulingLesson.releaseDate);
+      
+      // Check if moving to future (new date is after old date)
+      const movingToFuture = newReleaseDate > oldReleaseDate;
+      
       const res = await apiClient(`/lessons/${reschedulingLesson.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          releaseDate: new Date(releaseDateTime).toISOString(),
+          releaseDate: newReleaseDate.toISOString(),
+          resetTimers: movingToFuture, // Signal backend to reset timers
         }),
       });
       const result = await res.json();
@@ -799,6 +890,10 @@ export default function TeacherClassPage() {
         setShowRescheduleModal(false);
         setReschedulingLesson(null);
         loadData();
+        
+        if (movingToFuture) {
+          alert('Lección reprogramada. Los tiempos de visualización de todos los estudiantes han sido reiniciados.');
+        }
       } else {
         alert(result.error || 'Failed to reschedule lesson');
       }
@@ -914,7 +1009,7 @@ export default function TeacherClassPage() {
         topicId: detail.topicId || '',
         videos: [],
         documents: [],
-        selectedStreamRecording: '',
+        selectedStreamRecordings: [],
       });
       setEditingLessonId(lesson.id);
       setShowLessonForm(true);
@@ -949,17 +1044,17 @@ export default function TeacherClassPage() {
       }
       
       // If there are new files to upload, handle them
-      if (lessonFormData.videos.length > 0 || lessonFormData.documents.length > 0 || lessonFormData.selectedStreamRecording) {
+      if (lessonFormData.videos.length > 0 || lessonFormData.documents.length > 0 || lessonFormData.selectedStreamRecordings.length > 0) {
         setUploading(true);
         const abortController = new AbortController();
         
         try {
           // Handle Stream Recording if selected
-          if (lessonFormData.selectedStreamRecording) {
+          if (lessonFormData.selectedStreamRecordings.length > 0) {
             const streamRes = await apiClient(`/lessons/${editingLessonId}/add-stream`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ streamId: lessonFormData.selectedStreamRecording }),
+              body: JSON.stringify({ streamId: lessonFormData.selectedStreamRecordings[0] }), // Use first selected
             });
             const streamResult = await streamRes.json();
             if (!streamResult.success) {
@@ -997,7 +1092,7 @@ export default function TeacherClassPage() {
       setLessonFormData({
         title: '', description: '', externalUrl: '', releaseDate: new Date().toISOString().split('T')[0],
         releaseTime: '00:00', publishImmediately: true,
-        maxWatchTimeMultiplier: 2.0, watermarkIntervalMins: 5, topicId: '', videos: [], documents: [], selectedStreamRecording: ''
+        maxWatchTimeMultiplier: 2.0, watermarkIntervalMins: 5, topicId: '', videos: [], documents: [], selectedStreamRecordings: []
       });
       setEditingLessonId(null);
       setEditingLessonMedia(null);
@@ -1109,7 +1204,7 @@ export default function TeacherClassPage() {
             </div>
 
             {/* Video Player and Documents Side by Side */}
-            <div className="flex gap-6 items-start">
+            <div className="flex gap-6 items-start mt-6">
               {/* Video Player - Left Side */}
               <div className="flex-1 min-w-0 max-w-3xl">
                 <h3 className="font-semibold text-gray-900 mb-3 text-lg text-center">VIDEOS</h3>
@@ -1200,7 +1295,7 @@ export default function TeacherClassPage() {
             {/* Feedback Section - Full Width Below */}
             <div className="pt-6">
               <h3 className="font-semibold text-gray-900 mb-3 text-lg text-center">FEEDBACK</h3>
-              <div className="bg-emerald-50/50 backdrop-blur-md rounded-xl border border-emerald-100 p-6 animate-in slide-in-from-top-2 shadow-sm">
+              <div className="rounded-xl border border-gray-200 p-6 animate-in slide-in-from-top-2 shadow-sm">
                 <div>
                 {lessonFeedback.filter(f => f.comment && f.comment.trim().length > 0).length > 0 ? (
                   <div className="space-y-4">
@@ -1211,7 +1306,7 @@ export default function TeacherClassPage() {
                       const partialFill = remainder >= 0.875 ? 1 : remainder >= 0.625 ? 0.75 : remainder >= 0.375 ? 0.5 : remainder >= 0.125 ? 0.25 : 0;
                       
                       return (
-                        <div key={feedback.id} className="bg-white/60 border border-emerald-100 rounded-lg p-4 hover:border-emerald-300 transition-all">
+                        <div key={feedback.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-all shadow-sm">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-2">
                               <div className="flex items-center gap-0.5">
@@ -1272,7 +1367,8 @@ export default function TeacherClassPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="relative flex h-3 w-3">
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-gray-400"></span>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
                     </span>
                     <div>
                       <p className="font-semibold text-gray-900">{liveClasses[0].title}</p>
@@ -1404,23 +1500,22 @@ export default function TeacherClassPage() {
                           placeholder="Título de la lección"
                         />
                       </div>
-                      {/* Topic Selector - show in edit mode, Publish options in create mode */}
-                      {editingLessonId ? (
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Tema (opcional)</label>
-                          <select
-                            value={lessonFormData.topicId}
-                            onChange={e => setLessonFormData({ ...lessonFormData, topicId: e.target.value })}
-                            className="w-full h-[38px] px-3 py-2 pr-10 border border-gray-200 rounded-lg text-sm bg-white appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20fill%3D%27none%27%20viewBox%3D%270%200%2020%2020%27%3E%3Cpath%20stroke%3D%27%236b7280%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%20stroke-width%3D%271.5%27%20d%3D%27M6%208l4%204%204-4%27%2F%3E%3C%2Fsvg%3E')] bg-[length:1.5em] bg-[right_0.5rem_center] bg-no-repeat"
-                          >
-                            <option value="">Sin tema</option>
-                            {topics.map(topic => (
-                              <option key={topic.id} value={topic.id}>{topic.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                      ) : (
-                      /* Publish options - Only for CREATE mode */
+                      {/* Topic Selector - show in BOTH create and edit modes */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Tema (opcional)</label>
+                        <select
+                          value={lessonFormData.topicId}
+                          onChange={e => setLessonFormData({ ...lessonFormData, topicId: e.target.value })}
+                          className="w-full h-[38px] px-3 py-2 pr-10 border border-gray-200 rounded-lg text-sm bg-white appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20fill%3D%27none%27%20viewBox%3D%270%200%2020%2020%27%3E%3Cpath%20stroke%3D%27%236b7280%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%20stroke-width%3D%271.5%27%20d%3D%27M6%208l4%204%204-4%27%2F%3E%3C%2Fsvg%3E')] bg-[length:1.5em] bg-[right_0.5rem_center] bg-no-repeat"
+                        >
+                          <option value="">Sin tema</option>
+                          {topics.map(topic => (
+                            <option key={topic.id} value={topic.id}>{topic.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {/* Publish options - Only for CREATE mode */}
+                      {!editingLessonId && (
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-2">Publicación</label>
                           <div className="flex gap-2">
@@ -1535,12 +1630,12 @@ export default function TeacherClassPage() {
                           accept="video/mp4" 
                           multiple 
                           onChange={e => { if (e.target.files) Array.from(e.target.files).forEach(addVideoToForm); e.target.value = ''; }} 
-                          className="w-full h-[38px] px-3 py-2 pr-10 border border-gray-200 rounded-lg text-sm bg-white appearance-none mb-1"
+                          className="w-full h-[38px] px-3 py-2 pr-10 border border-gray-200 rounded-lg text-sm bg-white appearance-none"
                         />
                         {lessonFormData.videos.length > 0 && (
                           <div className="mt-2 space-y-2">
                             {lessonFormData.videos.map((v, i) => (
-                              <div key={i} className="relative p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                              <div key={i} className="relative p-3 border border-blue-200 rounded-lg">
                                 <div className="absolute top-1/2 -translate-y-1/2 left-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center animate-[scale-in_0.3s_ease-out]">
                                   <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -1552,7 +1647,7 @@ export default function TeacherClassPage() {
                                 <button 
                                   type="button" 
                                   onClick={() => setLessonFormData({ ...lessonFormData, videos: lessonFormData.videos.filter((_, j) => j !== i) })} 
-                                  className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-100 rounded transition-colors"
+                                  className="absolute top-1/2 -translate-y-1/2 right-2 w-5 h-5 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-100 rounded transition-colors"
                                   title="Eliminar video"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1566,36 +1661,61 @@ export default function TeacherClassPage() {
                       </div>
                       
                       {/* Stream Recording Selection */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">O utiliza una grabación de stream</label>
-                        <select 
-                          value={lessonFormData.selectedStreamRecording}
-                          onChange={e => setLessonFormData({ ...lessonFormData, selectedStreamRecording: e.target.value })}
-                          className="w-full h-[38px] px-3 py-2 pr-10 border border-gray-200 rounded-lg text-sm bg-white appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20fill%3D%27none%27%20viewBox%3D%270%200%2020%2020%27%3E%3Cpath%20stroke%3D%27%236b7280%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%20stroke-width%3D%271.5%27%20d%3D%27M6%208l4%204%204-4%27%2F%3E%3C%2Fsvg%3E')] bg-[length:1.5em] bg-[right_0.5rem_center] bg-no-repeat"
-                          style={{ paddingRight: '2.5rem' }}
-                          disabled={availableStreamRecordings.length === 0}
-                        >
-                          <option value="">
-                            {availableStreamRecordings.length === 0 
-                              ? '-- No hay grabaciones disponibles --' 
-                              : '-- Selecciona una grabación --'}
-                          </option>
-                          {availableStreamRecordings.map(recording => (
-                            <option key={recording.id} value={recording.id}>
-                              {recording.title} ({new Date(recording.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})
-                            </option>
-                          ))}
-                        </select>
+                      <div className="relative">
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">O utiliza grabación(es) de stream</label>
+                        <details className="w-full border border-gray-200 rounded-lg text-sm bg-white">
+                          <summary className="px-3 py-2 cursor-pointer hover:bg-gray-50 rounded-lg flex items-center justify-between">
+                            <span>
+                              {lessonFormData.selectedStreamRecordings.length > 0 
+                                ? `${lessonFormData.selectedStreamRecordings.length} grabación(es) seleccionada(s)` 
+                                : availableStreamRecordings.length === 0 
+                                  ? 'No hay grabaciones disponibles' 
+                                  : 'Seleccionar grabaciones'}
+                            </span>
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </summary>
+                          <div className="absolute left-0 right-0 mt-1 px-3 py-2 max-h-[200px] overflow-y-auto border border-gray-200 rounded-lg bg-white shadow-lg z-50">
+                            {availableStreamRecordings.length === 0 ? (
+                              <p className="text-gray-500 text-sm py-1">No hay grabaciones disponibles</p>
+                            ) : (
+                              <div className="space-y-2">
+                                {availableStreamRecordings.map(recording => (
+                                  <label key={recording.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                    <input
+                                      type="checkbox"
+                                      checked={lessonFormData.selectedStreamRecordings.includes(recording.id)}
+                                      onChange={e => {
+                                        const checked = e.target.checked;
+                                        setLessonFormData({
+                                          ...lessonFormData,
+                                          selectedStreamRecordings: checked
+                                            ? [...lessonFormData.selectedStreamRecordings, recording.id]
+                                            : lessonFormData.selectedStreamRecordings.filter(id => id !== recording.id)
+                                        });
+                                      }}
+                                      className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
+                                    />
+                                    <span className="text-sm text-gray-700 flex-1">
+                                      {recording.title} ({new Date(recording.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </details>
                       </div>
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">Documentos (PDF)</label>
-                      <input type="file" accept=".pdf" multiple onChange={e => { if (e.target.files) Array.from(e.target.files).forEach(addDocumentToForm); e.target.value = ''; }} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"/>
+                      <input type="file" accept=".pdf" multiple onChange={e => { if (e.target.files) Array.from(e.target.files).forEach(addDocumentToForm); e.target.value = ''; }} className="w-full h-[38px] px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white appearance-none"/>
                       {lessonFormData.documents.length > 0 && (
                         <div className="mt-2 space-y-2">
                           {lessonFormData.documents.map((d, i) => (
-                            <div key={i} className="relative p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <div key={i} className="relative p-3 border border-red-200 rounded-lg">
                               <div className="absolute top-1/2 -translate-y-1/2 left-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center animate-[scale-in_0.3s_ease-out]">
                                 <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -1607,7 +1727,7 @@ export default function TeacherClassPage() {
                               <button 
                                 type="button" 
                                 onClick={() => setLessonFormData({ ...lessonFormData, documents: lessonFormData.documents.filter((_, j) => j !== i) })} 
-                                className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-100 rounded transition-colors"
+                                className="absolute top-1/2 -translate-y-1/2 right-2 w-5 h-5 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-100 rounded transition-colors"
                                 title="Eliminar documento"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1767,26 +1887,51 @@ export default function TeacherClassPage() {
                             </div>
                           </div>
                           
-                          <div className="mt-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">O utiliza una grabación de stream</label>
-                            <select 
-                              value={lessonFormData.selectedStreamRecording}
-                              onChange={e => setLessonFormData({ ...lessonFormData, selectedStreamRecording: e.target.value })}
-                              className="w-full h-[38px] px-3 py-2 pr-10 border border-gray-200 rounded-lg text-sm bg-white appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20fill%3D%27none%27%20viewBox%3D%270%200%2020%2020%27%3E%3Cpath%20stroke%3D%27%236b7280%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%20stroke-width%3D%271.5%27%20d%3D%27M6%208l4%204%204-4%27%2F%3E%3C%2Fsvg%3E')] bg-[length:1.5em] bg-[right_0.5rem_center] bg-no-repeat"
-                              style={{ paddingRight: '2.5rem' }}
-                              disabled={availableStreamRecordings.length === 0}
-                            >
-                              <option value="">
-                                {availableStreamRecordings.length === 0 
-                                  ? '-- No hay grabaciones disponibles --' 
-                                  : '-- Selecciona una grabación --'}
-                              </option>
-                              {availableStreamRecordings.map(recording => (
-                                <option key={recording.id} value={recording.id}>
-                                  {recording.title} ({new Date(recording.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})
-                                </option>
-                              ))}
-                            </select>
+                          <div className="mt-4 relative">
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">O utiliza grabación(es) de stream</label>
+                            <details className="w-full border border-gray-200 rounded-lg text-sm bg-white">
+                              <summary className="px-3 py-2 cursor-pointer hover:bg-gray-50 rounded-lg flex items-center justify-between">
+                                <span>
+                                  {lessonFormData.selectedStreamRecordings.length > 0 
+                                    ? `${lessonFormData.selectedStreamRecordings.length} grabación(es) seleccionada(s)` 
+                                    : availableStreamRecordings.length === 0 
+                                      ? 'No hay grabaciones disponibles' 
+                                      : 'Seleccionar grabaciones'}
+                                </span>
+                                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </summary>
+                              <div className="absolute left-0 right-0 mt-1 px-3 py-2 max-h-[200px] overflow-y-auto border border-gray-200 rounded-lg bg-white shadow-lg z-50">
+                                {availableStreamRecordings.length === 0 ? (
+                                  <p className="text-gray-500 text-sm py-1">No hay grabaciones disponibles</p>
+                                ) : (
+                                  <div className="space-y-2">
+                                    {availableStreamRecordings.map(recording => (
+                                      <label key={recording.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                        <input
+                                          type="checkbox"
+                                          checked={lessonFormData.selectedStreamRecordings.includes(recording.id)}
+                                          onChange={e => {
+                                            const checked = e.target.checked;
+                                            setLessonFormData({
+                                              ...lessonFormData,
+                                              selectedStreamRecordings: checked
+                                                ? [...lessonFormData.selectedStreamRecordings, recording.id]
+                                                : lessonFormData.selectedStreamRecordings.filter(id => id !== recording.id)
+                                            });
+                                          }}
+                                          className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
+                                        />
+                                        <span className="text-sm text-gray-700 flex-1">
+                                          {recording.title} ({new Date(recording.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})
+                                        </span>
+                                      </label>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </details>
                           </div>
                         </div>
                       </div>
@@ -1878,6 +2023,7 @@ export default function TeacherClassPage() {
                 onRescheduleLesson={handleRescheduleLesson}
                 onTopicsChange={loadData}
                 onLessonMove={handleLessonMove}
+                onToggleRelease={handleToggleRelease}
               />
             )}
 
@@ -1941,6 +2087,48 @@ export default function TeacherClassPage() {
             )}
           </>
         )}
+
+        {/* Hide Lesson Confirmation */}
+        <ConfirmModal
+            isOpen={showHideConfirm}
+            title="Ocultar lección"
+            message={`¿Estás seguro de que deseas ocultar la lección "${lessonToHide?.title}"? Los estudiantes perderán el acceso inmediatamente.`}
+            confirmText="Ocultar lección"
+            cancelText="Cancelar"
+            type="warning"
+            onConfirm={() => {
+                if (lessonToHide) {
+                    executeToggleRelease(lessonToHide, true);
+                    setShowHideConfirm(false);
+                    setLessonToHide(null);
+                }
+            }}
+            onCancel={() => {
+                setShowHideConfirm(false);
+                setLessonToHide(null);
+            }}
+        />
+
+        {/* Show Lesson Confirmation */}
+        <ConfirmModal
+            isOpen={showShowConfirm}
+            title="Publicar lección"
+            message={`¿Estás seguro de que deseas publicar la lección "${lessonToShow?.title}"? Los estudiantes tendrán acceso inmediatamente.`}
+            confirmText="Publicar lección"
+            cancelText="Cancelar"
+            type="info"
+            onConfirm={() => {
+                if (lessonToShow) {
+                    executeToggleRelease(lessonToShow, false);
+                    setShowShowConfirm(false);
+                    setLessonToShow(null);
+                }
+            }}
+            onCancel={() => {
+                setShowShowConfirm(false);
+                setLessonToShow(null);
+            }}
+        />
 
         {/* Custom Stream Name Modal */}
         {showStreamNameModal && (

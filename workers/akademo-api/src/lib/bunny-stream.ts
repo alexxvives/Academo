@@ -44,6 +44,50 @@ export interface CreateVideoResponse {
 }
 
 // Create a new video entry in Bunny Stream (before uploading)
+// Get or create a collection by name (for organizing videos by academy)
+export async function getOrCreateCollection(collectionName: string): Promise<string> {
+  const config = getConfig();
+  
+  // First, try to get existing collections
+  const listResponse = await fetch(
+    `${BUNNY_API_BASE}/library/${config.BUNNY_STREAM_LIBRARY_ID}/collections`,
+    {
+      headers: {
+        'AccessKey': config.BUNNY_STREAM_API_KEY,
+      },
+    }
+  );
+
+  if (listResponse.ok) {
+    const collections = await listResponse.json();
+    const existing = (collections.items || []).find((c: any) => c.name === collectionName);
+    if (existing) {
+      return existing.guid;
+    }
+  }
+
+  // Collection doesn't exist, create it
+  const createResponse = await fetch(
+    `${BUNNY_API_BASE}/library/${config.BUNNY_STREAM_LIBRARY_ID}/collections`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'AccessKey': config.BUNNY_STREAM_API_KEY,
+      },
+      body: JSON.stringify({ name: collectionName }),
+    }
+  );
+
+  if (!createResponse.ok) {
+    const error = await createResponse.text();
+    throw new Error(`Failed to create collection: ${error}`);
+  }
+
+  const newCollection = await createResponse.json();
+  return newCollection.guid;
+}
+
 export async function createBunnyVideo(title: string, collectionId?: string): Promise<CreateVideoResponse> {
   const config = getConfig();
   

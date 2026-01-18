@@ -162,6 +162,100 @@ videos.post('/progress/reset', async (c) => {
   }
 });
 
+// POST /videos/progress/admin-update - Admin/teacher endpoint to update student video time
+videos.post('/progress/admin-update', async (c) => {
+  try {
+    const session = await requireAuth(c);
+    const { studentId, videoId, totalWatchTimeSeconds } = await c.req.json();
+
+    if (!['ADMIN', 'TEACHER', 'ACADEMY'].includes(session.role)) {
+      return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    if (!studentId || !videoId || totalWatchTimeSeconds === undefined) {
+      return c.json(errorResponse('studentId, videoId, and totalWatchTimeSeconds required'), 400);
+    }
+
+    // Get video and lesson details to check authorization
+    const video = await c.env.DB
+      .prepare(`
+        SELECT v.*, l.classId, l.maxWatchTimeMultiplier, c.teacherId, a.ownerId
+        FROM Video v
+        JOIN Lesson l ON v.lessonId = l.id
+        JOIN Class c ON l.classId = c.id
+        JOIN Academy a ON c.academyId = a.id
+        WHERE v.id = ?
+      `)
+      .bind(videoId)
+      .first() as any;
+
+    if (!video) {
+      return c.json(errorResponse('Video not found'), 404);
+    }
+
+    // Check authorization
+    if (session.role === 'TEACHER' && video.teacherId !== session.id) {
+      return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    if (session.role === 'ACADEMY' && video.ownerId !== session.id) {
+      return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    // Check if play state exists
+    const existing = await c.env.DB
+      .prepare('SELECT * FROM VideoPlayState WHERE videoId = ? AND studentId = ?')
+      .bind(videoId, studentId)
+      .first() as any;
+
+    const maxWatchTime = (video.durationSeconds || 0) * (video.maxWatchTimeMultiplier || 2);
+    const newStatus = totalWatchTimeSeconds >= maxWatchTime ? 'BLOCKED' : 'ACTIVE';
+    const now = new Date().toISOString();
+
+    if (existing) {
+      // Update existing
+      await c.env.DB
+        .prepare(`
+          UPDATE VideoPlayState 
+          SET totalWatchTimeSeconds = ?,
+              status = ?,
+              updatedAt = ?
+          WHERE id = ?
+        `)
+        .bind(totalWatchTimeSeconds, newStatus, now, existing.id)
+        .run();
+    } else {
+      // Create new play state
+      const playStateId = crypto.randomUUID();
+      await c.env.DB
+        .prepare(`
+          INSERT INTO VideoPlayState (
+            id, videoId, studentId, totalWatchTimeSeconds, lastPositionSeconds,
+            sessionStartTime, lastWatchedAt, createdAt, updatedAt, status
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `)
+        .bind(
+          playStateId,
+          videoId,
+          studentId,
+          totalWatchTimeSeconds,
+          0,
+          now,
+          now,
+          now,
+          now,
+          newStatus
+        )
+        .run();
+    }
+
+    return c.json(successResponse({ message: 'Time updated successfully' }));
+  } catch (error: any) {
+    console.error('[Admin Update Time] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
 // GET /videos/:id - Get video details
 videos.get('/:id', async (c) => {
   try {

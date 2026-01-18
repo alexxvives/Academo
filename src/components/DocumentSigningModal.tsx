@@ -137,7 +137,7 @@ export default function DocumentSigningModal({
             </div>
             <span className="text-gray-700 group-hover:text-gray-900 transition-colors">
               <span className="text-sm text-gray-600">
-                Me comprometo a no compartir, difundir, reproducir, copiar, comunicar públicamente ni permitir el acceso a terceros a ningún contenido de la plataforma (vídeos, audios, textos, PDFs, enlaces, imágenes u otro material didáctico). Tampoco compartiré mi cuenta con otras personas.
+                Me comprometo a no <strong className="font-semibold text-gray-900">compartir</strong> ni permitir el acceso a terceros a <strong className="font-semibold text-gray-900">ningún contenido</strong> de la plataforma (vídeos, audios, textos, PDFs, enlaces, imágenes u otro material didáctico). Tampoco <strong className="font-semibold text-gray-900">compartiré mi cuenta</strong> con otras personas.
               </span>
             </span>
           </label>

@@ -46,6 +46,7 @@ interface TopicsLessonsListProps {
   onRescheduleLesson: (lesson: Lesson) => void;
   onTopicsChange: () => void;
   onLessonMove: (lessonId: string, topicId: string | null) => void;
+  onToggleRelease: (lesson: Lesson) => void;
 }
 
 export default function TopicsLessonsList({
@@ -59,6 +60,7 @@ export default function TopicsLessonsList({
   onRescheduleLesson,
   onTopicsChange,
   onLessonMove,
+  onToggleRelease,
 }: TopicsLessonsListProps) {
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
   const [draggedLesson, setDraggedLesson] = useState<string | null>(null);
@@ -68,6 +70,22 @@ export default function TopicsLessonsList({
   const [creatingTopic, setCreatingTopic] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollAnimationRef = useRef<number | null>(null);
+  
+  // Student time management modal
+  const [showTimeModal, setShowTimeModal] = useState(false);
+  const [selectedLessonForTime, setSelectedLessonForTime] = useState<Lesson | null>(null);
+  const [isLoadingStudentTimes, setIsLoadingStudentTimes] = useState(false);
+  const [studentTimesData, setStudentTimesData] = useState<Array<{
+    studentId: string;
+    studentName: string;
+    videos: Array<{
+      videoId: string;
+      videoTitle: string;
+      totalWatchTimeSeconds: number;
+      maxWatchTimeSeconds: number;
+      status: string;
+    }>;
+  }>>([]);
 
   // Auto-scroll while dragging near edges
   const handleDragScroll = useCallback((clientY: number) => {
@@ -221,6 +239,53 @@ export default function TopicsLessonsList({
       console.error('Failed to delete topic:', error);
     }
   };
+  
+  const handleManageStudentTimes = async (lesson: Lesson) => {
+    setSelectedLessonForTime(lesson);
+    setShowTimeModal(true);
+    setIsLoadingStudentTimes(true);
+    setStudentTimesData([]);
+    
+    try {
+      // Load student times for this lesson
+      const res = await apiClient(`/lessons/${lesson.id}/student-times`);
+      const result = await res.json();
+      if (result.success) {
+        setStudentTimesData(result.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to load student times:', error);
+      alert('Error al cargar tiempos de estudiantes');
+    } finally {
+      setIsLoadingStudentTimes(false);
+    }
+  };
+  
+  const handleUpdateStudentTime = async (studentId: string, videoId: string, newTimeSeconds: number) => {
+    try {
+      const res = await apiClient(`/videos/progress/admin-update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId,
+          videoId,
+          totalWatchTimeSeconds: newTimeSeconds,
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        // Reload data
+        if (selectedLessonForTime) {
+          await handleManageStudentTimes(selectedLessonForTime);
+        }
+      } else {
+        alert(result.error || 'Error al actualizar tiempo');
+      }
+    } catch (error) {
+      console.error('Failed to update student time:', error);
+      alert('Error al actualizar tiempo');
+    }
+  };
 
   const renderLessonCard = (lesson: Lesson) => {
     const videoCount = lesson.videoCount || 0;
@@ -242,7 +307,7 @@ export default function TopicsLessonsList({
           lesson.isUploading
             ? 'cursor-default'
             : 'hover:border-accent-500 hover:shadow-xl hover:shadow-accent-500/20 cursor-pointer hover:scale-[1.03]'
-        } ${draggedLesson === lesson.id ? 'opacity-50' : ''}`}
+        } ${draggedLesson === lesson.id ? 'opacity-50' : ''} ${!released ? 'opacity-70 grayscale sepia-[.2]' : ''}`}
       >
         <div className="flex flex-col h-full">
           {/* Header with Title and Action Buttons */}
@@ -253,21 +318,32 @@ export default function TopicsLessonsList({
               </h3>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <div className="flex gap-1.5" data-action-buttons>
-                  {/* Reschedule button for unreleased lessons */}
-                  {!released && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRescheduleLesson(lesson);
-                      }}
-                      className="p-2 bg-violet-500/20 text-violet-400 rounded-lg hover:bg-violet-500/30 hover:scale-105 transition-all border border-violet-500/30"
-                      title="Reprogramar"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </button>
-                  )}
+                  {/* Student times management button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleManageStudentTimes(lesson);
+                    }}
+                    className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 hover:scale-105 transition-all border border-blue-500/30"
+                    title="Gestionar tiempos de estudiantes"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                  {/* Reschedule button for all lessons */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRescheduleLesson(lesson);
+                    }}
+                    className="p-2 bg-violet-500/20 text-violet-400 rounded-lg hover:bg-violet-500/30 hover:scale-105 transition-all border border-violet-500/30"
+                    title="Reprogramar"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -316,16 +392,40 @@ export default function TopicsLessonsList({
                     </span>
                   </div>
                 )}
-                <div className={`absolute top-2 right-2 z-10 flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg backdrop-blur-sm shadow-lg ${
-                  released
-                    ? 'bg-gray-100/90 text-gray-600 border border-gray-300/50'
-                    : 'bg-emerald-500/90 text-white border border-emerald-400/50'
-                }`}>
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span className="font-medium">{formatDate(lesson.releaseDate)}</span>
-                </div>
+                {/* Date Badge - Top Left */}
+                {released && (
+                  <div className={`absolute top-2 left-2 z-10 flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg backdrop-blur-sm shadow-lg border border-gray-300/50 bg-white/90 text-gray-900`}>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="font-medium">{formatDate(lesson.releaseDate)}</span>
+                  </div>
+                )}
+                
+                {/* Visibility Toggle - Top Right */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleRelease(lesson);
+                  }}
+                  className={`absolute top-2 right-2 z-10 p-1.5 rounded-lg backdrop-blur-sm shadow-lg transition-all border ${
+                    released
+                      ? 'bg-white/90 text-gray-900 border-gray-300' 
+                      : 'bg-gray-800/90 text-gray-400 border-gray-700'
+                  }`}
+                  title={released ? "Visible: Click para ocultar" : "Oculto: Click para publicar"}
+                >
+                  {released ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  )}
+                </button>
                 {!lesson.isUploading && !lesson.isTranscoding && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
                     <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
@@ -337,7 +437,16 @@ export default function TopicsLessonsList({
                 )}
               </>
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+              <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center relative">
+                {/* Date Badge for document-only lessons */}
+                {released && (
+                  <div className={`absolute top-2 left-2 z-10 flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg backdrop-blur-sm shadow-lg border border-gray-300/50 bg-white/90 text-gray-900`}>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="font-medium">{formatDate(lesson.releaseDate)}</span>
+                  </div>
+                )}
                 <svg className="w-16 h-16 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
                 </svg>
@@ -367,7 +476,7 @@ export default function TopicsLessonsList({
 
           {/* Card Body */}
           <div className="p-4">
-            {!lesson.isUploading && !lesson.isTranscoding && released && (
+            {!lesson.isUploading && !lesson.isTranscoding && (
               <>
                 <div className="flex items-center justify-between text-sm mb-2">
                   <div className="flex items-center gap-1">
@@ -453,7 +562,29 @@ export default function TopicsLessonsList({
             </span>
           </div>
           {topicId && (
-            <div className="relative group/delete">
+            <div className="flex items-center gap-1">
+              {/* Hide All Button - Hides all currently released lessons in this topic */}
+              <div className="relative group/hidetopic">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!confirm('¿Ocultar todas las lecciones visibles de este tema?')) return;
+                    topicLessons.filter(l => isReleased(l.releaseDate)).forEach(l => onToggleRelease(l));
+                  }}
+                  className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200/50 rounded-lg transition-all duration-200"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  </svg>
+                </button>
+                {/* Tooltip */}
+                <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 px-3 py-2 bg-slate-800 text-slate-200 text-xs rounded-lg shadow-xl border border-slate-700 opacity-0 invisible group-hover/hidetopic:opacity-100 group-hover/hidetopic:visible transition-all duration-200 whitespace-nowrap z-20">
+                  <div className="absolute top-1/2 -translate-y-1/2 -right-1 w-2 h-2 bg-slate-800 border-r border-b border-slate-700 rotate-45"></div>
+                  Ocultar todas las lecciones de este tema
+                </div>
+              </div>
+              
+              <div className="relative group/delete">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -470,6 +601,7 @@ export default function TopicsLessonsList({
                 <div className="absolute top-1/2 -translate-y-1/2 -right-1 w-2 h-2 bg-slate-800 border-r border-b border-slate-700 rotate-45"></div>
                 Las lecciones se moverán a "Sin tema"
               </div>
+            </div>
             </div>
           )}
         </div>
@@ -498,7 +630,28 @@ export default function TopicsLessonsList({
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-semibold text-gray-900">Lecciones</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold text-gray-900">Lecciones</h2>
+          {/* Global Hide/Show All Button */}
+          <div className="relative group/hideall">
+            <button
+              onClick={() => {
+                if (!confirm('¿Ocultar todas las lecciones visibles de todas las clases?')) return;
+                lessons.filter(l => isReleased(l.releaseDate)).forEach(l => onToggleRelease(l));
+              }}
+              className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200/50 rounded-lg transition-all duration-200"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+              </svg>
+            </button>
+            {/* Tooltip */}
+            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-2 bg-slate-800 text-slate-200 text-xs rounded-lg shadow-xl border border-slate-700 opacity-0 invisible group-hover/hideall:opacity-100 group-hover/hideall:visible transition-all duration-200 whitespace-nowrap z-20">
+              <div className="absolute top-1/2 -translate-y-1/2 -left-1 w-2 h-2 bg-slate-800 border-l border-t border-slate-700 rotate-45"></div>
+              Ocultar todas las lecciones visibles
+            </div>
+          </div>
+        </div>
         {showNewTopicInput ? (
           <div className="flex items-center gap-2">
             <input
@@ -554,6 +707,139 @@ export default function TopicsLessonsList({
           
           {/* Render uncategorized lessons */}
           {renderTopicSection(null, 'Sin tema', lessonsByTopic.get(null) || [])}
+        </div>
+      )}
+      
+      {/* Student Time Management Modal */}
+      {showTimeModal && selectedLessonForTime && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">{selectedLessonForTime.title}</h3>
+                  <p className="text-sm text-gray-600 mt-1">Gestionar tiempos de estudiantes</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowTimeModal(false);
+                    setSelectedLessonForTime(null);
+                    setStudentTimesData([]);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6">
+              {isLoadingStudentTimes ? (
+                <div className="text-center py-12">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                  <p className="mt-4 text-gray-600">Cargando datos de estudiantes...</p>
+                </div>
+              ) : studentTimesData.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <p>No hay datos de estudiantes para esta lección</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {studentTimesData.map((studentData) => (
+                    <div key={studentData.studentId} className="bg-gray-50 rounded-xl p-4">
+                      <h4 className="font-semibold text-gray-900 mb-3">{studentData.studentName}</h4>
+                      
+                      {studentData.videos.length === 0 ? (
+                        <p className="text-sm text-gray-500">No ha visto ningún video aún</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {studentData.videos.map((video, videoIndex) => (
+                            <div key={video.videoId} className="bg-white rounded-lg p-3 border border-gray-200">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-900 text-sm">Video {videoIndex + 1}</p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-xs text-gray-600">
+                                      Tiempo usado: {Math.floor(video.totalWatchTimeSeconds / 60)}:{String(Math.floor(video.totalWatchTimeSeconds % 60)).padStart(2, '0')}
+                                    </span>
+                                    <span className="text-xs text-gray-400">/</span>
+                                    <span className="text-xs text-gray-600">
+                                      Máximo: {Math.floor(video.maxWatchTimeSeconds / 60)}:{String(Math.floor(video.maxWatchTimeSeconds % 60)).padStart(2, '0')}
+                                    </span>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                      video.status === 'BLOCKED' 
+                                        ? 'bg-red-100 text-red-700' 
+                                        : 'bg-green-100 text-green-700'
+                                    }`}>
+                                      {video.status === 'BLOCKED' ? 'Bloqueado' : 'Activo'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap justify-end">
+                                  <button
+                                    onClick={() => handleUpdateStudentTime(studentData.studentId, video.videoId, 0)}
+                                    className="px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 whitespace-nowrap"
+                                    title="Reiniciar completamente"
+                                  >
+                                    Reiniciar
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      const newTime = Math.max(0, video.totalWatchTimeSeconds - 900);
+                                      handleUpdateStudentTime(studentData.studentId, video.videoId, newTime);
+                                    }}
+                                    className="px-2 py-1 bg-gray-900 text-white rounded text-xs hover:bg-gray-800 whitespace-nowrap"
+                                    title="Reducir 15 minutos"
+                                  >
+                                    +15min
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      const newTime = Math.max(0, video.totalWatchTimeSeconds - 1800);
+                                      handleUpdateStudentTime(studentData.studentId, video.videoId, newTime);
+                                    }}
+                                    className="px-2 py-1 bg-gray-900 text-white rounded text-xs hover:bg-gray-800 whitespace-nowrap"
+                                    title="Reducir 30 minutos"
+                                  >
+                                    +30min
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      const newTime = Math.max(0, video.totalWatchTimeSeconds - 3600);
+                                      handleUpdateStudentTime(studentData.studentId, video.videoId, newTime);
+                                    }}
+                                    className="px-2 py-1 bg-gray-900 text-white rounded text-xs hover:bg-gray-800 whitespace-nowrap"
+                                    title="Reducir 1 hora"
+                                  >
+                                    +1hr
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4 border-t border-gray-200">
+              <button
+                onClick={() => {
+                  setShowTimeModal(false);
+                  setSelectedLessonForTime(null);
+                  setStudentTimesData([]);
+                }}
+                className="w-full px-6 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

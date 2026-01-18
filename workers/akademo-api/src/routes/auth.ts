@@ -42,18 +42,44 @@ auth.post('/session/check', async (c) => {
 // POST /auth/register
 auth.post('/register', async (c) => {
   try {
-    const { email, password, firstName, lastName, role = 'STUDENT' } = await c.req.json();
+    const { 
+      email, 
+      password, 
+      firstName, 
+      lastName,
+      academyName,    // For ACADEMY role (instead of firstName/lastName)
+      role = 'STUDENT',
+      academyId,      // For STUDENT and TEACHER
+      classId,        // For STUDENT
+      classIds = [],  // For TEACHER (can join multiple classes)
+    } = await c.req.json();
 
-    if (!email || !password || !firstName || !lastName) {
-      return c.json(errorResponse('All fields are required'), 400);
+    if (!email || !password) {
+      return c.json(errorResponse('Email and password are required'), 400);
+    }
+
+    // Validate name fields based on role
+    if (role === 'ACADEMY' && !academyName) {
+      return c.json(errorResponse('Academy name is required'), 400);
+    }
+
+    if ((role === 'STUDENT' || role === 'TEACHER') && (!firstName || !lastName)) {
+      return c.json(errorResponse('First name and last name are required'), 400);
     }
 
     if (password.length < 8) {
       return c.json(errorResponse('Password must be at least 8 characters'), 400);
     }
 
-    if (!['STUDENT', 'TEACHER'].includes(role)) {
+    if (!['STUDENT', 'TEACHER', 'ACADEMY'].includes(role)) {
       return c.json(errorResponse('Invalid role'), 400);
+    }
+
+    // Validate required fields based on role
+    // For STUDENT: academyId and classId are optional (can enroll later via /requests/student)
+    // For TEACHER: academyId and at least one class required
+    if (role === 'TEACHER' && (!academyId || classIds.length === 0)) {
+      return c.json(errorResponse('Academy and at least one class required for teachers'), 400);
     }
 
     // Check if user exists
@@ -72,24 +98,89 @@ auth.post('/register', async (c) => {
     // Generate user ID
     const userId = crypto.randomUUID();
 
-    // Create user
+    // Create user with appropriate name fields
+    const userFirstName = role === 'ACADEMY' ? academyName : firstName;
+    const userLastName = role === 'ACADEMY' ? '' : lastName;
+
     await c.env.DB
       .prepare('INSERT INTO User (id, email, password, firstName, lastName, role) VALUES (?, ?, ?, ?, ?, ?)')
-      .bind(userId, email.toLowerCase(), hashedPassword, firstName, lastName, role)
+      .bind(userId, email.toLowerCase(), hashedPassword, userFirstName, userLastName, role)
       .run();
 
-    // Auto-create academy for teachers
-    if (role === 'TEACHER') {
-      const academyId = crypto.randomUUID();
+    // Handle different signup flows
+    if (role === 'ACADEMY') {
+      // Academy owner - create academy with PENDING status
+      const newAcademyId = crypto.randomUUID();
       await c.env.DB
-        .prepare('INSERT INTO Academy (id, name, description, ownerId) VALUES (?, ?, ?, ?)')
+        .prepare('INSERT INTO Academy (id, name, description, ownerId, status) VALUES (?, ?, ?, ?, ?)')
         .bind(
-          academyId,
-          `${firstName} ${lastName}'s Academy`,
-          `Welcome to ${firstName}'s teaching space`,
-          userId
+          newAcademyId,
+          academyName,
+          `Welcome to ${academyName}`,
+          userId,
+          'PENDING'
         )
         .run();
+
+      // Send notification email to admins
+      const resendApiKey = c.env.RESEND_API_KEY;
+      if (resendApiKey) {
+        try {
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${resendApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from: 'AKADEMO <onboarding@akademo-edu.com>',
+              to: ['alex@akademo-edu.com', 'david@akademo-edu.com'],
+              subject: `New Academy Owner Signup: ${academyName}`,
+              html: `
+                <div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">
+                  <h2 style=\"color: #2563eb;\">New Academy Owner Approval Required</h2>
+                  <p><strong>${academyName}</strong> has signed up as an Academy.</p>
+                  <p><strong>Email:</strong> ${email}</p>
+                  <p><strong>Academy Name:</strong> ${academyName}</p>
+                  <p>Please review and approve/reject this academy in the admin dashboard.</p>
+                </div>
+              `,
+            }),
+          });
+        } catch (emailError) {
+          console.error('[Register] Failed to send admin notification:', emailError);
+        }
+      }
+
+    } else if (role === 'TEACHER') {
+      // Teacher - link to academy with PENDING status
+      const teacherId = crypto.randomUUID();
+      await c.env.DB
+        .prepare('INSERT INTO Teacher (id, userId, academyId, status) VALUES (?, ?, ?, ?)')
+        .bind(teacherId, userId, academyId, 'PENDING')
+        .run();
+
+      // Enroll teacher in selected classes with PENDING status (awaiting academy approval)
+      for (const cId of classIds) {
+        const enrollmentId = crypto.randomUUID();
+        const now = new Date().toISOString();
+        await c.env.DB
+          .prepare('INSERT INTO ClassEnrollment (id, classId, userId, status, enrolledAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
+          .bind(enrollmentId, cId, userId, 'PENDING', now, now, now)
+          .run();
+      }
+
+    } else if (role === 'STUDENT') {
+      // Student - optionally enroll in class with PENDING status if classId provided
+      // If not provided, student can enroll later via /requests/student endpoint
+      if (classId) {
+        const enrollmentId = crypto.randomUUID();
+        const now = new Date().toISOString();
+        await c.env.DB
+          .prepare('INSERT INTO ClassEnrollment (id, classId, userId, status, enrolledAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
+          .bind(enrollmentId, classId, userId, 'PENDING', now, now, now)
+          .run();
+      }
     }
 
     // Create session (use btoa for base64 encoding in Workers)
@@ -107,8 +198,8 @@ auth.post('/register', async (c) => {
       token: sessionId, // Return token for cross-domain auth
       id: userId,
       email: email.toLowerCase(),
-      firstName,
-      lastName,
+      firstName: userFirstName,
+      lastName: userLastName,
       role,
     }), 201);
   } catch (error: any) {

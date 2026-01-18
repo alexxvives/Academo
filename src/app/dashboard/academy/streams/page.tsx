@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface Stream {
   id: string;
@@ -10,35 +11,76 @@ interface Stream {
   classId: string;
   classSlug?: string;
   className: string;
-  teacherName: string;
-  teacherId: string;
+  teacherName?: string;
   status: string;
   createdAt: string;
   startedAt: string | null;
   endedAt: string | null;
   zoomMeetingId: string | null;
-  zoomLink: string | null;
+  zoomStartUrl?: string;
+  zoomLink?: string;
   recordingId: string | null;
   participantCount?: number | null;
   participantsFetchedAt?: string | null;
+  bunnyStatus?: number | null;
+}
+
+interface Class {
+  id: string;
+  name: string;
 }
 
 export default function AcademyStreamsPage() {
   const [streams, setStreams] = useState<Stream[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [academyName, setAcademyName] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [selectedClass, setSelectedClass] = useState('all');
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitleValue, setEditingTitleValue] = useState<string>('');
+  const [deletingStreamId, setDeletingStreamId] = useState<string | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; streamId: string; streamTitle: string }>({ isOpen: false, streamId: '', streamTitle: '' });
 
   useEffect(() => {
     loadStreams();
+    loadAcademyInfo();
+    
+    const pollInterval = setInterval(() => {
+      loadStreams();
+    }, 10000);
+    
+    return () => clearInterval(pollInterval);
   }, []);
+
+  const loadAcademyInfo = async () => {
+    try {
+      const [academiesRes, classesRes] = await Promise.all([
+        apiClient('/academies'),
+        apiClient('/academies/classes')
+      ]);
+      const [academiesResult, classesResult] = await Promise.all([
+        academiesRes.json(),
+        classesRes.json()
+      ]);
+      
+      if (academiesResult.success && Array.isArray(academiesResult.data) && academiesResult.data.length > 0) {
+        setAcademyName(academiesResult.data[0].name);
+      }
+      
+      if (classesResult.success && Array.isArray(classesResult.data)) {
+        setClasses(classesResult.data);
+      }
+    } catch (error) {
+      console.error('Error loading academy info:', error);
+    }
+  };
 
   const loadStreams = async () => {
     try {
       const response = await apiClient('/live/history');
       const result = await response.json();
       if (result.success) {
-        setStreams(result.data);
+        setStreams(result.data || []);
       }
     } catch (error) {
       console.error('Error loading streams:', error);
@@ -46,6 +88,11 @@ export default function AcademyStreamsPage() {
       setLoading(false);
     }
   };
+
+  const filteredStreams = useMemo(() => {
+    if (selectedClass === 'all') return streams;
+    return streams.filter(s => s.classId === selectedClass);
+  }, [streams, selectedClass]);
 
   const handleEditTitle = (streamId: string, currentTitle: string) => {
     setEditingTitleId(streamId);
@@ -78,6 +125,36 @@ export default function AcademyStreamsPage() {
     } catch (error) {
       console.error('Error updating title:', error);
       alert('Error al actualizar el título');
+    } finally{
+      setEditingTitleValue('');
+    }
+  };
+
+  const handleDeleteClick = (streamId: string, streamTitle: string) => {
+    setConfirmModal({ isOpen: true, streamId, streamTitle });
+  };
+
+  const handleDeleteStream = async () => {
+    const streamId = confirmModal.streamId;
+    setConfirmModal({ isOpen: false, streamId: '', streamTitle: '' });
+    setDeletingStreamId(streamId);
+
+    try {
+      const response = await apiClient(`/live/${streamId}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setStreams(streams.filter(s => s.id !== streamId));
+      } else {
+        alert(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error deleting stream:', error);
+      alert('Error al eliminar stream');
+    } finally {
+      setDeletingStreamId(null);
     }
   };
 
@@ -159,68 +236,75 @@ export default function AcademyStreamsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Historial de Streams</h1>
-        <p className="text-sm text-gray-500 mt-1">Todos los streams de la academia</p>
+        {academyName && <p className="text-gray-600 text-sm mt-1">{academyName}</p>}
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border border-purple-100 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Streams</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{streams.length}</p>
+              <p className="text-sm text-purple-600 font-medium mb-1">Participantes promedio</p>
+              <p className="text-3xl font-bold text-purple-900">{avgParticipants}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
           </div>
         </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Activos</p>
-              <p className="text-2xl font-bold text-green-600 mt-1">{activeCount}</p>
+              <p className="text-sm text-blue-600 font-medium mb-1">Streams anteriores</p>
+              <p className="text-3xl font-bold text-blue-900">{endedCount}</p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Promedio Participantes</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{avgParticipants}</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Tiempo Total</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {totalHours > 0 ? `${totalHours}h ${totalMinutes}m` : `${totalMinutes}m`}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
         </div>
+        <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-xl border border-green-100 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-green-600 font-medium mb-1">Tiempo total transmitido</p>
+              <p className="text-3xl font-bold text-green-900">
+                {totalHours > 0 ? `${totalHours}h ${totalMinutes}m` : `${totalMinutes}m`}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-green-200 rounded-full flex items-center justify-center">
+              <svg className="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Class Filter */}
+      <div className="flex justify-end">
+        {classes.length > 0 && (
+          <div className="relative">
+            <select
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              className="appearance-none w-full md:w-56 pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            >
+              <option value="all">Todas las clases</option>
+              {classes.map((cls) => (
+                <option key={cls.id} value={cls.id}>{cls.name}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -228,7 +312,7 @@ export default function AcademyStreamsPage() {
           <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando streams...</p>
         </div>
-      ) : streams.length === 0 ? (
+      ) : filteredStreams.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -237,45 +321,62 @@ export default function AcademyStreamsPage() {
           <p className="text-gray-500">Los profesores pueden crear streams desde sus clases</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="max-h-[600px] overflow-y-auto">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+              <thead className="bg-gray-50/50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    TÍTULO
+                  <th className="text-left py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Título
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Clase
-                  </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="text-left py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Profesor
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="text-left py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Clase
+                  </th>
+                  <th className="text-left py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Estado
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="text-left py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Participantes
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Inicio
+                  <th className="text-left py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Fecha
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="text-left py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Duración
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="text-left py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Grabación
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
-                {streams.map((stream) => (
-                  <tr key={stream.id} className="hover:bg-gray-50 transition-colors">
+              <tbody className="divide-y divide-gray-200">
+                {filteredStreams.map((stream) => (
+                  <tr key={stream.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 px-4">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        {/* Delete Button */}
+                        <button
+                          onClick={() => handleDeleteClick(stream.id, stream.title)}
+                          disabled={deletingStreamId === stream.id}
+                          className="text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 flex-shrink-0"
+                          title="Eliminar stream"
+                        >
+                          {deletingStreamId === stream.id ? (
+                            <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
+                        </button>
+                        
                         {stream.status === 'active' && (
                           <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                         )}
+                        
                         {editingTitleId === stream.id ? (
                           <input
                             type="text"
@@ -310,19 +411,24 @@ export default function AcademyStreamsPage() {
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <span className="text-brand-600 font-medium">
-                        {stream.className}
+                      <span className="text-sm text-gray-700">
+                        {stream.teacherName || '—'}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-sm text-gray-700">
-                      {stream.teacherName}
+                    <td className="py-4 px-4">
+                      <Link 
+                        href={`/dashboard/academy/class/${stream.classSlug || stream.classId}`}
+                        className="text-brand-600 hover:text-brand-700 font-medium transition-colors"
+                      >
+                        {stream.className}
+                      </Link>
                     </td>
                     <td className="py-4 px-4">
                       {getStatusBadge(stream.status)}
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-2">
-                        {stream.participantCount != null ? (
+                        {stream.participantCount != null && stream.participantCount > 0 ? (
                           <span className="text-sm text-gray-600 font-medium">
                             {stream.participantCount}
                           </span>
@@ -367,6 +473,18 @@ export default function AcademyStreamsPage() {
           </div>
         </div>
       )}
+      
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title="Eliminar Stream"
+        message={`¿Estás seguro que deseas eliminar el stream "${confirmModal.streamTitle}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        type="danger"
+        onConfirm={handleDeleteStream}
+        onCancel={() => setConfirmModal({ isOpen: false, streamId: '', streamTitle: '' })}
+      />
     </div>
   );
 }
