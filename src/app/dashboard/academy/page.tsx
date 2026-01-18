@@ -200,7 +200,7 @@ export default function AcademyDashboard() {
     <>
       <div className="w-full space-y-6">
         {/* Page Header with Class Filter */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Panel de Control</h1>
             {academyInfo && (
@@ -232,7 +232,7 @@ export default function AcademyDashboard() {
 
         {/* Visual Analytics Grid */}
         {filteredStudents.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             {/* Engagement Metrics - TOP LEFT */}
             <div className="bg-white rounded-lg p-6 border border-gray-100">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Participación</h3>

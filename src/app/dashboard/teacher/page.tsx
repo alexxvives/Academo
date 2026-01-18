@@ -345,7 +345,7 @@ export default function TeacherDashboard() {
 
         {/* Visual Analytics Grid */}
         {enrolledStudents.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             {/* Engagement Metrics - TOP LEFT (moved from right) */}
             <div className="bg-white rounded-lg p-6 border border-gray-100">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Participación</h3>

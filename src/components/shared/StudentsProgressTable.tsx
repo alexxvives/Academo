@@ -94,46 +94,13 @@ export function StudentsProgressTable({
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Buscar por nombre o email..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
-          </div>
-          {showClassFilter && uniqueClasses.length > 0 && (
-            <div className="w-full md:w-64 relative">
-              <select
-                value={selectedClass}
-                onChange={(e) => onClassFilterChange(e.target.value)}
-                className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 appearance-none bg-white"
-              >
-                <option value="all">Todas las clases</option>
-                {uniqueClasses.map((className) => (
-                  <option key={className} value={className}>
-                    {className}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Chart */}
       {chartData.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top 10 Estudiantes por Tiempo de Visualización</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Tiempo de Visualización</h3>
+            <p className="text-sm text-gray-500">Solo muestra los top 10 estudiantes</p>
+          </div>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
