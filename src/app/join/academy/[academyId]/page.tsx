@@ -66,18 +66,30 @@ export default function AcademyJoinPage() {
     try {
       console.log('[Academy Join] Loading academy:', academyId);
       const response = await apiClient(`/auth/join/academy/${academyId}`);
-      const result = await response.json();
       
-      console.log('[Academy Join] API Response:', result);
+      console.log('[Academy Join] Response status:', response.status);
+      console.log('[Academy Join] Response URL:', response.url);
       
-      if (result.success) {
-        console.log('[Academy Join] Success! Academy:', result.data.academy);
-        console.log('[Academy Join] Classes:', result.data.classes);
-        setAcademy(result.data.academy);
-        setClasses(result.data.classes);
-      } else {
-        console.error('[Academy Join] API returned error:', result.error);
-        setError(result.error || 'No se encontró la academia');
+      const text = await response.text();
+      console.log('[Academy Join] Response text:', text);
+      
+      try {
+        const result = JSON.parse(text);
+        console.log('[Academy Join] API Response:', result);
+        
+        if (result.success) {
+          console.log('[Academy Join] Success! Academy:', result.data.academy);
+          console.log('[Academy Join] Classes:', result.data.classes);
+          setAcademy(result.data.academy);
+          setClasses(result.data.classes);
+        } else {
+          console.error('[Academy Join] API returned error:', result.error);
+          setError(result.error || 'No se encontró la academia');
+        }
+      } catch (parseError) {
+        console.error('[Academy Join] JSON parse error:', parseError);
+        console.error('[Academy Join] Response was not JSON:', text);
+        setError('Error al cargar los datos (respuesta inválida)');
       }
     } catch (e) {
       console.error('[Academy Join] Exception:', e);

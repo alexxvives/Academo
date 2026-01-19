@@ -232,18 +232,10 @@ export default function AcademyDashboard() {
 
         {/* Visual Analytics Grid */}
         {filteredStudents.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Engagement Metrics - TOP LEFT */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
-                </div>
-                <h3 className="text-base font-bold text-gray-900 tracking-tight uppercase">Participación</h3>
-              </div>
-              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm h-full">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Participación</h3>
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between mb-2">
@@ -291,20 +283,11 @@ export default function AcademyDashboard() {
                   </div>
                 </div>
               </div>
-              </div>
             </div>
 
             {/* Student Summary - TOP RIGHT */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-sm">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-base font-bold text-gray-900 tracking-tight uppercase">Estudiantes</h3>
-              </div>
-              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm h-full">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Estudiantes</h3>
               <div className="space-y-6">
                 <div className="text-center">
                   <AnimatedNumber value={filteredStudents.length} className="text-5xl font-bold text-gray-900 mb-2" />
@@ -337,20 +320,11 @@ export default function AcademyDashboard() {
                   </div>
                 </div>
               </div>
-              </div>
             </div>
 
             {/* Star Ratings Distribution - BOTTOM LEFT (Bar Chart) */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center shadow-sm">
-                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-base font-bold text-gray-900 tracking-tight uppercase">Valoraciones</h3>
-              </div>
-              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm h-full">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Valoraciones</h3>
               {ratingsData && ratingsData.overall.totalRatings > 0 ? (
                 <>
                   <BarChart
@@ -371,20 +345,11 @@ export default function AcademyDashboard() {
                   <p className="text-sm">Sin valoraciones aún</p>
                 </div>
               )}
-              </div>
             </div>
 
             {/* Student Status - BOTTOM RIGHT (Pie Chart) */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <h3 className="text-base font-bold text-gray-900 tracking-tight uppercase">Actividad</h3>
-              </div>
-              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm h-full">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Actividad</h3>
               <div className="h-64 flex items-center justify-center">
                 <DonutChart
                   data={[
@@ -392,7 +357,8 @@ export default function AcademyDashboard() {
                     { label: 'Inactivos', value: Math.round(filteredStudents.length * 0.35), color: '#ef4444' },
                   ]}
                 />
-              </div>              </div>            </div>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="bg-white rounded-lg border border-gray-100 p-12 text-center">
