@@ -268,20 +268,21 @@ export default function AcademyJoinPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">Cargando...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
       </div>
     );
   }
 
   if (error || !academy) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-400 text-xl mb-4">{error || 'Academia no encontrada'}</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error</h1>
+          <p className="text-gray-600">{error || 'Academia no encontrada'}</p>
           <button
             onClick={() => router.push('/')}
-            className="text-[#b1e787] hover:underline"
+            className="mt-4 text-blue-600 hover:underline"
           >
             Volver al inicio
           </button>
@@ -291,27 +292,33 @@ export default function AcademyJoinPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Academy Header */}
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-8 mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">{academy.name}</h1>
-          {academy.description && (
-            <p className="text-gray-300 mb-4">{academy.description}</p>
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Header with Logo */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <img 
+              src="/logo/AKADEMO_logo_OTHER2.svg" 
+              alt="AKADEMO" 
+              className="h-12 w-auto"
+            />
+          </div>
+          <p className="text-gray-600">Únete a las clases de</p>
+          {academy && (
+            <p className="text-xl font-semibold text-gray-900 mt-1">
+              {academy.name}
+            </p>
           )}
-          <p className="text-sm text-gray-400">
-            Dirigida por: {academy.ownerFirstName} {academy.ownerLastName}
-          </p>
         </div>
 
         {/* Email Verification Modal */}
         {showVerification && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-2xl border border-gray-700 p-8 max-w-md w-full">
-              <h3 className="text-2xl font-bold text-white mb-2 text-center">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-xl p-8 max-w-md w-full">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">
                 Verifica tu correo
               </h3>
-              <p className="text-gray-300 text-center mb-6">
+              <p className="text-gray-600 text-center mb-6">
                 Ingresa el código de 6 dígitos que enviamos a <strong>{formData.email}</strong>
               </p>
               
@@ -329,32 +336,32 @@ export default function AcademyJoinPage() {
                     disabled={verifyingCode || verificationSuccess}
                     className={`w-12 h-14 text-center text-2xl font-bold rounded-lg border-2 transition-all
                       ${verificationError 
-                        ? 'border-red-500 bg-red-500/10' 
+                        ? 'border-red-500 bg-red-50' 
                         : verificationSuccess
-                        ? 'border-green-500 bg-green-500/10'
-                        : 'border-gray-600 bg-gray-700/50'
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-300 bg-white'
                       }
                       ${verifyingCode || verificationSuccess ? 'opacity-50' : ''}
-                      text-white focus:outline-none focus:border-[#b1e787]`}
+                      text-gray-900 focus:outline-none focus:border-blue-500`}
                     autoFocus={index === 0}
                   />
                 ))}
               </div>
 
               {verificationError && (
-                <p className="text-red-400 text-sm text-center mb-4">
+                <p className="text-red-600 text-sm text-center mb-4">
                   Código incorrecto. Inténtalo de nuevo.
                 </p>
               )}
 
               {verificationSuccess && (
-                <p className="text-green-400 text-sm text-center mb-4">
+                <p className="text-green-600 text-sm text-center mb-4">
                   ✓ Código verificado. Creando tu cuenta...
                 </p>
               )}
 
               {verifyingCode && !verificationSuccess && !verificationError && (
-                <p className="text-gray-400 text-sm text-center mb-4">
+                <p className="text-gray-600 text-sm text-center mb-4">
                   Verificando código...
                 </p>
               )}
@@ -366,7 +373,7 @@ export default function AcademyJoinPage() {
                   setVerificationError(false);
                 }}
                 disabled={verifyingCode || verificationSuccess}
-                className="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors disabled:opacity-50"
+                className="w-full py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-xl transition-colors disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -376,141 +383,163 @@ export default function AcademyJoinPage() {
 
         {!isLoggedIn ? (
           /* Auth Form */
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              {showLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
-            </h2>
-            
-            <form onSubmit={handleAuth} className="space-y-4">
-              {!showLogin && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Nombre
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.firstName}
-                      onChange={e => setFormData({ ...formData, firstName: e.target.value })}
-                      className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-[#b1e787]"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Apellido
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.lastName}
-                      onChange={e => setFormData({ ...formData, lastName: e.target.value })}
-                      className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-[#b1e787]"
-                    />
-                  </div>
-                </>
-              )}
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Correo Electrónico
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-[#b1e787]"
-                />
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <>
+              <div className="flex mb-6">
+                <button
+                  type="button"
+                  onClick={() => { setShowLogin(true); setShowVerification(false); setAuthError(null); }}
+                  className={`flex-1 py-2 text-center font-medium border-b-2 transition-colors ${
+                    showLogin ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500'
+                  }`}
+                >
+                  Iniciar Sesión
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowLogin(false); setShowVerification(false); setAuthError(null); }}
+                  className={`flex-1 py-2 text-center font-medium border-b-2 transition-colors ${
+                    !showLogin ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-500'
+                  }`}
+                >
+                  Registrarse
+                </button>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Contraseña
-                </label>
-                <PasswordInput
-                  value={formData.password}
-                  onChange={e => setFormData({ ...formData, password: e.target.value })}
-                  required
-                  placeholder=""
-                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-[#b1e787]"
-                />
-              </div>
-              
+
               {authError && (
-                <div className="text-red-400 text-sm">{authError}</div>
+                <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg">
+                  {authError}
+                </div>
               )}
-              
-              <button
-                type="submit"
-                disabled={authLoading}
-                className="w-full py-3 bg-[#b1e787] hover:bg-[#9dd46f] text-gray-900 font-semibold rounded-xl transition-colors disabled:opacity-50"
-              >
-                {authLoading ? 'Cargando...' : showLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
-              </button>
-            </form>
-            
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => {
-                  setShowLogin(!showLogin);
-                  setAuthError(null);
-                }}
-                className="text-[#b1e787] hover:underline text-sm"
-              >
-                {showLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}
-              </button>
-            </div>
+
+              <form onSubmit={handleAuth} className="space-y-4">
+                {!showLogin && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.firstName}
+                        onChange={e => setFormData({ ...formData, firstName: e.target.value })}
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-gray-900"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Apellido
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.lastName}
+                        onChange={e => setFormData({ ...formData, lastName: e.target.value })}
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-gray-900"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Correo Electrónico
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-gray-900"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contraseña
+                  </label>
+                  <PasswordInput
+                    value={formData.password}
+                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    placeholder=""
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-gray-900"
+                  />
+                </div>
+                
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full py-3 bg-gray-900 text-white font-semibold rounded-lg transition-colors hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {authLoading ? 'Cargando...' : showLogin ? 'Iniciar Sesión' : 'Continuar'}
+                </button>
+              </form>
+            </>
           </div>
         ) : (
           /* Class Selection */
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              Selecciona una Clase
-            </h2>
-            
-            {classes.length === 0 ? (
-              <p className="text-gray-400 text-center py-8">
-                No hay clases disponibles en esta academia en este momento.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {classes.map(classItem => (
-                  <button
-                    key={classItem.id}
-                    onClick={() => setSelectedClassId(classItem.id)}
-                    className={`w-full p-6 rounded-xl border-2 transition-all text-left ${
-                      selectedClassId === classItem.id
-                        ? 'border-[#b1e787] bg-[#b1e787]/10'
-                        : 'border-gray-700 bg-gray-700/30 hover:border-gray-600'
-                    }`}
-                  >
-                    <h3 className="text-lg font-semibold text-white mb-2">
-                      {classItem.name}
-                    </h3>
-                    {classItem.description && (
-                      <p className="text-gray-400 text-sm mb-2">
-                        {classItem.description}
-                      </p>
-                    )}
-                    <p className="text-gray-500 text-sm">
-                      Profesor: {classItem.teacherName}
-                    </p>
-                  </button>
-                ))}
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Selecciona una clase</h2>
+
+            {authError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg">
+                {authError}
               </div>
             )}
             
-            {authError && (
-              <div className="text-red-400 text-sm mt-4">{authError}</div>
+            {classes.length === 0 ? (
+              <p className="text-gray-600 text-center py-8">
+                No hay clases disponibles en esta academia en este momento.
+              </p>
+            ) : (
+              <div className="space-y-3 mb-6">
+                {classes.map(classItem => (
+                  <div
+                    key={classItem.id}
+                    onClick={() => setSelectedClassId(classItem.id)}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      selectedClassId === classItem.id
+                        ? 'border-gray-900 bg-gray-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-1">
+                          {classItem.name}
+                        </h3>
+                        {classItem.description && (
+                          <p className="text-sm text-gray-600 mb-1">
+                            {classItem.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500">
+                          Profesor: {classItem.teacherName}
+                        </p>
+                      </div>
+                      {selectedClassId === classItem.id && (
+                        <div className="flex-shrink-0">
+                          <div className="w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
             
             {classes.length > 0 && (
               <button
                 onClick={handleRequestAccess}
                 disabled={!selectedClassId || authLoading}
-                className="w-full mt-6 py-3 bg-[#b1e787] hover:bg-[#9dd46f] text-gray-900 font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 bg-gray-900 text-white font-medium rounded-lg transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {authLoading ? 'Enviando solicitud...' : 'Solicitar Acceso'}
               </button>

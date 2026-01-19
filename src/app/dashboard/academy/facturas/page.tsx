@@ -8,25 +8,34 @@ export default function FacturasPage() {
   const handleCheckout = async () => {
     setLoading(true);
     try {
+      console.log('[Stripe] Creating checkout session...');
       // Call our API to create a Stripe checkout session
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          priceId: 'price_1234567890', // Replace with your Stripe Price ID
+          priceId: 'price_1Sr91MGnG2OZ2dGGhbQBN5yI', // Your Stripe Price ID (create one in Stripe Dashboard)
           successUrl: `${window.location.origin}/dashboard/academy/facturas?success=true`,
           cancelUrl: `${window.location.origin}/dashboard/academy/facturas?canceled=true`,
         }),
       });
 
-      const { url } = await response.json();
+      console.log('[Stripe] Response status:', response.status);
+      const data = await response.json();
+      console.log('[Stripe] Response data:', data);
       
-      if (url) {
+      if (data.url) {
+        console.log('[Stripe] Redirecting to checkout...');
         // Redirect to Stripe Checkout
-        window.location.href = url;
+        window.location.href = data.url;
+      } else if (data.error) {
+        console.error('[Stripe] API Error:', data.error);
+        alert(`Error: ${data.error}`);
+      } else {
+        alert('Error: No se recibió URL de pago');
       }
     } catch (error) {
-      console.error('Error creating checkout session:', error);
+      console.error('[Stripe] Exception:', error);
       alert('Error al crear la sesión de pago');
     } finally {
       setLoading(false);
@@ -45,12 +54,12 @@ export default function FacturasPage() {
           Actualiza a nuestra suscripción premium para acceder a funciones avanzadas.
         </p>
 
-        <div className="bg-gray-50 rounded-lg p-6 mb-6">
+        <div className="bg-gray-50 rounded-lg p-6 mb-6 text-center">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Plan Mensual</h3>
           <p className="text-3xl font-bold text-gray-900 mb-4">
             $29.99<span className="text-base font-normal text-gray-600">/mes</span>
           </p>
-          <ul className="space-y-2 text-gray-600 mb-6">
+          <ul className="space-y-2 text-gray-600 mb-6 text-left inline-block">
             <li className="flex items-center gap-2">
               <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />

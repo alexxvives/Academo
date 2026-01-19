@@ -24,6 +24,7 @@ bucket_name = "akademo-storage"
 
 [vars]
 STORAGE_TYPE = "r2"
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "pk_test_51Sr91MGnG2OZ2dGGUw3ObiVNKVVFUmbvmckFtbpjQK7KRHb8M1xUayFK8QcURcUFLBcEhux80JZPQsb7z6X91ANZ00ApZwt376"
 
 # API Worker URL (for frontend to call backend)
 NEXT_PUBLIC_API_URL = "https://akademo-api.alexxvives.workers.dev"
