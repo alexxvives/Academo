@@ -18,8 +18,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, onClose }: RegisterFo
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    firstName: '',
-    lastName: '',
+    fullName: '',
     role: 'STUDENT',
     academyId: '',
     classId: '',
@@ -69,11 +68,16 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, onClose }: RegisterFo
     setError('');
 
     try {
+      // Parse full name into firstName and lastName
+      const nameParts = formData.fullName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || nameParts[0] || '';
+
       const payload = {
         email: formData.email,
         password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        firstName,
+        lastName,
         role: formData.role,
         academyId: formData.academyId,
         classId: formData.classId,
@@ -126,7 +130,10 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, onClose }: RegisterFo
           await sendVerificationCode();
           setShowVerification(true);
         } catch (err: any) {
-          setError(err.message || 'Failed to send verification code');
+          // Parse error response properly
+          const errorMessage = err.message || 'Failed to send verification code';
+          setError(errorMessage);
+          console.error('Verification error:', err);
         }
         setLoading(false);
         return;
@@ -165,13 +172,9 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, onClose }: RegisterFo
             academyName={formData.academyName}
             monoacademy={formData.monoacademy}
             onAcademyNameChange={(name) => setFormData({ ...formData, academyName: name })}
-            onMonoacademyChange={(value) => setFormData({ ...formData, monoacademy: value })}
-          />
-        ) : (
-          <StudentTeacherFields 
+          <StudentTeacherFields
             role={formData.role as 'STUDENT' | 'TEACHER'}
-            firstName={formData.firstName}
-            lastName={formData.lastName}
+            fullName={formData.fullName}
             academyId={formData.academyId}
             classId={formData.classId}
             classIds={formData.classIds}
@@ -179,9 +182,11 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, onClose }: RegisterFo
             classes={classes}
             loadingAcademies={loadingAcademies}
             loadingClasses={loadingClasses}
-            onFirstNameChange={(name) => setFormData({ ...formData, firstName: name })}
-            onLastNameChange={(name) => setFormData({ ...formData, lastName: name })}
+            onFullNameChange={(name) => setFormData({ ...formData, fullName: name })}
             onAcademyChange={(id) => setFormData({ ...formData, academyId: id, classId: '', classIds: [] })}
+            onClassChange={(id) => setFormData({ ...formData, classId: id })}
+            onClassIdsChange={(ids) => setFormData({ ...formData, classIds: ids })}
+          />onAcademyChange={(id) => setFormData({ ...formData, academyId: id, classId: '', classIds: [] })}
             onClassChange={(id) => setFormData({ ...formData, classId: id })}
             onClassIdsChange={(ids) => setFormData({ ...formData, classIds: ids })}
           />

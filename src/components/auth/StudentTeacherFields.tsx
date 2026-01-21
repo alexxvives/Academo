@@ -11,8 +11,7 @@ interface Class {
 
 interface StudentTeacherFieldsProps {
   role: 'STUDENT' | 'TEACHER';
-  firstName: string;
-  lastName: string;
+  fullName: string;
   academyId: string;
   classId: string;
   classIds: string[];
@@ -20,43 +19,29 @@ interface StudentTeacherFieldsProps {
   classes: Class[];
   loadingAcademies: boolean;
   loadingClasses: boolean;
-  onFirstNameChange: (name: string) => void;
-  onLastNameChange: (name: string) => void;
+  onFullNameChange: (name: string) => void;
   onAcademyChange: (id: string) => void;
   onClassChange: (id: string) => void;
   onClassIdsChange: (ids: string[]) => void;
 }
 
 export function StudentTeacherFields({ 
-  role, firstName, lastName, academyId, classId, classIds,
+  role, fullName, academyId, classId, classIds,
   academies, classes, loadingAcademies, loadingClasses,
-  onFirstNameChange, onLastNameChange, onAcademyChange, onClassChange, onClassIdsChange
+  onFullNameChange, onAcademyChange, onClassChange, onClassIdsChange
 }: StudentTeacherFieldsProps) {
   return (
     <>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre</label>
-          <input
-            type="text"
-            required
-            value={firstName}
-            onChange={(e) => onFirstNameChange(e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm transition-all"
-            placeholder="Juan"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Apellido</label>
-          <input
-            type="text"
-            required
-            value={lastName}
-            onChange={(e) => onLastNameChange(e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm transition-all"
-            placeholder="Pérez"
-          />
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre Completo</label>
+        <input
+          type="text"
+          required
+          value={fullName}
+          onChange={(e) => onFullNameChange(e.target.value)}
+          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm transition-all"
+          placeholder="Juan Pérez"
+        />
       </div>
 
       {/* Academy Selection */}
