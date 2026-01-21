@@ -33,6 +33,7 @@ export default function AcademyClassesPage() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [academyName, setAcademyName] = useState<string>('');
+  const [paymentStatus, setPaymentStatus] = useState<string>('NOT PAID');
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -64,6 +65,7 @@ export default function AcademyClassesPage() {
         const academiesJson = await academiesRes.json();
         if (academiesJson.success && Array.isArray(academiesJson.data) && academiesJson.data.length > 0) {
           setAcademyName(academiesJson.data[0].name);
+          setPaymentStatus(academiesJson.data[0].paymentStatus || 'NOT PAID');
         }
       }
       
@@ -182,9 +184,15 @@ export default function AcademyClassesPage() {
           </div>
           <button
             onClick={openCreateModal}
-            disabled={teachers.length === 0}
+            disabled={teachers.length === 0 || paymentStatus === 'NOT PAID'}
             className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            title={teachers.length === 0 ? 'Debes tener al menos un profesor para crear clases' : ''}
+            title={
+              paymentStatus === 'NOT PAID' 
+                ? 'Debes comprar un plan desde la página Facturas para crear clases' 
+                : teachers.length === 0 
+                  ? 'Debes tener al menos un profesor para crear clases' 
+                  : ''
+            }
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

@@ -172,14 +172,14 @@ auth.post('/register', async (c) => {
 
       // If monoacademy, create a teacher account for the owner
       if (monoacademy) {
-        // Create a derived email for the teacher account (not signable independently)
+        // Use same email for teacher account (same person, different role)
         const teacherUserId = crypto.randomUUID();
-        const teacherEmail = `${email.split('@')[0]}+teacher@${email.split('@')[1]}`;
+        const teacherEmail = email; // Same email, not +teacher variant
         
         // Create teacher User account (same password, role TEACHER)
         await c.env.DB
-          .prepare('INSERT INTO User (id, email, password, firstName, lastName, role) VALUES (?, ?, ?, ?, ?, ?)')
-          .bind(teacherUserId, teacherEmail.toLowerCase(), hashedPassword, userFirstName, userLastName, 'TEACHER')
+          .prepare('INSERT INTO User (id, email, password, firstName, lastName, role, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+          .bind(teacherUserId, teacherEmail.toLowerCase(), hashedPassword, userFirstName, userLastName, 'TEACHER', now, now)
           .run();
         
         // Create Teacher record linking to academy

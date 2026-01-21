@@ -429,7 +429,7 @@ export default function AcademyDashboard() {
           <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm h-full">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Actividad</h3>
             {filteredStudents.length > 0 ? (
-              <div className="h-64 flex items-center justify-center">
+              <div className="h-40 flex items-center justify-center">
                 <DonutChart
                   data={[
                     { label: 'Activos', value: Math.round(filteredStudents.length * 0.65), color: '#22c55e' },
@@ -438,7 +438,7 @@ export default function AcademyDashboard() {
                 />
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+              <div className="flex flex-col items-center justify-center h-40 text-gray-400">
                 <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
