@@ -1,5 +1,16 @@
 # DEPLOYMENT GUIDE - READ THIS BEFORE DEPLOYING
 
+## 🎯 PRIMARY METHOD: GitHub Actions (Automated)
+
+**Just push to main branch - deployments happen automatically!**
+
+- **API changes** in `workers/akademo-api/**` → Triggers API worker deployment
+- **Frontend changes** in `src/**`, `public/**`, `package.json`, etc. → Triggers frontend worker deployment
+
+Check deployment status: https://github.com/alexxvives/Akademo/actions
+
+---
+
 ## ⚠️ CRITICAL: Two Separate Workers
 
 AKADEMO uses **TWO separate Cloudflare Workers**:
@@ -7,25 +18,24 @@ AKADEMO uses **TWO separate Cloudflare Workers**:
 ### 1. Frontend Worker: `akademo`
 - **Location**: Root directory (`./`)
 - **Purpose**: Next.js frontend (UI pages)
-- **Deploy Command**: 
+- **URL**: https://akademo-edu.com
+- **Auto-deploys on**: Push to main with changes in `src/**`, `public/**`, `package.json`, etc.
+- **Manual deploy** (if needed): 
   ```powershell
-  Remove-Item -Recurse -Force .next, .open-next -ErrorAction SilentlyContinue
   npx @opennextjs/cloudflare build
   npx wrangler deploy
   ```
-- **URL**: https://akademo.alexxvives.workers.dev
-- **When to Deploy**: UI changes, component updates, frontend fixes
 
 ### 2. Backend API Worker: `akademo-api`
 - **Location**: `workers/akademo-api/`
 - **Purpose**: Hono API backend (all /auth, /live, /classes, etc. endpoints)
-- **Deploy Command**:
+- **URL**: https://akademo-api.alexxvives.workers.dev
+- **Auto-deploys on**: Push to main with changes in `workers/akademo-api/**`
+- **Manual deploy** (if needed):
   ```powershell
   cd workers/akademo-api
   npx wrangler deploy
   ```
-- **URL**: https://akademo-api.alexxvives.workers.dev
-- **When to Deploy**: API changes, database queries, auth logic, stream creation, etc.
 
 ## 🚨 COMMON MISTAKE
 
@@ -36,29 +46,35 @@ AKADEMO uses **TWO separate Cloudflare Workers**:
 
 **Solution**: **ALWAYS deploy the API worker when you change anything in `workers/akademo-api/src/`**
 
-## ✅ Deployment Checklist
+## ✅ Deployment Workflow
 
-### For API Changes (routes, database queries, permissions)
+### Automatic (Recommended)
+1. Make your changes
+2. Commit and push to main:
+   ```powershell
+   git add .
+   git commit -m "Your change description"
+   git push
+   ```
+3. GitHub Actions automatically deploys the appropriate worker(s)
+4. Check deployment status: https://github.com/alexxvives/Akademo/actions
+
+### Manual (If GitHub Actions Fails)
+
+**For API Changes:**
 ```powershell
-# 1. Deploy API worker FIRST
-cd C:\Users\alexx\Desktop\Projects\AKADEMO\workers\akademo-api
+cd workers/akademo-api
 npx wrangler deploy
+```
 
-# 2. Then deploy frontend if needed
-cd C:\Users\alexx\Desktop\Projects\AKADEMO
-Remove-Item -Recurse -Force .next, .open-next -ErrorAction SilentlyContinue
+**For Frontend Changes:**
+```powershell
 npx @opennextjs/cloudflare build
 npx wrangler deploy
 ```
 
-### For UI Changes Only
-```powershell
-# Only deploy frontend
-cd C:\Users\alexx\Desktop\Projects\AKADEMO
-Remove-Item -Recurse -Force .next, .open-next -ErrorAction SilentlyContinue
-npx @opennextjs/cloudflare build
-npx wrangler deploy
-```
+**For Both:**
+Deploy API first, then frontend (API changes should be live before frontend calls them)
 
 ## 📋 Quick Reference
 
@@ -89,8 +105,13 @@ Invoke-WebRequest -Uri "https://akademo-api.alexxvives.workers.dev/" | Select-Ob
 Should return: `{"status":"ok","service":"akademo-api","version":"3.1",...}`
 
 ### Test Frontend Deployment
-Open: https://akademo.alexxvives.workers.dev
+Open: https://akademo-edu.com
 Should load the AKADEMO homepage
+
+### Check GitHub Actions Status
+- View all deployments: https://github.com/alexxvives/Akademo/actions
+- Green checkmark = successful deployment
+- Red X = failed deployment (check logs)
 
 ## 💡 Pro Tip
 

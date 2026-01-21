@@ -7,22 +7,31 @@
 
 ## 🚀 QUICK REFERENCE
 
-### Deployment Commands
+### Deployment - AUTOMATIC via GitHub Actions ✨
 ```powershell
-# AUTOMATIC DEPLOYMENT via GitHub Actions:
-# Just push to main branch - both workers auto-deploy!
+# PRIMARY METHOD - Just push to main!
+git add .
+git commit -m "Your changes"
+git push
 
-# Manual deployment (if needed):
+# GitHub Actions automatically:
+# - Detects which worker(s) changed
+# - Builds and deploys them
+# - Shows status at: https://github.com/alexxvives/Akademo/actions
+```
+
+### Manual Deployment (Backup Method)
+```powershell
 # API Worker (from root)
 cd workers/akademo-api
-npx wrangler deploy --config wrangler.toml
+npx wrangler deploy
 cd ../..
 
 # Frontend Worker (from root)
 npx @opennextjs/cloudflare build
 npx wrangler deploy
 
-# Deploy Order: API first if both changed, then frontend
+# Note: GitHub Actions is preferred - manual only if automation fails
 ```
 
 ### Database Commands
@@ -48,9 +57,11 @@ npx wrangler tail akademo --format pretty
 
 ### 0. ALWAYS DEPLOY AFTER CHANGES
 **CRITICAL**: We are NOT working locally - changes only work after deployment!
-- Changed API code? → Deploy API worker immediately
-- Changed frontend code? → Clean build + deploy frontend immediately
+- Changed API code? → Push to GitHub (auto-deploys API worker)
+- Changed frontend code? → Push to GitHub (auto-deploys frontend worker)
+- Check deployment status: https://github.com/alexxvives/Akademo/actions
 - Test deployment success before telling user "it works"
+- Manual deployment only if GitHub Actions fails
 
 ### 1. Search Before You Code
 Always verify current state before changes:
