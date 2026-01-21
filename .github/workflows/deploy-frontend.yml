@@ -29,8 +29,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Build
-        run: npx @opennextjs/cloudflare build
+      - name: Build with OpenNext
+        run: |
+          npx @opennextjs/cloudflare build
+          ls -la .open-next/
+          
+      - name: Verify build output
+        run: |
+          if [ ! -f .open-next/worker.js ]; then
+            echo "Error: .open-next/worker.js not found!"
+            exit 1
+          fi
+          echo "Build successful - worker.js found"
       
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
