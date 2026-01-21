@@ -180,20 +180,15 @@ export function Sidebar({
 
       {/* Quick Action Button */}
       <div className="px-3 pb-3">
-        {role !== 'TEACHER' && role !== 'ACADEMY' && (
+        {role === 'STUDENT' && (
           <Link
-            href={
-              role === 'STUDENT' ? '/dashboard/student/enrolled-academies/classes' :
-              '/dashboard/admin'
-            }
+            href="/dashboard/student/enrolled-academies/classes"
             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#b1e787] hover:bg-[#9dd46f] text-gray-900 rounded-xl transition-all shadow-lg font-semibold"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            <span className="text-sm">
-              {role === 'STUDENT' ? 'Explorar Clases' : 'Panel Admin'}
-            </span>
+            <span className="text-sm">Explorar Clases</span>
           </Link>
         )}
       </div>
