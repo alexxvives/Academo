@@ -309,7 +309,7 @@ export default function AcademyDashboard() {
                     <span className="text-sm text-gray-600">Asistencia Promedio (Streams)</span>
                     <span className="text-sm font-semibold text-gray-900">
                       {streamStats.total > 0 && filteredStudents.length > 0
-                        ? Math.round((streamStats.avgParticipants / filteredStudents.length) * 100)
+                        ? Math.round(((streamStats.avgParticipants - 1) / filteredStudents.length) * 100)
                         : 0}%
                     </span>
                   </div>
@@ -318,7 +318,7 @@ export default function AcademyDashboard() {
                       className="bg-purple-500 h-2 rounded-full" 
                       style={{ 
                         width: `${streamStats.total > 0 && filteredStudents.length > 0
-                          ? Math.round((streamStats.avgParticipants / filteredStudents.length) * 100)
+                          ? Math.round(((streamStats.avgParticipants - 1) / filteredStudents.length) * 100)
                           : 0}%`, 
                         animation: 'slideIn 1s ease-out 0.1s backwards' 
                       }} 

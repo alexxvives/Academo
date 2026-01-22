@@ -218,12 +218,23 @@ export default function StudentClassesPage() {
         {enrolledClasses.map((classItem) => {
           const liveStream = activeStreams.find(s => s.classId === classItem.id);
           const needsSignature = !classItem.documentSigned;
+          const isPaymentPending = classItem.paymentStatus === 'CASH_PENDING' || classItem.paymentStatus === 'PENDING';
           
           return (
             <div
               key={classItem.id}
-              className="block bg-white rounded-xl border-2 border-gray-200 hover:border-brand-400 hover:shadow-xl transition-all p-6 group cursor-pointer"
+              className="block bg-white rounded-xl border-2 border-gray-200 hover:border-brand-400 hover:shadow-xl transition-all p-6 group cursor-pointer relative"
             >
+              {/* Payment Pending Tag - Top Right */}
+              {isPaymentPending && (
+                <div className="absolute top-4 right-4 bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shadow-sm">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Pago pendiente
+                </div>
+              )}
+              
               <div 
                 onClick={(e) => {
                   handleClassClick(classItem, e);

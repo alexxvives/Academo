@@ -102,11 +102,13 @@ payments.get('/pending-cash', async (c) => {
           c.name as className,
           c.currency,
           a.id as academyId,
-          a.name as academyName
+          a.name as academyName,
+          teacher.firstName || ' ' || teacher.lastName as teacherName
         FROM ClassEnrollment e
         JOIN User u ON e.userId = u.id
         JOIN Class c ON e.classId = c.id
         JOIN Academy a ON c.academyId = a.id
+        LEFT JOIN User teacher ON c.teacherId = teacher.id
         WHERE a.ownerId = ? 
         AND e.paymentStatus = 'CASH_PENDING'
         ORDER BY e.createdAt DESC
@@ -390,11 +392,13 @@ payments.get('/history', async (c) => {
           u.firstName as studentFirstName,
           u.lastName as studentLastName,
           u.email as studentEmail,
-          c.name as className
+          c.name as className,
+          teacher.firstName || ' ' || teacher.lastName as teacherName
         FROM ClassEnrollment e
         JOIN User u ON e.userId = u.id
         JOIN Class c ON e.classId = c.id
         JOIN Academy a ON c.academyId = a.id
+        LEFT JOIN User teacher ON c.teacherId = teacher.id
         WHERE a.ownerId = ? 
           AND e.paymentAmount > 0
           AND e.paymentStatus IN ('PAID', 'PENDING', 'CASH_PENDING')

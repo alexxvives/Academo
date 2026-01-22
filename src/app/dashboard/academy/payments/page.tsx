@@ -18,6 +18,7 @@ interface PendingPayment {
   className: string;
   academyId: string;
   academyName: string;
+  teacherName?: string;
 }
 
 interface PaymentHistory {
@@ -32,6 +33,7 @@ interface PaymentHistory {
   paymentStatus: string;
   approvedByName?: string;
   updatedAt: string;
+  teacherName?: string;
 }
 
 export default function AcademyPaymentsPage() {
@@ -214,6 +216,14 @@ export default function AcademyPaymentsPage() {
                         </svg>
                         <span className="text-gray-900 font-medium">{payment.className}</span>
                       </div>
+                      {payment.teacherName && (
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                          <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <span className="text-gray-600">Profesor: {payment.teacherName}</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
                         <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -270,6 +280,7 @@ export default function AcademyPaymentsPage() {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estudiante</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clase</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profesor</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Método</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aprobado por</th>
@@ -291,6 +302,9 @@ export default function AcademyPaymentsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">{history.className}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-700">{history.teacherName || 'N/A'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-semibold text-gray-900">
