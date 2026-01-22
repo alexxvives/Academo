@@ -162,11 +162,11 @@ export default function DocumentSigningModal({
         <div className="border-t border-gray-200 bg-white rounded-b-3xl">
           {/* Scroll indicator */}
           {!hasScrolledToEnd && (
-            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-3 my-3 flex items-center gap-3">
-              <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="border-2 border-blue-500 rounded-xl p-3 my-3 flex items-center justify-center gap-3">
+              <svg className="w-5 h-5 text-blue-500 flex-shrink-0 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
-              <p className="text-sm text-yellow-800 font-medium">
+              <p className="text-sm text-blue-600 font-medium">
                 Desplázate hasta el final del documento para continuar
               </p>
             </div>
