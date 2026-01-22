@@ -196,16 +196,21 @@ payments.patch('/:enrollmentId/approve-cash', async (c) => {
       return c.json(errorResponse('Payment is not in pending state'), 400);
     }
 
+    // Track who approved/denied the payment
+    const approverName = `Academia: ${session.firstName} ${session.lastName}`;
+
     // Update payment status
     const newStatus = approved ? 'PAID' : 'PENDING';
     await c.env.DB
       .prepare(`
         UPDATE ClassEnrollment 
         SET paymentStatus = ?,
+            approvedBy = ?,
+            approvedByName = ?,
             updatedAt = datetime('now')
         WHERE id = ?
       `)
-      .bind(newStatus, enrollmentId)
+      .bind(newStatus, session.id, approverName, enrollmentId)
       .run();
 
     return c.json(successResponse({
@@ -380,6 +385,7 @@ payments.get('/history', async (c) => {
           e.paymentAmount,
           e.currency,
           e.updatedAt,
+          e.approvedByName,
           u.firstName as studentFirstName,
           u.lastName as studentLastName,
           u.email as studentEmail,
@@ -404,6 +410,71 @@ payments.get('/history', async (c) => {
     return c.json(successResponse(result.results || []));
   } catch (error: any) {
     console.error('[Payment History] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
+// PUT /payments/history/:id/reverse - Reverse payment approval/rejection
+payments.put('/history/:id/reverse', async (c) => {
+  try {
+    const session = await requireAuth(c);
+    const enrollmentId = c.req.param('id');
+
+    if (!enrollmentId) {
+      return c.json(errorResponse('enrollmentId required'), 400);
+    }
+
+    // Get enrollment with academy info
+    const enrollment: any = await c.env.DB
+      .prepare(`
+        SELECT 
+          e.id,
+          e.paymentStatus,
+          e.classId,
+          c.academyId,
+          a.ownerId
+        FROM ClassEnrollment e
+        JOIN Class c ON e.classId = c.id
+        JOIN Academy a ON c.academyId = a.id
+        WHERE e.id = ?
+      `)
+      .bind(enrollmentId)
+      .first();
+
+    if (!enrollment) {
+      return c.json(errorResponse('Enrollment not found'), 404);
+    }
+
+    // Verify user owns the academy
+    if (session.role !== 'ACADEMY' || enrollment.ownerId !== session.id) {
+      return c.json(errorResponse('Only academy owners can reverse payments'), 403);
+    }
+
+    // Toggle status: PAID <-> PENDING
+    const newStatus = enrollment.paymentStatus === 'PAID' ? 'PENDING' : 'PAID';
+    
+    // Track who reversed the decision
+    const approverName = `Academia: ${session.firstName} ${session.lastName}`;
+
+    await c.env.DB
+      .prepare(`
+        UPDATE ClassEnrollment 
+        SET paymentStatus = ?,
+            approvedBy = ?,
+            approvedByName = ?,
+            updatedAt = datetime('now')
+        WHERE id = ?
+      `)
+      .bind(newStatus, session.id, approverName, enrollmentId)
+      .run();
+
+    return c.json(successResponse({ 
+      message: `Payment status changed to ${newStatus}`,
+      newStatus 
+    }));
+
+  } catch (error: any) {
+    console.error('[Reverse Payment] Error:', error);
     return c.json(errorResponse(error.message || 'Internal server error'), 500);
   }
 });

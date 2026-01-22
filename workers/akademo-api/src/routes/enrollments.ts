@@ -316,16 +316,21 @@ enrollments.put('/pending', async (c) => {
        return c.json(errorResponse('Not authorized'), 403);
     }
 
+    // Track who approved/rejected
+    const approverName = session.role === 'ACADEMY' 
+      ? `Academia: ${session.firstName} ${session.lastName}`
+      : `Profesor: ${session.firstName} ${session.lastName}`;
+
     if (action === 'APPROVE') {
       await c.env.DB
-        .prepare("UPDATE ClassEnrollment SET status = 'APPROVED', updatedAt = datetime('now') WHERE id = ?")
-        .bind(enrollmentId)
+        .prepare("UPDATE ClassEnrollment SET status = 'APPROVED', approvedBy = ?, approvedByName = ?, updatedAt = datetime('now') WHERE id = ?")
+        .bind(session.id, approverName, enrollmentId)
         .run();
     } else {
        // REJECT
        await c.env.DB
-        .prepare("UPDATE ClassEnrollment SET status = 'REJECTED', updatedAt = datetime('now') WHERE id = ?")
-        .bind(enrollmentId)
+        .prepare("UPDATE ClassEnrollment SET status = 'REJECTED', approvedBy = ?, approvedByName = ?, updatedAt = datetime('now') WHERE id = ?")
+        .bind(session.id, approverName, enrollmentId)
         .run();
     }
 
@@ -353,6 +358,7 @@ enrollments.get('/history', async (c) => {
           e.status,
           e.updatedAt,
           e.createdAt as enrolledAt,
+          e.approvedByName,
           u.id as student_id,
           u.firstName as student_firstName,
           u.lastName as student_lastName,
@@ -378,6 +384,7 @@ enrollments.get('/history', async (c) => {
           e.status,
           e.updatedAt,
           e.createdAt as enrolledAt,
+          e.approvedByName,
           u.id as student_id,
           u.firstName as student_firstName,
           u.lastName as student_lastName,
@@ -404,6 +411,7 @@ enrollments.get('/history', async (c) => {
       status: row.status,
       updatedAt: row.updatedAt,
       enrolledAt: row.enrolledAt,
+      approvedByName: row.approvedByName,
       student: {
         id: row.student_id,
         firstName: row.student_firstName,
@@ -420,6 +428,69 @@ enrollments.get('/history', async (c) => {
     return c.json(successResponse(enrollments));
   } catch (error: any) {
     console.error('[Enrollment History] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
+// PUT /enrollments/history/:id/reverse - Reverse approval/rejection decision
+enrollments.put('/history/:id/reverse', async (c) => {
+  try {
+    const session = await requireAuth(c);
+    const enrollmentId = c.req.param('id');
+
+    if (!enrollmentId) {
+      return c.json(errorResponse('enrollmentId required'), 400);
+    }
+
+    // Get enrollment details including class owner
+    const enrollment = await c.env.DB
+      .prepare(`
+        SELECT e.*, c.teacherId, a.ownerId
+        FROM ClassEnrollment e
+        JOIN Class c ON e.classId = c.id
+        JOIN Academy a ON c.academyId = a.id
+        WHERE e.id = ?
+      `)
+      .bind(enrollmentId)
+      .first();
+
+    if (!enrollment) {
+      return c.json(errorResponse('Enrollment not found'), 404);
+    }
+
+    // Check permissions
+    if (session.role === 'ACADEMY') {
+      if (enrollment.ownerId !== session.id) {
+         return c.json(errorResponse('Not authorized'), 403);
+      }
+    } else if (session.role === 'TEACHER') {
+      if (enrollment.teacherId !== session.id) {
+         return c.json(errorResponse('Not authorized'), 403);
+      }
+    } else {
+       return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    // Toggle status: APPROVED <-> REJECTED
+    const newStatus = enrollment.status === 'APPROVED' ? 'REJECTED' : 'APPROVED';
+    
+    // Track who reversed the decision
+    const approverName = session.role === 'ACADEMY' 
+      ? `Academia: ${session.firstName} ${session.lastName}`
+      : `Profesor: ${session.firstName} ${session.lastName}`;
+
+    await c.env.DB
+      .prepare("UPDATE ClassEnrollment SET status = ?, approvedBy = ?, approvedByName = ?, updatedAt = datetime('now') WHERE id = ?")
+      .bind(newStatus, session.id, approverName, enrollmentId)
+      .run();
+
+    return c.json(successResponse({ 
+      message: `Enrollment status changed to ${newStatus}`,
+      newStatus 
+    }));
+
+  } catch (error: any) {
+    console.error('[Reverse Enrollment] Error:', error);
     return c.json(errorResponse(error.message || 'Internal server error'), 500);
   }
 });

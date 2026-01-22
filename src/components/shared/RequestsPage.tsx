@@ -19,6 +19,7 @@ interface EnrollmentHistory {
   status: string;
   updatedAt: string;
   enrolledAt: string;
+  approvedByName?: string;
   student: {
     id: string;
     firstName: string;
@@ -41,6 +42,7 @@ export function RequestsPage({ role }: RequestsPageProps) {
   const [enrollmentHistory, setEnrollmentHistory] = useState<EnrollmentHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [reversingIds, setReversingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadData();
@@ -144,6 +146,36 @@ export function RequestsPage({ role }: RequestsPageProps) {
       alert('An error occurred');
     } finally {
       setProcessingIds(prev => {
+        const next = new Set(prev);
+        next.delete(enrollmentId);
+        return next;
+      });
+    }
+  };
+
+  const handleReverseStatus = async (enrollmentId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'APPROVED' ? 'rechazado' : 'aprobado';
+    if (!confirm(`¿Estás seguro de revertir este estado a ${newStatus}?`)) {
+      return;
+    }
+
+    setReversingIds(prev => new Set(prev).add(enrollmentId));
+    try {
+      const response = await apiClient(`/enrollments/history/${enrollmentId}/reverse`, {
+        method: 'PUT',
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        loadData(); // Reload to update history
+      } else {
+        alert(result.error || 'Failed to reverse status');
+      }
+    } catch (error) {
+      console.error('Error reversing status:', error);
+      alert('An error occurred');
+    } finally {
+      setReversingIds(prev => {
         const next = new Set(prev);
         next.delete(enrollmentId);
         return next;
@@ -255,8 +287,10 @@ export function RequestsPage({ role }: RequestsPageProps) {
                     {role === 'ACADEMY' && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profesor</th>
                     )}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aprobado por</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -279,6 +313,9 @@ export function RequestsPage({ role }: RequestsPageProps) {
                         </td>
                       )}
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-700">{history.approvedByName || 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         {history.status === 'APPROVED' ? (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             Aprobado
@@ -297,6 +334,15 @@ export function RequestsPage({ role }: RequestsPageProps) {
                           hour: '2-digit',
                           minute: '2-digit'
                         })}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => handleReverseStatus(history.id, history.status)}
+                          disabled={reversingIds.has(history.id)}
+                          className="text-sm text-accent-600 hover:text-accent-800 disabled:opacity-50"
+                        >
+                          {reversingIds.has(history.id) ? 'Procesando...' : 'Revertir'}
+                        </button>
                       </td>
                     </tr>
                   ))}

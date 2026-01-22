@@ -29,6 +29,7 @@ interface PaymentHistory {
   paymentAmount: number;
   currency: string;
   paymentStatus: string;
+  approvedByName?: string;
   updatedAt: string;
 }
 
@@ -37,6 +38,7 @@ export default function AcademyPaymentsPage() {
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const [reversingIds, setReversingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadData();
@@ -115,6 +117,36 @@ export default function AcademyPaymentsPage() {
       alert('Error: ' + error.message);
     } finally {
       setProcessingIds(prev => {
+        const next = new Set(prev);
+        next.delete(enrollmentId);
+        return next;
+      });
+    }
+  };
+
+  const handleReversePayment = async (enrollmentId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'PAID' ? 'denegado' : 'confirmado';
+    if (!confirm(`¿Estás seguro de revertir este estado a ${newStatus}?`)) {
+      return;
+    }
+
+    setReversingIds(prev => new Set(prev).add(enrollmentId));
+    try {
+      const response = await apiClient(`/payments/history/${enrollmentId}/reverse`, {
+        method: 'PUT',
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        loadData(); // Reload to update history
+      } else {
+        alert(result.error || 'Failed to reverse payment status');
+      }
+    } catch (error) {
+      console.error('Error reversing payment status:', error);
+      alert('An error occurred');
+    } finally {
+      setReversingIds(prev => {
         const next = new Set(prev);
         next.delete(enrollmentId);
         return next;
@@ -232,8 +264,10 @@ export default function AcademyPaymentsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estudiante</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clase</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aprobado por</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -256,6 +290,9 @@ export default function AcademyPaymentsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-700">{history.approvedByName || 'N/A'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {history.paymentStatus === 'PAID' ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                           Confirmado
@@ -274,6 +311,15 @@ export default function AcademyPaymentsPage() {
                         hour: '2-digit',
                         minute: '2-digit'
                       })}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => handleReversePayment(history.enrollmentId, history.paymentStatus)}
+                        disabled={reversingIds.has(history.enrollmentId)}
+                        className="text-sm text-accent-600 hover:text-accent-800 disabled:opacity-50"
+                      >
+                        {reversingIds.has(history.enrollmentId) ? 'Procesando...' : 'Revertir'}
+                      </button>
                     </td>
                   </tr>
                 ))}
