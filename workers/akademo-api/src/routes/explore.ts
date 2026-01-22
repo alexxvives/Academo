@@ -119,7 +119,15 @@ explore.get('/enrolled-academies/classes', async (c) => {
       .bind(session.id, session.id)
       .all();
 
-    return c.json(successResponse(result.results || []));
+    // Map results to include full teacher name
+    const classes = (result.results || []).map((c: any) => ({
+      ...c,
+      teacherName: c.teacherFirstName && c.teacherLastName 
+        ? `${c.teacherFirstName} ${c.teacherLastName}`
+        : c.teacherFirstName || c.teacherLastName || 'Sin profesor asignado'
+    }));
+
+    return c.json(successResponse(classes));
   } catch (error: any) {
     console.error('[Enrolled Academies Classes] Error:', error);
     return c.json(errorResponse(error.message || 'Internal server error'), 500);

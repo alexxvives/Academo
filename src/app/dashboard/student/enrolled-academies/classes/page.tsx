@@ -12,7 +12,9 @@ interface AcademyClass {
   slug: string | null;
   academyId: string;
   academyName: string;
-  teacherName: string;
+  teacherName: string; // Full name from backend
+  teacherFirstName?: string;
+  teacherLastName?: string;
   teacherId: string;
   teacherEmail: string;
   studentCount: number;
