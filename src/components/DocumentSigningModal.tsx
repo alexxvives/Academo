@@ -166,7 +166,7 @@ export default function DocumentSigningModal({
               <svg className="w-5 h-5 text-blue-500 flex-shrink-0 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
-              <p className="text-sm text-blue-600 font-medium">
+              <p className="text-sm text-blue-700 font-medium">
                 Desplázate hasta el final del documento para continuar
               </p>
             </div>
