@@ -74,6 +74,15 @@ export default function PaymentModal({
         }),
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('La respuesta del servidor no es JSON. Por favor, verifica que el API worker esté desplegado.');
+      }
+
       const result = await res.json();
       if (result.success && result.data?.url) {
         // Redirect to Stripe Checkout
@@ -82,6 +91,7 @@ export default function PaymentModal({
         throw new Error(result.error || 'Error al crear sesión de pago');
       }
     } catch (error: any) {
+      console.error('Stripe payment error:', error);
       alert('Error: ' + error.message);
       setProcessing(false);
     }
@@ -169,31 +179,24 @@ export default function PaymentModal({
 
         {/* Content Container with Two Columns */}
         <div className="p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Left Side - Price Info */}
             <div className="lg:col-span-1">
-              <div className="bg-gray-50 rounded-xl p-8 border border-gray-200 h-full flex flex-col justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">Total</p>
-                  <p className="text-5xl font-bold text-gray-900 mb-6">{formatPrice(price, currency)}</p>
-                </div>
-                <div className="pt-6 border-t border-gray-300">
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    Selecciona tu método de pago preferido para continuar con la inscripción.
-                  </p>
-                </div>
+              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 h-full flex flex-col justify-center">
+                <p className="text-xs uppercase tracking-wider text-gray-500 mb-2 text-center">Total</p>
+                <p className="text-3xl font-bold text-gray-900 text-center">{formatPrice(price, currency)}</p>
               </div>
             </div>
 
             {/* Right Side - Payment Options */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-3 space-y-3">
               {/* Cash Payment */}
               <button
                 onClick={() => {
                   setSelectedMethod('cash');
                   handleCashPayment();
                 }}
-                className="w-full p-6 border-2 border-gray-300 rounded-xl text-left transition-all hover:border-gray-400 hover:shadow-md"
+                className="w-full p-4 border-2 border-gray-300 rounded-xl text-left transition-all hover:border-gray-400 hover:shadow-md"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -214,7 +217,7 @@ export default function PaymentModal({
                   setSelectedMethod('stripe');
                   handleStripePayment();
                 }}
-                className="w-full p-6 border-2 border-gray-300 rounded-xl text-left transition-all hover:border-gray-400 hover:shadow-md"
+                className="w-full p-4 border-2 border-gray-300 rounded-xl text-left transition-all hover:border-gray-400 hover:shadow-md"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -235,7 +238,7 @@ export default function PaymentModal({
                   setSelectedMethod('bizum');
                   handleBizumPayment();
                 }}
-                className="w-full p-6 border-2 border-gray-300 rounded-xl text-left transition-all hover:border-gray-400 hover:shadow-md"
+                className="w-full p-4 border-2 border-gray-300 rounded-xl text-left transition-all hover:border-gray-400 hover:shadow-md"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
