@@ -8,7 +8,12 @@ const payments = new Hono<{ Bindings: Bindings }>();
 // POST /payments/initiate - Student initiates a payment for a class
 payments.post('/initiate', async (c) => {
   try {
+    console.log('[Payments] Initiate payment request received');
+    console.log('[Payments] Headers:', Object.fromEntries(c.req.raw.headers));
+    
     const session = await requireAuth(c);
+    console.log('[Payments] Session authenticated:', session.id, session.email);
+    
     const { classId, paymentMethod } = await c.req.json();
 
     if (!classId || !paymentMethod) {
@@ -216,8 +221,12 @@ payments.patch('/:enrollmentId/approve-cash', async (c) => {
 // POST /payments/stripe-session - Create Stripe Checkout Session (Stripe Connect)
 payments.post('/stripe-session', async (c) => {
   try {
+    console.log('[Stripe Session] Request received');
     const session = await requireAuth(c);
+    console.log('[Stripe Session] User authenticated:', session.id);
+    
     const { classId, method } = await c.req.json();
+    console.log('[Stripe Session] Request data:', { classId, method });
 
     if (!classId) {
       return c.json(errorResponse('classId is required'), 400);
@@ -234,11 +243,15 @@ payments.post('/stripe-session', async (c) => {
       .bind(classId)
       .first();
 
+    console.log('[Stripe Session] Class data:', classData);
+
     if (!classData) {
+      console.error('[Stripe Session] Class not found:', classId);
       return c.json(errorResponse('Class not found'), 404);
     }
 
     if (!classData.stripeAccountId) {
+      console.error('[Stripe Session] No Stripe account for academy:', classData.academyId);
       return c.json(errorResponse('Academy has not set up Stripe Connect. Please pay with cash.'), 400);
     }
 

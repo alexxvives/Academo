@@ -52,7 +52,6 @@ export default function PaymentModal({
       console.log('[PaymentModal] Response result:', result);
       
       if (result.success) {
-        alert('Pago en efectivo registrado. Esperando aprobación de la academia.');
         onPaymentComplete();
       } else {
         throw new Error(result.error || 'Error al registrar pago');
@@ -69,13 +68,19 @@ export default function PaymentModal({
   const handleStripePayment = async () => {
     setProcessing(true);
     try {
+      console.log('[PaymentModal] Initiating Stripe payment for classId:', classId);
+      
       const res = await apiPost('/payments/stripe-session', { 
         classId,
         method: 'bank_transfer'
       });
 
+      console.log('[PaymentModal] Stripe response status:', res.status);
+      
       if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        const errorText = await res.text();
+        console.error('[PaymentModal] Stripe error response:', errorText);
+        throw new Error(`HTTP error! status: ${res.status} - ${errorText}`);
       }
 
       const contentType = res.headers.get('content-type');
@@ -84,6 +89,7 @@ export default function PaymentModal({
       }
 
       const result = await res.json();
+      console.log('[PaymentModal] Stripe result:', result);
       if (result.success && result.data?.url) {
         // Redirect to Stripe Checkout
         window.location.href = result.data.url;

@@ -262,8 +262,8 @@ export default function StudentClassesPage() {
                       </div>
                     )}
                     
-                    {/* Payment Status Icon - Always show if price exists or payment pending/completed */}
-                    {(classItem.price && classItem.price > 0) || classItem.paymentStatus === 'PAID' || classItem.paymentStatus === 'CASH_PENDING' ? (
+                    {/* Payment Status Icon - Show for all classes with price > 0 */}
+                    {classItem.price && classItem.price > 0 ? (
                       classItem.paymentStatus === 'PAID' ? (
                         <div className="relative group/payment">
                           <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
