@@ -21,8 +21,9 @@ export default function DocumentSigningModal({
   const [signing, setSigning] = useState(false);
   const [pdfLoaded, setPdfLoaded] = useState(false);
   const [showShieldAnimation, setShowShieldAnimation] = useState(true);
-  const [countdown, setCountdown] = useState(15);
+  const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -31,31 +32,40 @@ export default function DocumentSigningModal({
       setSigning(false);
       setPdfLoaded(false);
       setShowShieldAnimation(true);
-      setCountdown(15);
+      setHasScrolledToEnd(false);
       // Hide shield animation after 1.5 seconds
       const timer = setTimeout(() => setShowShieldAnimation(false), 1500);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
-  // Countdown timer - starts when PDF loads
+  // Monitor scroll in the PDF container
   useEffect(() => {
-    if (!isOpen || !pdfLoaded || countdown === 0) return;
+    if (!isOpen || !pdfLoaded) return;
 
-    const timer = setInterval(() => {
-      setCountdown(prev => Math.max(0, prev - 1));
-    }, 1000);
+    const container = containerRef.current;
+    if (!container) return;
 
-    return () => clearInterval(timer);
-  }, [isOpen, pdfLoaded, countdown]);
+    const handleScroll = () => {
+      const scrollTop = container.scrollTop;
+      const scrollHeight = container.scrollHeight;
+      const clientHeight = container.clientHeight;
+      
+      // User reached bottom (within 20px threshold)
+      if (scrollTop + clientHeight >= scrollHeight - 20) {
+        setHasScrolledToEnd(true);
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [isOpen, pdfLoaded]);
 
   if (!isOpen) return null;
 
-  const canSign = countdown === 0;
-
   const handleSign = async () => {
-    if (!canSign) {
-      alert(`Debes esperar ${countdown} segundos antes de firmar`);
+    if (!hasScrolledToEnd) {
+      alert('Debes leer el documento completo (desplázate hasta el final)');
       return;
     }
     
@@ -123,52 +133,58 @@ export default function DocumentSigningModal({
           </div>
         </div>
 
-        {/* PDF Viewer */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="w-full bg-gray-50 rounded-2xl border-2 border-gray-200 relative shadow-inner" style={{ height: '500px' }}>
-            {!pdfLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-16 h-16 border-4 border-gray-200 border-t-brand-600 rounded-full animate-spin mx-auto mb-4" />
-                  <p className="text-gray-600 font-medium">Cargando documento...</p>
-                  <p className="text-sm text-gray-500 mt-1">Por favor espera</p>
-                </div>
+        {/* PDF Viewer - Scrollable */}
+        <div 
+          ref={containerRef}
+          className="flex-1 overflow-y-auto bg-gray-50 rounded-2xl border-2 border-gray-200 relative shadow-inner" 
+          style={{ height: '500px' }}
+        >
+          {!pdfLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-gray-200 border-t-brand-600 rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-gray-600 font-medium">Cargando documento...</p>
+                <p className="text-sm text-gray-500 mt-1">Por favor espera</p>
               </div>
-            )}
-            <iframe
-              ref={iframeRef}
-              src="/legal/consent.pdf"
-              className="w-full h-full rounded-2xl"
-              onLoad={() => setPdfLoaded(true)}
-              title="Documento de Consentimiento"
-            />
-          </div>
+            </div>
+          )}
+          <iframe
+            ref={iframeRef}
+            src="/legal/consent.pdf"
+            className="w-full rounded-2xl"
+            style={{ height: '1200px', minHeight: '1200px' }}
+            onLoad={() => setPdfLoaded(true)}
+            title="Documento de Consentimiento"
+          />
         </div>
 
         {/* Footer - Agreement and Sign Button */}
         <div className="border-t border-gray-200 bg-white rounded-b-3xl">
-          {/* Timer Warning */}
-          {countdown > 0 && (
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 my-3 flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-2xl font-bold text-blue-600">{countdown}</span>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-blue-800 font-medium">
-                  Por favor, lee el documento. Podrás firmar en <strong>{countdown} segundos</strong>
-                </p>
-              </div>
+          {/* Scroll indicator */}
+          {!hasScrolledToEnd && (
+            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-3 my-3 flex items-center gap-3">
+              <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+              <p className="text-sm text-yellow-800 font-medium">
+                Desplázate hasta el final del documento para continuar
+              </p>
             </div>
           )}
 
           {/* Checkbox Agreement */}
-          <label className="flex items-center gap-4 p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-green-300 cursor-pointer transition-colors my-3 group">
+          <label className={`flex items-center gap-4 p-4 bg-white border-2 rounded-xl transition-colors my-3 group ${
+            hasScrolledToEnd
+              ? 'border-gray-200 hover:border-green-300 cursor-pointer'
+              : 'border-gray-200 opacity-50 cursor-not-allowed'
+          }`}>
             <div className="relative flex-shrink-0">
               <input
                 type="checkbox"
                 checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
-                className="w-6 h-6 accent-green-600 border-2 border-gray-300 rounded-lg focus:ring-green-500 focus:ring-offset-2 cursor-pointer"
+                disabled={!hasScrolledToEnd}
+                className="w-6 h-6 accent-green-600 border-2 border-gray-300 rounded-lg focus:ring-green-500 focus:ring-offset-2 cursor-pointer disabled:cursor-not-allowed"
               />
               {agreed && (
                 <svg className="w-3 h-3 text-green-600 absolute top-1.5 left-1.5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
@@ -190,9 +206,9 @@ export default function DocumentSigningModal({
           <div className="flex items-center justify-center">
             <button
               onClick={handleSign}
-              disabled={!canSign || !agreed || signing}
+              disabled={!hasScrolledToEnd || !agreed || signing}
               className={`px-10 py-3.5 rounded-xl font-semibold transition-all flex items-center gap-3 shadow-lg ${
-                canSign && agreed && !signing
+                hasScrolledToEnd && agreed && !signing
                   ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-green-500/30 hover:shadow-green-500/40 hover:scale-[1.02]'
                   : 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-none'
               }`}
@@ -202,12 +218,12 @@ export default function DocumentSigningModal({
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Firmando...</span>
                 </>
-              ) : countdown > 0 ? (
+              ) : !hasScrolledToEnd ? (
                 <>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
-                  <span>Espera {countdown}s para firmar</span>
+                  <span>Lee el Documento Completo</span>
                 </>
               ) : (
                 <>
