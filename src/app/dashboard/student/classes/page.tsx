@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import DocumentSigningModal from '@/components/DocumentSigningModal';
+import PaymentModal from '@/components/PaymentModal';
 
 interface EnrolledClass {
   id: string;
@@ -42,6 +43,7 @@ export default function StudentClassesPage() {
   const [academyName, setAcademyName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [signingClass, setSigningClass] = useState<EnrolledClass | null>(null);
+  const [payingClass, setPayingClass] = useState<EnrolledClass | null>(null);
 
   useEffect(() => {
     loadData();
@@ -107,17 +109,18 @@ export default function StudentClassesPage() {
   };
 
   const handleClassClick = (classItem: EnrolledClass, e: React.MouseEvent) => {
-    // First check payment status
+    // First check if document signed
+    if (!classItem.documentSigned) {
+      e.preventDefault();
+      setSigningClass(classItem);
+      return;
+    }
+    
+    // Then check payment status
     if (classItem.paymentStatus !== 'PAID') {
       e.preventDefault();
       setPayingClass(classItem);
       return;
-    }
-    
-    // Then check if document signed
-    if (!classItem.documentSigned) {
-      e.preventDefault();
-      setSigningClass(classItem);
     }
   };
 
@@ -133,14 +136,21 @@ export default function StudentClassesPage() {
 
     if (result.success) {
       // Update local state to reflect signed document
+      const updatedClass = { ...signingClass, documentSigned: 1 };
       setEnrolledClasses(prev =>
         prev.map(c =>
-          c.id === signingClass.id ? { ...c, documentSigned: 1 } : c
+          c.id === signingClass.id ? updatedClass : c
         )
       );
       setSigningClass(null);
-      // Navigate to the class
-      router.push(`/dashboard/student/class/${signingClass.slug || signingClass.id}`);
+      
+      // Check if payment is needed
+      if (updatedClass.paymentStatus !== 'PAID') {
+        setPayingClass(updatedClass);
+      } else {
+        // Navigate to the class
+        router.push(`/dashboard/student/class/${updatedClass.slug || updatedClass.id}`);
+      }
     } else {
       throw new Error(result.error || 'Failed to sign document');
     }
@@ -270,7 +280,7 @@ export default function StudentClassesPage() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            window.location.href = `/dashboard/student/payment?classId=${classItem.id}`;
+                            setPayingClass(classItem);
                           }}
                           className="relative group/payment"
                         >
@@ -286,7 +296,7 @@ export default function StudentClassesPage() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            window.location.href = `/dashboard/student/payment?classId=${classItem.id}`;
+                            setPayingClass(classItem);
                           }}
                           className="relative group/payment"
                         >
@@ -376,6 +386,20 @@ export default function StudentClassesPage() {
           );
         })}
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={!!payingClass}
+        onClose={() => setPayingClass(null)}
+        classId={payingClass?.id || ''}
+        className={payingClass?.name || ''}
+        price={payingClass?.price || 0}
+        currency={payingClass?.currency || 'EUR'}
+        onPaymentComplete={() => {
+          setPayingClass(null);
+          loadData();
+        }}
+      />
 
       {/* Document Signing Modal */}
       <DocumentSigningModal
