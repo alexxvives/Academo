@@ -116,8 +116,8 @@ export default function StudentClassesPage() {
       return;
     }
     
-    // Then check payment status
-    if (classItem.paymentStatus !== 'PAID') {
+    // Then check payment status (only if class has a price > 0)
+    if (classItem.price && classItem.price > 0 && classItem.paymentStatus !== 'PAID') {
       e.preventDefault();
       setPayingClass(classItem);
       return;
@@ -262,15 +262,15 @@ export default function StudentClassesPage() {
                       </div>
                     )}
                     
-                    {/* Payment Status Icon - Show for all classes with price > 0 */}
-                    {classItem.price && classItem.price > 0 ? (
-                      classItem.paymentStatus === 'PAID' ? (
+                    {/* Payment Status Icon - Show for all classes (free or paid) */}
+                    {classItem.price !== null && classItem.price !== undefined ? (
+                      classItem.price === 0 || classItem.paymentStatus === 'PAID' ? (
                         <div className="relative group/payment">
                           <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover/payment:opacity-100 transition-opacity z-10">
-                            Pagado
+                            {classItem.price === 0 ? 'Gratis' : 'Pagado'}
                           </div>
                         </div>
                       ) : classItem.paymentStatus === 'CASH_PENDING' ? (

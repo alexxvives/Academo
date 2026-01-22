@@ -1159,19 +1159,17 @@ lessons.get('/:id/student-times', async (c) => {
           })
         );
 
-        // Only include students who have watched at least one video
-        const hasWatchedAny = videoTimes.some(v => v.totalWatchTimeSeconds > 0);
-
+        // Include all enrolled students, even if they haven't watched yet
         return {
           studentId: student.id,
           studentName: `${student.firstName} ${student.lastName}`,
-          videos: hasWatchedAny ? videoTimes : [],
+          videos: videoTimes, // Always include all videos, even with 0 watch time
         };
       })
     );
 
-    // Filter out students who haven't watched any videos
-    const filteredData = studentTimesData.filter(s => s.videos.length > 0);
+    // Include all students (don't filter by watch time)
+    const filteredData = studentTimesData;
 
     return c.json(successResponse(filteredData));
   } catch (error: any) {
