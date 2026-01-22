@@ -50,17 +50,20 @@ export default function DocumentSigningModal({
       const scrollHeight = pdfContainer.scrollHeight;
       const clientHeight = pdfContainer.clientHeight;
       
-      // Consider "end" when user is within 10px of bottom
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10;
+      // User must scroll at least 200px to prove they started reading
+      const hasStartedScrolling = scrollTop > 10;
       
-      if (isAtBottom && !hasScrolledToEnd) {
+      // Consider "end" when user is within 20px of bottom
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 20;
+      
+      if (hasStartedScrolling && isAtBottom && !hasScrolledToEnd) {
         setHasScrolledToEnd(true);
       }
     };
 
     pdfContainer.addEventListener('scroll', checkScroll);
-    // Check initial state
-    checkScroll();
+    
+    // Don't check initial state - force user to scroll
     
     return () => pdfContainer.removeEventListener('scroll', checkScroll);
   }, [isOpen, pdfLoaded, hasScrolledToEnd]);
@@ -154,7 +157,7 @@ export default function DocumentSigningModal({
             ref={iframeRef}
             src="/legal/consent.pdf"
             className="w-full rounded-2xl"
-            style={{ height: '800px', display: 'block' }}
+            style={{ height: '1200px', display: 'block' }}
             onLoad={() => setPdfLoaded(true)}
             title="Documento de Consentimiento"
           />
