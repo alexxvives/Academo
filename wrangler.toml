@@ -3,6 +3,7 @@ name = "akademo"
 main = ".open-next/worker.js"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
+account_id = "53808754f4bd94365d6e31351aa426c0"
 
 [observability]
 enabled = false
