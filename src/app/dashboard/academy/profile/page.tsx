@@ -15,12 +15,28 @@ interface Academy {
   name: string;
   description: string;
   ownerId: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  feedbackAnonymous?: number;
+  defaultWatermarkIntervalMins?: number;
+  defaultMaxWatchTimeMultiplier?: number;
 }
 
 export default function ProfilePage() {
   const [academy, setAcademy] = useState<Academy | null>(null);
   const [zoomAccounts, setZoomAccounts] = useState<ZoomAccount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    address: '',
+    phone: '',
+    email: '',
+    feedbackAnonymous: false,
+    defaultWatermarkIntervalMins: 5,
+    defaultMaxWatchTimeMultiplier: 2.0
+  });
 
   useEffect(() => {
     loadData();
@@ -37,7 +53,17 @@ export default function ProfilePage() {
       const zoomResult = await zoomRes.json();
 
       if (academyResult.success && academyResult.data.length > 0) {
-        setAcademy(academyResult.data[0]);
+        const academyData = academyResult.data[0];
+        setAcademy(academyData);
+        setFormData({
+          name: academyData.name || '',
+          address: academyData.address || '',
+          phone: academyData.phone || '',
+          email: academyData.email || '',
+          feedbackAnonymous: academyData.feedbackAnonymous === 1,
+          defaultWatermarkIntervalMins: academyData.defaultWatermarkIntervalMins || 5,
+          defaultMaxWatchTimeMultiplier: academyData.defaultMaxWatchTimeMultiplier || 2.0
+        });
       }
 
       if (zoomResult.success) {
@@ -78,6 +104,37 @@ export default function ProfilePage() {
     }
   };
 
+  const handleSaveProfile = async () => {
+    if (!academy) return;
+
+    try {
+      const response = await apiClient(`/academies/${academy.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          address: formData.address,
+          phone: formData.phone,
+          email: formData.email,
+          feedbackAnonymous: formData.feedbackAnonymous ? 1 : 0,
+          defaultWatermarkIntervalMins: formData.defaultWatermarkIntervalMins,
+          defaultMaxWatchTimeMultiplier: formData.defaultMaxWatchTimeMultiplier
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setEditing(false);
+        loadData();
+      } else {
+        alert('Error al guardar los cambios');
+      }
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert('Error al guardar los cambios');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -90,25 +147,173 @@ export default function ProfilePage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Perfil de Academia</h1>
+        <h1 className="text-2xl text-gray-900">Perfil de Academia</h1>
         <p className="text-sm text-gray-600 mt-1">Gestiona la información de tu academia y cuentas conectadas</p>
       </div>
 
       {/* Academy Info */}
       {academy && (
         <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Información de la Academia</h2>
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium text-gray-700">Nombre</label>
-              <p className="text-gray-900 mt-1">{academy.name}</p>
-            </div>
-            {academy.description && (
-              <div>
-                <label className="text-sm font-medium text-gray-700">Descripción</label>
-                <p className="text-gray-900 mt-1">{academy.description}</p>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Información de la Academia</h2>
+            {!editing ? (
+              <button
+                onClick={() => setEditing(true)}
+                className="text-sm text-brand-600 hover:text-brand-700 font-medium"
+              >
+                Editar
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setEditing(false);
+                    setFormData({
+                      name: academy.name || '',
+                      address: academy.address || '',
+                      phone: academy.phone || '',
+                      email: academy.email || '',
+                      feedbackAnonymous: academy.feedbackAnonymous === 1,
+                      defaultWatermarkIntervalMins: academy.defaultWatermarkIntervalMins || 5,
+                      defaultMaxWatchTimeMultiplier: academy.defaultMaxWatchTimeMultiplier || 2.0
+                    });
+                  }}
+                  className="text-sm text-gray-600 hover:text-gray-700 font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveProfile}
+                  className="text-sm text-brand-600 hover:text-brand-700 font-medium"
+                >
+                  Guardar
+                </button>
               </div>
             )}
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700">Nombre</label>
+              {editing ? (
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              ) : (
+                <p className="text-gray-900 mt-1">{academy.name}</p>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">Dirección (para pagos en efectivo)</label>
+              {editing ? (
+                <input
+                  type="text"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  placeholder="Dirección física de la academia"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              ) : (
+                <p className="text-gray-900 mt-1">{academy.address || 'No especificada'}</p>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">Email de contacto</label>
+              {editing ? (
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="email@academia.com"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              ) : (
+                <p className="text-gray-900 mt-1">{academy.email || 'No especificado'}</p>
+              )}
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">Teléfono de contacto</label>
+              {editing ? (
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+34 123 456 789"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              ) : (
+                <p className="text-gray-900 mt-1">{academy.phone || 'No especificado'}</p>
+              )}
+            </div>
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Configuración de Feedback</h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Feedback anónimo</label>
+                  <p className="text-xs text-gray-500 mt-1">Los estudiantes pueden dar feedback sin revelar su identidad</p>
+                </div>
+                {editing ? (
+                  <button
+                    onClick={() => setFormData({ ...formData, feedbackAnonymous: !formData.feedbackAnonymous })}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      formData.feedbackAnonymous ? 'bg-brand-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        formData.feedbackAnonymous ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                ) : (
+                  <span className={`text-sm font-medium ${
+                    academy.feedbackAnonymous ? 'text-green-600' : 'text-gray-500'
+                  }`}>
+                    {academy.feedbackAnonymous ? 'Activado' : 'Desactivado'}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Configuración de Vídeos (por defecto)</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Multiplicador de tiempo de visualización</label>
+                  <p className="text-xs text-gray-500 mt-1">Cuántas veces puede ver un estudiante el vídeo</p>
+                  {editing ? (
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="1"
+                      max="10"
+                      value={formData.defaultMaxWatchTimeMultiplier}
+                      onChange={(e) => setFormData({ ...formData, defaultMaxWatchTimeMultiplier: parseFloat(e.target.value) })}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900 mt-1">{academy.defaultMaxWatchTimeMultiplier || 2.0}x</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Intervalo de marca de agua (minutos)</label>
+                  <p className="text-xs text-gray-500 mt-1">Cada cuántos minutos aparece la marca de agua con el nombre del estudiante</p>
+                  {editing ? (
+                    <input
+                      type="number"
+                      min="1"
+                      max="30"
+                      value={formData.defaultWatermarkIntervalMins}
+                      onChange={(e) => setFormData({ ...formData, defaultWatermarkIntervalMins: parseInt(e.target.value) })}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    />
+                  ) : (
+                    <p className="text-gray-900 mt-1">{academy.defaultWatermarkIntervalMins || 5} minutos</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -122,7 +327,7 @@ export default function ProfilePage() {
           </div>
           <button
             onClick={handleConnectZoom}
-            className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-sm font-medium"
+            className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
           >
             + Conectar Zoom
           </button>

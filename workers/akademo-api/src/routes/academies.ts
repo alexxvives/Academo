@@ -464,7 +464,16 @@ academies.patch('/:id', async (c) => {
   try {
     const session = await requireAuth(c);
     const academyId = c.req.param('id');
-    const { name, description } = await c.req.json();
+    const { 
+      name, 
+      description, 
+      address, 
+      phone, 
+      email, 
+      feedbackAnonymous,
+      defaultWatermarkIntervalMins,
+      defaultMaxWatchTimeMultiplier
+    } = await c.req.json();
 
     // Check ownership
     const academy = await c.env.DB
@@ -481,8 +490,28 @@ academies.patch('/:id', async (c) => {
     }
 
     await c.env.DB
-      .prepare('UPDATE Academy SET name = ?, description = ? WHERE id = ?')
-      .bind(name, description || null, academyId)
+      .prepare(`UPDATE Academy 
+        SET name = ?, 
+            description = ?, 
+            address = ?,
+            phone = ?,
+            email = ?,
+            feedbackAnonymous = ?,
+            defaultWatermarkIntervalMins = ?,
+            defaultMaxWatchTimeMultiplier = ?,
+            updatedAt = datetime('now')
+        WHERE id = ?`)
+      .bind(
+        name, 
+        description || null, 
+        address || null,
+        phone || null,
+        email || null,
+        feedbackAnonymous !== undefined ? feedbackAnonymous : 0,
+        defaultWatermarkIntervalMins || 5,
+        defaultMaxWatchTimeMultiplier || 2.0,
+        academyId
+      )
       .run();
 
     const updated = await c.env.DB
