@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import DocumentSigningModal from '@/components/DocumentSigningModal';
+import PaymentModal from '@/components/PaymentModal';
 
 interface EnrolledClass {
   id: string;
@@ -21,6 +22,9 @@ interface EnrolledClass {
   enrollmentStatus?: 'PENDING' | 'APPROVED';
   documentSigned: number;
   whatsappGroupLink?: string;
+  paymentStatus?: string; // PENDING, CASH_PENDING, PAID
+  price?: number;
+  currency?: string;
 }
 
 interface ActiveStream {
@@ -39,6 +43,7 @@ export default function StudentClassesPage() {
   const [academyName, setAcademyName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [signingClass, setSigningClass] = useState<EnrolledClass | null>(null);
+  const [payingClass, setPayingClass] = useState<EnrolledClass | null>(null);
 
   useEffect(() => {
     loadData();
@@ -83,6 +88,9 @@ export default function StudentClassesPage() {
           enrollmentStatus: c.enrollmentStatus || 'APPROVED',
           documentSigned: c.documentSigned ?? 0,
           whatsappGroupLink: c.whatsappGroupLink,
+          paymentStatus: c.paymentStatus || 'PENDING',
+          price: c.price || 0,
+          currency: c.currency || 'EUR',
         }));
         setEnrolledClasses(classes);
         if (classes.length > 0) {
@@ -98,7 +106,14 @@ export default function StudentClassesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  };First check payment status
+    if (classItem.paymentStatus !== 'PAID') {
+      e.preventDefault();
+      setPayingClass(classItem);
+      return;
+    }
+    
+    // Then check if document signed
 
   const handleClassClick = (classItem: EnrolledClass, e: React.MouseEvent) => {
     // If document not signed, show modal instead of navigating
@@ -316,6 +331,20 @@ export default function StudentClassesPage() {
           );
         })}
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={!!payingClass}
+        onClose={() => setPayingClass(null)}
+        classId={payingClass?.id || ''}
+        className={payingClass?.name || ''}
+        price={payingClass?.price || 0}
+        currency={payingClass?.currency || 'EUR'}
+        onPaymentComplete={() => {
+          setPayingClass(null);
+          loadData(); // Reload to get updated payment status
+        }}
+      />
 
       {/* Document Signing Modal */}
       <DocumentSigningModal

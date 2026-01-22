@@ -14,13 +14,16 @@ classes.get('/', async (c) => {
     let params: any[] = [];
 
     if (session.role === 'STUDENT') {
-      // Get enrolled classes with counts
+      // Get enrolled classes with counts and payment status
       query = `
         SELECT 
           c.*,
           a.name as academyName,
           ce.status as enrollmentStatus,
           ce.documentSigned,
+          ce.paymentStatus,
+          ce.paymentMethod,
+          ce.paymentAmount,
           (SELECT COUNT(*) FROM ClassEnrollment WHERE classId = c.id AND status = 'APPROVED') as studentCount,
           (SELECT COUNT(*) FROM Lesson WHERE classId = c.id) as lessonCount,
           (SELECT COUNT(*) FROM Video v JOIN Lesson l ON v.lessonId = l.id WHERE l.classId = c.id) as videoCount,

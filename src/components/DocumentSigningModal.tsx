@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface DocumentSigningModalProps {
   isOpen: boolean;
@@ -21,6 +21,8 @@ export default function DocumentSigningModal({
   const [signing, setSigning] = useState(false);
   const [pdfLoaded, setPdfLoaded] = useState(false);
   const [showShieldAnimation, setShowShieldAnimation] = useState(true);
+  const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -29,17 +31,51 @@ export default function DocumentSigningModal({
       setSigning(false);
       setPdfLoaded(false);
       setShowShieldAnimation(true);
+      setHasScrolledToEnd(false);
       // Hide shield animation after 1.5 seconds
       const timer = setTimeout(() => setShowShieldAnimation(false), 1500);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
+  // Monitor scroll position in PDF container
+  useEffect(() => {
+    if (!isOpen || !pdfLoaded) return;
+
+    const checkScroll = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target) {
+        const scrollTop = target.scrollTop;
+        const scrollHeight = target.scrollHeight;
+        const clientHeight = target.clientHeight;
+        
+        // Consider "end" when user is within 50px of bottom
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50;
+        
+        if (isAtBottom && !hasScrolledToEnd) {
+          setHasScrolledToEnd(true);
+        }
+      }
+    };
+
+    // Get the iframe's content window to monitor scroll
+    const pdfContainer = document.querySelector('.pdf-container');
+    if (pdfContainer) {
+      pdfContainer.addEventListener('scroll', checkScroll);
+      return () => pdfContainer.removeEventListener('scroll', checkScroll);
+    }
+  }, [isOpen, pdfLoaded, hasScrolledToEnd]);
+
   if (!isOpen) return null;
 
   const handleSign = async () => {
+    if (!hasScrolledToEnd) {
+      alert('Debes leer el documento completo (desplázate hasta el final)');
+      return;
+    }
+    
     if (!agreed) {
-      alert('Debes leer y aceptar el documento para continuar');
+      alert('Debes aceptar el compromiso para continuar');
       return;
     }
 
@@ -103,8 +139,8 @@ export default function DocumentSigningModal({
         </div>
 
         {/* PDF Viewer */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="w-full bg-gray-50 rounded-2xl border-2 border-gray-200 relative shadow-inner" style={{ height: '500px' }}>
+        <div className="flex-1 overflow-y-auto pdf-container" style={{ maxHeight: '500px' }}>
+          <div className="w-full bg-gray-50 rounded-2xl border-2 border-gray-200 relative shadow-inner" style={{ minHeight: '500px' }}>
             {!pdfLoaded && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
@@ -115,12 +151,41 @@ export default function DocumentSigningModal({
               </div>
             )}
             <iframe
+              ref={iframeRef}
               src="/legal/consent.pdf"
-              className="w-full h-full rounded-2xl"
+              className="w-full rounded-2xl"
+              style={{ height: '500px' }}
               onLoad={() => setPdfLoaded(true)}
               title="Documento de Consentimiento"
             />
-          </div>
+            
+            {/* Scroll indicator - appears until user scrolls to end */}
+            {pdfLoaded && !hasScrolledToEnd && (
+              Scroll Progress Indicator */}
+          {!hasScrolledToEnd && (
+            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-3 my-3 flex items-center gap-3">
+              <svg className="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm text-yellow-800 font-medium">
+                Por favor, lee el documento completo desplazándote hasta el final antes de firmar
+              </p>
+            </div>
+          )}
+
+          {/* Checkbox Agreement */}
+          <label className={`flex items-center gap-4 p-4 bg-white border-2 rounded-xl transition-colors my-3 group ${
+            hasScrolledToEnd 
+              ? 'border-gray-200 hover:border-green-300 cursor-pointer' 
+              : 'border-gray-200 opacity-50 cursor-not-allowed'
+          }`}>
+            <div className="relative flex-shrink-0">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                disabled={!hasScrolledToEnd}
+                className="w-6 h-6 accent-green-600 border-2 border-gray-300 rounded-lg focus:ring-green-500 focus:ring-offset-2 cursor-pointer disabled:cursor-not-allowed
         </div>
 
         {/* Footer - Agreement and Sign Button */}
@@ -129,17 +194,24 @@ export default function DocumentSigningModal({
           <label className="flex items-center gap-4 p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-green-300 cursor-pointer transition-colors my-3 group">
             <div className="relative flex-shrink-0">
               <input
-                type="checkbox"
-                checked={agreed}
-                onChange={(e) => setAgreed(e.target.checked)}
-                className="w-6 h-6 accent-green-600 border-2 border-gray-300 rounded-lg focus:ring-green-500 focus:ring-offset-2 cursor-pointer"
-              />
-            </div>
-            <span className="text-gray-700 group-hover:text-gray-900 transition-colors">
-              <span className="text-sm text-gray-600">
-                Me comprometo a no <strong className="font-semibold text-gray-900">compartir</strong> ni permitir el acceso a terceros a <strong className="font-semibold text-gray-900">ningún contenido</strong> de la plataforma (vídeos, audios, textos, PDFs, enlaces, imágenes u otro material didáctico). Tampoco <strong className="font-semibold text-gray-900">compartiré mi cuenta</strong> con otras personas.
-              </span>
-            </span>
+                type="chehasScrolledToEnd || !agreed || signing}
+              className={`px-10 py-3.5 rounded-xl font-semibold transition-all flex items-center gap-3 shadow-lg ${
+                hasScrolledToEnd && agreed && !signing
+                  ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-green-500/30 hover:shadow-green-500/40 hover:scale-[1.02]'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-none'
+              }`}
+            >
+              {signing ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Firmando...</span>
+                </>
+              ) : !hasScrolledToEnd ? (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span>Lee el Documento Completo
           </label>
 
           {/* Action Button - Centered */}

@@ -22,6 +22,7 @@ import storageRoutes from './routes/storage';
 import webhookRoutes from './routes/webhooks';
 import studentRoutes from './routes/students';
 import adminRoutes from './routes/admin';
+import paymentsRoutes from './routes/payments';
 import { Bindings } from './types';
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -60,9 +61,9 @@ app.use('*', cors({
 app.get('/', (c) => c.json({ 
   status: 'ok', 
   service: 'akademo-api',
-  version: '3.2',
-  routes: 19,
-  phase: 'Admin Dashboard + Teacher Fix',
+  version: '3.3',
+  routes: 20,
+  phase: 'Payment System Integration',
   timestamp: new Date().toISOString() 
 }));
 
@@ -84,6 +85,7 @@ app.route('/documents', documentRoutes);
 app.route('/notifications', notificationRoutes);
 app.route('/ratings', ratingRoutes);
 app.route('/analytics', analyticsRoutes);
+app.route('/payments', paymentsRoutes);
 
 // Routes - Phase 2: Advanced Features
 app.route('/live', liveRoutes);

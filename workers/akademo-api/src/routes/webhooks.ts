@@ -233,4 +233,55 @@ webhooks.post('/bunny', async (c) => {
   }
 });
 
+// POST /webhooks/stripe - Stripe webhook handler for payment confirmations
+webhooks.post('/stripe', async (c) => {
+  try {
+    const signature = c.req.header('stripe-signature');
+    if (!signature) {
+      return c.json(errorResponse('Missing Stripe signature'), 400);
+    }
+
+    // TODO: Verify webhook signature with Stripe
+    // const stripe = new Stripe(c.env.STRIPE_SECRET_KEY);
+    // const event = stripe.webhooks.constructEvent(
+    //   await c.req.text(),
+    //   signature,
+    //   c.env.STRIPE_WEBHOOK_SECRET
+    // );
+
+    const payload = await c.req.json();
+    const event = payload.type;
+    const data = payload.data.object;
+
+    console.log('[Stripe Webhook] Received:', event);
+
+    if (event === 'checkout.session.completed') {
+      const { id: sessionId, metadata, payment_status } = data;
+
+      if (payment_status === 'paid') {
+        const { enrollmentId, classId, userId } = metadata;
+
+        // Update enrollment payment status
+        await c.env.DB
+          .prepare(`
+            UPDATE ClassEnrollment 
+            SET paymentStatus = 'PAID',
+                paymentMethod = 'stripe',
+                updatedAt = datetime('now')
+            WHERE id = ?
+          `)
+          .bind(enrollmentId)
+          .run();
+
+        console.log('[Stripe Webhook] Payment confirmed for enrollment:', enrollmentId);
+      }
+    }
+
+    return c.json(successResponse({ received: true }));
+  } catch (error: any) {
+    console.error('[Stripe Webhook] Error:', error);
+    return c.json(successResponse({ received: true, error: error.message }));
+  }
+});
+
 export default webhooks;

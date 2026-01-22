@@ -343,10 +343,11 @@ export default function DashboardLayout({
           { label: 'Profesores', href: '/dashboard/academy/teachers', iconType: 'botMessage' as const },
           { label: 'Clases', href: '/dashboard/academy/classes', matchPaths: ['/dashboard/academy/class'], iconType: 'book' as const },
           { label: 'Solicitudes', href: '/dashboard/academy/requests', badge: pendingRequestsCount, iconType: 'userPlus' as const },
+          { label: 'Pagos', href: '/dashboard/academy/payments', iconType: 'handCoins' as const },
           { label: 'Feedback', href: '/dashboard/academy/feedback', iconType: 'message' as const },
           { label: 'Streams', href: '/dashboard/academy/streams', iconType: 'clap' as const },
           { label: 'Estudiantes', href: '/dashboard/academy/students', iconType: 'users' as const },
-          { label: 'Facturas', href: '/dashboard/academy/facturas', iconType: 'handCoins' as const },
+          { label: 'Facturas', href: '/dashboard/academy/facturas', iconType: 'receipt' as const },
         ];
         
         // Filter out Profesores menu for monoacademies
