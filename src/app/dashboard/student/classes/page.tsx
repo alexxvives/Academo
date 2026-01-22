@@ -116,6 +116,20 @@ export default function StudentClassesPage() {
       return;
     }
     
+    // Second check payment status - only block if class has price and not paid
+    if (classItem.price && classItem.price > 0 && classItem.paymentStatus !== 'PAID') {
+      e.preventDefault();
+      setPayingClass(classItem);
+      return;
+    }
+    
+    // Third check enrollment approval status
+    if (classItem.enrollmentStatus === 'PENDING') {
+      e.preventDefault();
+      alert('Tu solicitud de inscripción está pendiente de aprobación por el profesor/academia.');
+      return;
+    }
+    
     // All checks passed - navigate to class
     router.push(`/dashboard/student/class/${classItem.slug || classItem.id}`);
   };
@@ -140,8 +154,15 @@ export default function StudentClassesPage() {
       );
       setSigningClass(null);
       
-      // Navigate to the class
-      router.push(`/dashboard/student/class/${updatedClass.slug || updatedClass.id}`);
+      // Check if payment is needed
+      if (updatedClass.price && updatedClass.price > 0 && updatedClass.paymentStatus !== 'PAID') {
+        setPayingClass(updatedClass);
+      } else if (updatedClass.enrollmentStatus === 'PENDING') {
+        alert('Tu solicitud de inscripción está pendiente de aprobación por el profesor/academia.');
+      } else {
+        // Navigate to the class
+        router.push(`/dashboard/student/class/${updatedClass.slug || updatedClass.id}`);
+      }
     } else {
       throw new Error(result.error || 'Failed to sign document');
     }
@@ -251,6 +272,41 @@ export default function StudentClassesPage() {
                           Documento firmado
                         </div>
                       </div>
+                    )}
+                    
+                    {/* Enrollment Approval Status - Show only when PENDING */}
+                    {classItem.enrollmentStatus === 'PENDING' && (
+                      <div className="relative group/approval">
+                        <svg className="w-6 h-6 text-yellow-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover/approval:opacity-100 transition-opacity z-10">
+                          Aprobación pendiente
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Payment Status Icon - Only show when NOT paid */}
+                    {classItem.price && classItem.price > 0 && classItem.paymentStatus !== 'PAID' && (
+                      classItem.paymentStatus === 'CASH_PENDING' ? (
+                        <div className="relative group/payment">
+                          <svg className="w-6 h-6 text-orange-500 transition-colors animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover/payment:opacity-100 transition-opacity z-10">
+                            Pago pendiente (efectivo)
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative group/payment">
+                          <svg className="w-6 h-6 text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover/payment:opacity-100 transition-opacity z-10">
+                            Pago requerido
+                          </div>
+                        </div>
+                      )
                     )}
                     
                     {/* WhatsApp Group Link - Low-key icon */}
