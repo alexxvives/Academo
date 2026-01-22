@@ -173,24 +173,19 @@ export default function DocumentSigningModal({
           )}
 
           {/* Checkbox Agreement */}
-          <label className={`flex items-center gap-4 p-4 bg-white border-2 rounded-xl transition-colors my-3 group ${
+          <label className={`flex items-center gap-4 p-4 bg-white border-2 rounded-xl transition-colors my-3 ${
             hasScrolledToEnd
               ? 'border-gray-200 hover:border-green-300 cursor-pointer'
               : 'border-gray-200 opacity-50 cursor-not-allowed'
           }`}>
-            <div className="relative flex-shrink-0">
+            <div className="flex-shrink-0">
               <input
                 type="checkbox"
                 checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
                 disabled={!hasScrolledToEnd}
-                className="w-6 h-6 accent-green-600 border-2 border-gray-300 rounded-lg focus:ring-green-500 focus:ring-offset-2 cursor-pointer disabled:cursor-not-allowed"
+                className="w-6 h-6 accent-green-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:ring-offset-2 cursor-pointer disabled:cursor-not-allowed"
               />
-              {agreed && (
-                <svg className="w-3 h-3 text-green-600 absolute top-1.5 left-1.5 pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              )}
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-gray-900">

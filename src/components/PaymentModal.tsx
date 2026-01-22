@@ -70,7 +70,7 @@ export default function PaymentModal({
         credentials: 'include',
         body: JSON.stringify({ 
           classId,
-          paymentMethod: 'bank_transfer'
+          method: 'bank_transfer'
         }),
       });
 
@@ -116,20 +116,10 @@ export default function PaymentModal({
           </div>
           
           <div className="p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Left - Amount */}
-              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 flex flex-col justify-center items-center">
-                <p className="text-5xl font-bold text-gray-900">{formatPrice(price, currency)}</p>
-              </div>
-              
-              {/* Right - Info */}
-              <div className="flex flex-col justify-center">
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                  <p className="text-gray-700 leading-relaxed">
-                    Tu solicitud quedará pendiente hasta que la academia confirme haber recibido el pago. No tendrás acceso a la clase hasta la aprobación.
-                  </p>
-                </div>
-              </div>
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <p className="text-gray-700 leading-relaxed text-center">
+                Tu solicitud quedará pendiente hasta que la academia confirme haber recibido el pago. No tendrás acceso a la clase hasta la aprobación.
+              </p>
             </div>
           </div>
 
