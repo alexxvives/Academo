@@ -315,12 +315,11 @@ export default function DashboardLayout({
       case 'ACADEMY':
         const academyMenuItems: MenuItem[] = [
           { label: 'Dashboard', href: '/dashboard/academy', iconType: 'chart' as const },
-          { label: 'Profesores', href: '/dashboard/academy/teachers', iconType: 'botMessage' as const },
           { label: 'Clases', href: '/dashboard/academy/classes', matchPaths: ['/dashboard/academy/class'], iconType: 'book' as const },
-          { label: 'Pagos', href: '/dashboard/academy/payments', iconType: 'handCoins' as const },
-          { label: 'Feedback', href: '/dashboard/academy/feedback', iconType: 'message' as const },
           { label: 'Streams', href: '/dashboard/academy/streams', iconType: 'clap' as const },
+          { label: 'Profesores', href: '/dashboard/academy/teachers', iconType: 'botMessage' as const },
           { label: 'Estudiantes', href: '/dashboard/academy/students', iconType: 'users' as const },
+          { label: 'Pagos', href: '/dashboard/academy/payments', iconType: 'handCoins' as const },
           { label: 'Facturas', href: '/dashboard/academy/facturas', iconType: 'fileText' as const },
         ];
         
