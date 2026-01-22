@@ -383,7 +383,7 @@ payments.get('/history', async (c) => {
           e.id as enrollmentId,
           e.paymentStatus,
           e.paymentAmount,
-          e.currency,
+          c.currency,
           e.paymentMethod,
           e.updatedAt,
           e.approvedByName,
