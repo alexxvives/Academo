@@ -148,7 +148,7 @@ export default function AcademyClassesPage() {
 
       setShowEditModal(false);
       setEditingClass(null);
-      setFormData({ name: '', description: '', teacherId: '' });
+      setFormData({ name: '', description: '', teacherId: '', price: '10.00' });
       loadData();
     } catch (err: any) {
       setError(err.message);
