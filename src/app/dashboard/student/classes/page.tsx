@@ -116,8 +116,8 @@ export default function StudentClassesPage() {
       return;
     }
     
-    // Second check payment status - only block if class has price and not paid
-    if (classItem.price && classItem.price > 0 && classItem.paymentStatus !== 'PAID') {
+    // Second check payment status - block if not paid
+    if (classItem.paymentStatus !== 'PAID') {
       e.preventDefault();
       setPayingClass(classItem);
       return;
@@ -148,7 +148,7 @@ export default function StudentClassesPage() {
       setSigningClass(null);
       
       // Check if payment is needed
-      if (updatedClass.price && updatedClass.price > 0 && updatedClass.paymentStatus !== 'PAID') {
+      if (updatedClass.paymentStatus !== 'PAID') {
         setPayingClass(updatedClass);
       } else {
         // Navigate to the class
@@ -278,7 +278,7 @@ export default function StudentClassesPage() {
                     )}
                     
                     {/* Payment Status Icon - Show for any non-PAID status */}
-                    {(classItem.price ?? 0) > 0 && classItem.paymentStatus !== 'PAID' && (
+                    {classItem.paymentStatus !== 'PAID' && (
                       (classItem.paymentStatus === 'CASH_PENDING' || classItem.paymentStatus === 'PENDING') ? (
                         <div className="relative group/payment">
                           <svg className="w-6 h-6 text-orange-500 transition-colors animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
