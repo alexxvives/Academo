@@ -97,7 +97,8 @@ explore.get('/enrolled-academies/classes', async (c) => {
       return c.json(errorResponse('Only students can access this'), 403);
     }
 
-    // Get distinct academies where student has APPROVED enrollments
+    // Get classes from academies where student has APPROVED enrollments
+    // but exclude classes they're already enrolled in
     const result = await c.env.DB
       .prepare(`
         SELECT DISTINCT
@@ -105,15 +106,16 @@ explore.get('/enrolled-academies/classes', async (c) => {
           a.name as academyName,
           u.firstName as teacherFirstName,
           u.lastName as teacherLastName,
-          ce2.status as myEnrollmentStatus,
-          ce2.documentSigned as myDocumentSigned
+          ce2.status as enrollmentStatus
         FROM ClassEnrollment ce1
         JOIN Class c1 ON ce1.classId = c1.id
         JOIN Academy a ON c1.academyId = a.id
         JOIN Class c ON a.id = c.academyId
         LEFT JOIN User u ON c.teacherId = u.id
         LEFT JOIN ClassEnrollment ce2 ON c.id = ce2.classId AND ce2.userId = ?
-        WHERE ce1.userId = ? AND ce1.status = 'APPROVED'
+        WHERE ce1.userId = ? 
+          AND ce1.status = 'APPROVED'
+          AND (ce2.id IS NULL OR ce2.status != 'APPROVED')
         ORDER BY a.name, c.name
       `)
       .bind(session.id, session.id)

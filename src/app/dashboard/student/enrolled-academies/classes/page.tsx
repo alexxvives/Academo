@@ -145,8 +145,10 @@ export default function EnrolledAcademiesClassesPage() {
                             {classItem.teacherName}
                           </span>
                         </div>
-                        {classItem.description && (
+                        {classItem.description ? (
                           <p className="text-gray-600 text-sm mb-4">{classItem.description}</p>
+                        ) : (
+                          <p className="text-gray-400 text-sm mb-4 italic">Sin descripción</p>
                         )}
                       </div>
                       {classItem.enrollmentStatus === 'APPROVED' ? (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { API_BASE_URL } from '@/lib/api-client';
+import { apiPost } from '@/lib/api-client';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -37,14 +37,9 @@ export default function PaymentModal({
   const handleConfirmCash = async () => {
     setProcessing(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/payments/initiate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ 
-          classId, 
-          paymentMethod: 'cash' 
-        }),
+      const res = await apiPost('/payments/initiate', { 
+        classId, 
+        paymentMethod: 'cash' 
       });
 
       const result = await res.json();
@@ -65,14 +60,9 @@ export default function PaymentModal({
   const handleStripePayment = async () => {
     setProcessing(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/payments/stripe-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ 
-          classId,
-          method: 'bank_transfer'
-        }),
+      const res = await apiPost('/payments/stripe-session', { 
+        classId,
+        method: 'bank_transfer'
       });
 
       if (!res.ok) {
