@@ -164,6 +164,8 @@ export default function ProfilePage() {
     }
   };
 
+  // --- END handleSaveProfile ---
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
