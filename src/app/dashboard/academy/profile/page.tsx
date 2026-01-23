@@ -130,6 +130,24 @@ export default function ProfilePage() {
     }
   };
 
+  const handleSettingChange = async (field: string, value: any) => {
+    if (!academy) return;
+
+    // Update local state immediately
+    setFormData({ ...formData, [field]: value });
+
+    // Save to database immediately
+    try {
+      await apiClient(`/academies/${academy.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value })
+      });
+    } catch (error) {
+      console.error('Error updating setting:', error);
+    }
+  };
+
   const handleSaveProfile = async () => {
     if (!academy) return;
 
@@ -377,7 +395,7 @@ export default function ProfilePage() {
               <p className="text-xs text-gray-500 mb-3">Los estudiantes comentan de forma anónima</p>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setFormData({ ...formData, feedbackAnonymous: !formData.feedbackAnonymous })}
+                  onClick={() => handleSettingChange('feedbackAnonymous', formData.feedbackAnonymous ? 0 : 1)}
                   className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors cursor-pointer ${
                     formData.feedbackAnonymous ? 'bg-brand-600' : 'bg-gray-300'
                   }`}
@@ -402,7 +420,7 @@ export default function ProfilePage() {
               <p className="text-xs text-gray-500 mb-3">Veces que puede ver el contenido</p>
               <select
                 value={formData.defaultMaxWatchTimeMultiplier}
-                onChange={(e) => setFormData({ ...formData, defaultMaxWatchTimeMultiplier: parseFloat(e.target.value) })}
+                onChange={(e) => handleSettingChange('defaultMaxWatchTimeMultiplier', parseFloat(e.target.value))}
                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all text-sm"
               >
                 {MULTIPLIER_OPTIONS.map(opt => (
@@ -419,7 +437,7 @@ export default function ProfilePage() {
               <p className="text-xs text-gray-500 mb-3">Frecuencia de aparición</p>
               <select
                 value={formData.defaultWatermarkIntervalMins}
-                onChange={(e) => setFormData({ ...formData, defaultWatermarkIntervalMins: parseInt(e.target.value) })}
+                onChange={(e) => handleSettingChange('defaultWatermarkIntervalMins', parseInt(e.target.value))}
                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all text-sm"
               >
                 {WATERMARK_OPTIONS.map(opt => (
