@@ -90,7 +90,7 @@ zoomAccounts.post('/oauth/callback', async (c) => {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: `${c.req.header('origin')}/api/zoom/oauth/callback`
+        redirect_uri: 'https://akademo-edu.com/api/zoom/oauth/callback'
       })
     });
 
