@@ -95,8 +95,9 @@ zoomAccounts.post('/oauth/callback', async (c) => {
     });
 
     if (!tokenResponse.ok) {
-      console.error('Zoom token exchange failed:', await tokenResponse.text());
-      return c.json(errorResponse('Failed to exchange code for tokens'), 500);
+      const errorText = await tokenResponse.text();
+      console.error('Zoom token exchange failed:', errorText);
+      return c.json(errorResponse(`Failed to exchange code for tokens: ${errorText}`), 500);
     }
 
     const tokens = await tokenResponse.json() as any;
