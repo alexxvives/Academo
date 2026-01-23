@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/hooks/useAuth';
-import { CctvIcon } from '@/components/icons/CctvIcon';
+import { CctvIcon, CctvIconHandle } from '@/components/icons/CctvIcon';
 
 interface ZoomAccount {
   id: string;
@@ -101,10 +101,13 @@ export default function ProfilePage() {
 
   const handleConnectZoom = () => {
     // Redirect to Zoom OAuth
-    const clientId = process.env.NEXT_PUBLIC_ZOOM_CLIENT_ID || 'W2jPo9CJR0uZbFnEWtBF7Q';
+    const clientId = process.env.NEXT_PUBLIC_ZOOM_CLIENT_ID;
+    if (!clientId) {
+      alert('Falta configurar NEXT_PUBLIC_ZOOM_CLIENT_ID en el entorno.');
+      return;
+    }
     const redirectUri = encodeURIComponent(`${window.location.origin}/api/zoom/oauth/callback`);
     const state = academy?.id || '';
-    
     window.location.href = `https://zoom.us/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}`;
   };
 
@@ -356,11 +359,7 @@ export default function ProfilePage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-8 py-5 bg-gray-50 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-brand-50 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-              </svg>
-            </div>
+            {/* Removed icon next to Configuración Avanzada */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Configuración Avanzada</h3>
               <p className="text-sm text-gray-600">Feedback y reproducción de videos</p>
@@ -440,16 +439,23 @@ export default function ProfilePage() {
               <h2 className="text-xl font-semibold">Cuentas de Zoom</h2>
               <p className="text-gray-300 mt-1">Gestiona tus cuentas PRO de Zoom para clases en vivo</p>
             </div>
-            <button
-              type="button"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-              onClick={() => {
-                window.location.href = `https://zoom.us/oauth/authorize?response_type=code&client_id=${process.env.NEXT_PUBLIC_ZOOM_CLIENT_ID}&redirect_uri=${encodeURIComponent('https://akademo-edu.com/api/zoom/oauth/callback')}`;
-              }}
-            >
-              <CctvIcon size={20} />
-              Conectar Zoom
-            </button>
+            <ZoomConnectButton onClick={handleConnectZoom} />
+          // --- Animated Zoom Connect Button ---
+          function ZoomConnectButton({ onClick }: { onClick: () => void }) {
+            const iconRef = useRef<CctvIconHandle>(null);
+            return (
+              <button
+                type="button"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                onClick={onClick}
+                onMouseEnter={() => iconRef.current?.startAnimation()}
+                onMouseLeave={() => iconRef.current?.stopAnimation()}
+              >
+                <CctvIcon ref={iconRef} size={20} />
+                Conectar Zoom
+              </button>
+            );
+          }
           </div>
         </div>
 
