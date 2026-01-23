@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/hooks/useAuth';
+import { VideoIcon } from '@/components/icons/VideoIcon';
 
 interface ZoomAccount {
   id: string;
@@ -169,12 +170,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-gray-900">Configuración</h1>
-          <p className="text-gray-600 mt-1">Administra la información y preferencias de tu academia</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Configuración</h1>
+          <p className="text-sm text-gray-600 mt-1">Administra la información y preferencias de tu academia</p>
         </div>
       </div>
 
@@ -377,11 +378,10 @@ export default function ProfilePage() {
               <p className="text-xs text-gray-500 mb-3">Los estudiantes comentan de forma anónima</p>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => editing && setFormData({ ...formData, feedbackAnonymous: !formData.feedbackAnonymous })}
-                  disabled={!editing}
-                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                  onClick={() => setFormData({ ...formData, feedbackAnonymous: !formData.feedbackAnonymous })}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors cursor-pointer ${
                     formData.feedbackAnonymous ? 'bg-brand-600' : 'bg-gray-300'
-                  } ${!editing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  }`}
                 >
                   <span
                     className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${
@@ -401,23 +401,15 @@ export default function ProfilePage() {
                 Límite de visualización
               </label>
               <p className="text-xs text-gray-500 mb-3">Veces que puede ver el contenido</p>
-              {editing ? (
-                <select
-                  value={formData.defaultMaxWatchTimeMultiplier}
-                  onChange={(e) => setFormData({ ...formData, defaultMaxWatchTimeMultiplier: parseFloat(e.target.value) })}
-                  className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all text-sm"
-                >
-                  {MULTIPLIER_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              ) : (
-                <div className="px-3 py-2.5 bg-gray-50 rounded-lg">
-                  <span className="text-gray-900 font-medium text-sm">
-                    {MULTIPLIER_OPTIONS.find(o => o.value === academy?.defaultMaxWatchTimeMultiplier)?.label || '2x (dos veces)'}
-                  </span>
-                </div>
-              )}
+              <select
+                value={formData.defaultMaxWatchTimeMultiplier}
+                onChange={(e) => setFormData({ ...formData, defaultMaxWatchTimeMultiplier: parseFloat(e.target.value) })}
+                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all text-sm"
+              >
+                {MULTIPLIER_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
 
             {/* Watermark Interval */}
@@ -426,23 +418,15 @@ export default function ProfilePage() {
                 Marca de agua
               </label>
               <p className="text-xs text-gray-500 mb-3">Frecuencia de aparición</p>
-              {editing ? (
-                <select
-                  value={formData.defaultWatermarkIntervalMins}
-                  onChange={(e) => setFormData({ ...formData, defaultWatermarkIntervalMins: parseInt(e.target.value) })}
-                  className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all text-sm"
-                >
-                  {WATERMARK_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              ) : (
-                <div className="px-3 py-2.5 bg-gray-50 rounded-lg">
-                  <span className="text-gray-900 font-medium text-sm">
-                    {WATERMARK_OPTIONS.find(o => o.value === academy?.defaultWatermarkIntervalMins)?.label || '5 minutos'}
-                  </span>
-                </div>
-              )}
+              <select
+                value={formData.defaultWatermarkIntervalMins}
+                onChange={(e) => setFormData({ ...formData, defaultWatermarkIntervalMins: parseInt(e.target.value) })}
+                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all text-sm"
+              >
+                {WATERMARK_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -460,9 +444,7 @@ export default function ProfilePage() {
               onClick={handleConnectZoom}
               className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-900 rounded-lg hover:bg-gray-50 transition-all font-medium shadow-lg"
             >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 32 32">
-                <path d="M15 12.5v7l6-3.5-6-3.5zM23.5 9v14c0 1.375-1.125 2.5-2.5 2.5H9c-1.375 0-2.5-1.125-2.5-2.5V9c0-1.375 1.125-2.5 2.5-2.5h12c1.375 0 2.5 1.125 2.5 2.5z"/>
-              </svg>
+              <VideoIcon size={20} />
               Conectar Zoom
             </button>
           </div>
