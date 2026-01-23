@@ -114,6 +114,8 @@ admin.get('/classes', async (c) => {
         a.name as academyName,
         c.teacherId,
         u.firstName || ' ' || u.lastName as teacherName,
+        c.zoomAccountId,
+        z.displayName as zoomAccountName,
         COUNT(DISTINCT e.userId) as studentCount,
         COUNT(DISTINCT l.id) as lessonCount,
         c.createdAt,
@@ -121,6 +123,7 @@ admin.get('/classes', async (c) => {
       FROM Class c
       LEFT JOIN Academy a ON c.academyId = a.id
       LEFT JOIN User u ON c.teacherId = u.id
+      LEFT JOIN ZoomAccount z ON c.zoomAccountId = z.id
       LEFT JOIN ClassEnrollment e ON c.id = e.classId AND e.status = 'APPROVED'
       LEFT JOIN Lesson l ON c.id = l.classId
       GROUP BY c.id
@@ -308,6 +311,82 @@ admin.get('/students', async (c) => {
     return c.json(successResponse(result.results || []));
   } catch (error: any) {
     console.error('[Admin Students] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
+// GET /admin/zoom-accounts - Get all Zoom accounts (admin only)
+admin.get('/zoom-accounts', async (c) => {
+  try {
+    const session = await requireAuth(c);
+    
+    if (session.role !== 'ADMIN') {
+      return c.json(errorResponse('Forbidden'), 403);
+    }
+
+    const query = `
+      SELECT 
+        id,
+        accountId,
+        accountEmail,
+        displayName,
+        createdAt,
+        updatedAt
+      FROM ZoomAccount
+      ORDER BY createdAt DESC
+    `;
+
+    const result = await c.env.DB.prepare(query).all();
+    
+    console.log('[Admin Zoom Accounts] Found', result.results?.length || 0, 'accounts');
+    
+    return c.json(successResponse(result.results || []));
+  } catch (error: any) {
+    console.error('[Admin Zoom Accounts] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
+// GET /admin/classes - Enhanced to include Zoom account info
+// (Already exists above but needs to be updated to include zoomAccountId and zoomAccountName)
+
+// PATCH /admin/classes/:id/assign-zoom - Assign Zoom account to class (admin only)
+admin.patch('/classes/:id/assign-zoom', async (c) => {
+  try {
+    const session = await requireAuth(c);
+    
+    if (session.role !== 'ADMIN') {
+      return c.json(errorResponse('Forbidden'), 403);
+    }
+
+    const classId = c.req.param('id');
+    const body = await c.req.json();
+    const { zoomAccountId } = body;
+    
+    // Verify class exists
+    const classCheck = await c.env.DB.prepare('SELECT id FROM Class WHERE id = ?').bind(classId).first();
+    if (!classCheck) {
+      return c.json(errorResponse('Class not found'), 404);
+    }
+
+    // If zoomAccountId provided, verify it exists
+    if (zoomAccountId) {
+      const zoomCheck = await c.env.DB.prepare('SELECT id FROM ZoomAccount WHERE id = ?').bind(zoomAccountId).first();
+      if (!zoomCheck) {
+        return c.json(errorResponse('Zoom account not found'), 404);
+      }
+    }
+
+    // Update class with new Zoom account
+    await c.env.DB.prepare(
+      'UPDATE Class SET zoomAccountId = ?, updatedAt = datetime("now") WHERE id = ?'
+    ).bind(zoomAccountId || null, classId).run();
+
+    console.log('[Admin] Assigned Zoom account', zoomAccountId, 'to class', classId);
+    
+    return c.json(successResponse({ message: 'Zoom account assigned successfully' }));
+  } catch (error: any) {
+    console.error('[Admin Assign Zoom] Error:', error);
     return c.json(errorResponse(error.message || 'Internal server error'), 500);
   }
 });

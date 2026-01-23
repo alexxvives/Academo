@@ -162,8 +162,8 @@ classes.post('/', async (c) => {
     const now = new Date().toISOString();
 
     await c.env.DB.prepare(`
-      INSERT INTO Class (id, name, slug, description, academyId, teacherId, whatsappGroupLink, createdAt, updatedAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO Class (id, name, slug, description, academyId, teacherId, whatsappGroupLink, zoomAccountId, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       classId,
       name,
@@ -172,6 +172,7 @@ classes.post('/', async (c) => {
       academyId,
       teacherId || session.id, // Default to creator if no teacher specified
       whatsappGroupLink || null,
+      body.zoomAccountId || null,
       now,
       now
     ).run();
@@ -353,6 +354,10 @@ classes.patch('/:id', async (c) => {
     if (body.whatsappGroupLink !== undefined) {
       updates.push('whatsappGroupLink = ?');
       params.push(body.whatsappGroupLink);
+    }
+    if (body.zoomAccountId !== undefined) {
+      updates.push('zoomAccountId = ?');
+      params.push(body.zoomAccountId);
     }
 
     if (updates.length === 0) {

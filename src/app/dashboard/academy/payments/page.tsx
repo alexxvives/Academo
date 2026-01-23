@@ -186,7 +186,7 @@ export default function AcademyPaymentsPage() {
       {pendingPayments.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay pagos pendientes</h3>
-          <p className="text-gray-500">Los pagos en efectivo aparecer�n aqu� cuando los estudiantes los registren</p>
+          <p className="text-gray-500">Los pagos en efectivo aparecerán aquí cuando los estudiantes los registren</p>
         </div>
       ) : (
         <div className="space-y-4">

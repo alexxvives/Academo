@@ -139,14 +139,6 @@ export default function TeacherClassPage() {
   const [pendingEnrollments, setPendingEnrollments] = useState<any[]>([]);
   const [showPendingRequests, setShowPendingRequests] = useState(false);
 
-  // Hide Confirmation
-  const [lessonToHide, setLessonToHide] = useState<Lesson | null>(null);
-  const [showHideConfirm, setShowHideConfirm] = useState(false);
-  
-  // Show Confirmation
-  const [lessonToShow, setLessonToShow] = useState<Lesson | null>(null);
-  const [showShowConfirm, setShowShowConfirm] = useState(false);
-
   // Live Classes (Zoom)
   const [showStreamModal, setShowStreamModal] = useState(false);
   const [liveClasses, setLiveClasses] = useState<any[]>([]);
@@ -798,7 +790,7 @@ export default function TeacherClassPage() {
         await loadData();
         
         // Expand topic (or "Sin tema" if no topic selected)
-        const topicToExpand = result.data.topicId || 'no-topic';
+        const topicToExpand = result.data.topicId || 'uncategorized';
         setExpandTopicId(topicToExpand);
         setTimeout(() => setExpandTopicId(null), 500);
       } else {
@@ -864,11 +856,13 @@ export default function TeacherClassPage() {
   const handleToggleRelease = async (lesson: Lesson) => {
     const isReleasedNow = new Date(lesson.releaseDate) <= new Date();
     if (isReleasedNow) {
-      setLessonToHide(lesson);
-      setShowHideConfirm(true);
+      if (window.confirm(`¿Estás seguro de que deseas ocultar la lección "${lesson.title}"? Los estudiantes perderán el acceso inmediatamente.`)) {
+        executeToggleRelease(lesson, true);
+      }
     } else {
-      setLessonToShow(lesson);
-      setShowShowConfirm(true);
+      if (window.confirm(`¿Estás seguro de que deseas publicar la lección "${lesson.title}"? Los estudiantes tendrán acceso inmediatamente.`)) {
+        executeToggleRelease(lesson, false);
+      }
     }
   };
 
@@ -2101,47 +2095,7 @@ export default function TeacherClassPage() {
           </>
         )}
 
-        {/* Hide Lesson Confirmation */}
-        <ConfirmModal
-            isOpen={showHideConfirm}
-            title="Ocultar lección"
-            message={`¿Estás seguro de que deseas ocultar la lección "${lessonToHide?.title}"? Los estudiantes perderán el acceso inmediatamente.`}
-            confirmText="Ocultar lección"
-            cancelText="Cancelar"
-            type="warning"
-            onConfirm={() => {
-                if (lessonToHide) {
-                    executeToggleRelease(lessonToHide, true);
-                    setShowHideConfirm(false);
-                    setLessonToHide(null);
-                }
-            }}
-            onCancel={() => {
-                setShowHideConfirm(false);
-                setLessonToHide(null);
-            }}
-        />
-
-        {/* Show Lesson Confirmation */}
-        <ConfirmModal
-            isOpen={showShowConfirm}
-            title="Publicar lección"
-            message={`¿Estás seguro de que deseas publicar la lección "${lessonToShow?.title}"? Los estudiantes tendrán acceso inmediatamente.`}
-            confirmText="Publicar lección"
-            cancelText="Cancelar"
-            type="info"
-            onConfirm={() => {
-                if (lessonToShow) {
-                    executeToggleRelease(lessonToShow, false);
-                    setShowShowConfirm(false);
-                    setLessonToShow(null);
-                }
-            }}
-            onCancel={() => {
-                setShowShowConfirm(false);
-                setLessonToShow(null);
-            }}
-        />
+        {/* Confirmations now use native browser dialogs */}
 
         {/* Custom Stream Name Modal */}
         {showStreamNameModal && (
