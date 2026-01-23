@@ -24,7 +24,7 @@ jobs:
       
       - name: Install dependencies
         working-directory: workers/akademo-api
-        run: npm ci --legacy-peer-deps
+        run: npm install
       
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
