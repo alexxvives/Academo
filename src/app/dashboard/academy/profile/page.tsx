@@ -101,11 +101,8 @@ export default function ProfilePage() {
 
   const handleConnectZoom = () => {
     // Redirect to Zoom OAuth
-    const clientId = process.env.NEXT_PUBLIC_ZOOM_CLIENT_ID;
-    if (!clientId) {
-      alert('Falta configurar NEXT_PUBLIC_ZOOM_CLIENT_ID en el entorno.');
-      return;
-    }
+    // Note: This is a public OAuth client ID, safe to hardcode
+    const clientId = 'W2jPo9CJR0uZbFnEWtBF7Q';
     const redirectUri = encodeURIComponent(`${window.location.origin}/api/zoom/oauth/callback`);
     const state = academy?.id || '';
     window.location.href = `https://zoom.us/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}`;
