@@ -77,7 +77,7 @@ zoomAccounts.post('/oauth/callback', async (c) => {
     const academyId = state;
 
     if (!code || !academyId) {
-      return errorResponse('Missing required parameters', 400);
+      return c.json(errorResponse('Missing required parameters'), 400);
     }
 
     // Exchange code for tokens
@@ -96,7 +96,7 @@ zoomAccounts.post('/oauth/callback', async (c) => {
 
     if (!tokenResponse.ok) {
       console.error('Zoom token exchange failed:', await tokenResponse.text());
-      return errorResponse('Failed to exchange code for tokens', 500);
+      return c.json(errorResponse('Failed to exchange code for tokens'), 500);
     }
 
     const tokens = await tokenResponse.json() as any;
@@ -109,7 +109,7 @@ zoomAccounts.post('/oauth/callback', async (c) => {
     });
 
     if (!userResponse.ok) {
-      return errorResponse('Failed to fetch Zoom user info', 500);
+      return c.json(errorResponse('Failed to fetch Zoom user info'), 500);
     }
 
     const userInfo = await userResponse.json() as any;
@@ -134,7 +134,7 @@ zoomAccounts.post('/oauth/callback', async (c) => {
     return c.json({ success: true, data: { id: accountId } });
   } catch (error) {
     console.error('OAuth callback error:', error);
-    return errorResponse('OAuth callback failed', 500);
+    return c.json(errorResponse('OAuth callback failed'), 500);
   }
 });
 
