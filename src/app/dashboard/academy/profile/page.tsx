@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/hooks/useAuth';
-import { VideoIcon } from '@/components/icons/VideoIcon';
+import { CctvIcon } from '@/components/icons/CctvIcon';
 
 interface ZoomAccount {
   id: string;
@@ -441,10 +441,13 @@ export default function ProfilePage() {
               <p className="text-gray-300 mt-1">Gestiona tus cuentas PRO de Zoom para clases en vivo</p>
             </div>
             <button
-              onClick={handleConnectZoom}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-900 rounded-lg hover:bg-gray-50 transition-all font-medium shadow-lg"
+              type="button"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+              onClick={() => {
+                window.location.href = `https://zoom.us/oauth/authorize?response_type=code&client_id=${process.env.NEXT_PUBLIC_ZOOM_CLIENT_ID}&redirect_uri=${encodeURIComponent('https://akademo-edu.com/api/zoom/oauth/callback')}`;
+              }}
             >
-              <VideoIcon size={20} />
+              <CctvIcon size={20} />
               Conectar Zoom
             </button>
           </div>
