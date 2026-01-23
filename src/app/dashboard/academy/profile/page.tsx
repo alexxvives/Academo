@@ -10,6 +10,10 @@ interface ZoomAccount {
   accountName: string;
   accountId: string;
   createdAt: string;
+  classes?: Array<{
+    id: string;
+    name: string;
+  }>;
 }
 
 interface Academy {
