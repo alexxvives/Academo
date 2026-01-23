@@ -390,8 +390,6 @@ export default function AcademyStreamsPage() {
                           </span>
                         ) : stream.status === 'ended' ? (
                           <span className="text-sm text-gray-400 italic">No disponible</span>
-                        ) : stream.status === 'active' ? (
-                          <span className="text-sm text-blue-500">En vivo...</span>
                         ) : (
                           <span className="text-sm text-gray-400">—</span>
                         )}

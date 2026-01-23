@@ -23,8 +23,8 @@ Go to your Zoom App → **Scopes** tab and ensure these are checked:
 
 ✅ **`meeting:write:meeting`** - Create meetings for the authenticated user  
 ✅ **`meeting:read:meeting`** - Read meeting details  
-✅ **`cloud_recording:read:list_recording_files`** - Get recording URLs  
-✅ **`cloud_recording:read:content`** - Download recordings  
+✅ **`cloud_recording:read:list_recording_files`** - **CRITICAL** - List recording files  
+✅ **`cloud_recording:read:recording`** - Read recording details  
 
 ### ❌ DO NOT ADD Admin Scopes
 
@@ -74,7 +74,29 @@ POST https://api.zoom.us/v2/users/{zoom_user_id}/meetings
 
 ## Testing After Scope Changes
 
-After updating scopes in Zoom App Marketplace:
+### When Teachers Need to Re-Authorize
+
+**Teachers DON'T need to re-authorize** in most cases because:
+- We automatically refresh access tokens using their refresh token
+- Access tokens expire after 1 hour, but we handle refresh automatically
+- Refresh tokens last for 90 days and are renewed on each refresh
+
+**Teachers ONLY need to re-authorize when**:
+1. You add NEW scopes to the app in Zoom Marketplace
+2. Their refresh token expires (after 90 days of no use)
+3. They revoke access from their Zoom account settings
+
+**How token refresh works**:
+- Teacher connects Zoom → We save `accessToken` + `refreshToken`
+- Every API call checks if token expired
+- If expired, we automatically get new token using `refreshToken`
+- Teacher never sees this happening
+
+**Bottom line**: Once teachers connect their Zoom, it works indefinitely unless you change app scopes.
+
+### After Adding New Scopes
+
+When you add new scopes in Zoom App Marketplace:
 
 1. **Teachers must re-authorize** - Old tokens don't have new scopes
 2. Go to: `/api/zoom/oauth/callback` and connect again
@@ -85,7 +107,7 @@ After updating scopes in Zoom App Marketplace:
 Decode access token at [jwt.io](https://jwt.io) - should see:
 ```json
 {
-  "scope": "meeting:write:meeting meeting:read:meeting cloud_recording:read:list_recording_files"
+  "scope": "meeting:write:meeting meeting:read:meeting cloud_recording:read:list_recording_files cloud_recording:read:recording"
 }
 
 ---

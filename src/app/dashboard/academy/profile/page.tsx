@@ -529,10 +529,10 @@ export default function ProfilePage() {
           
           {/* Zoom Assignment Instructions */}
           {zoomAccounts.length > 0 && (
-            <div className="bg-gray-900 text-white rounded-lg p-4 mt-6">
-              <p className="text-sm">
+            <div className="border-2 border-gray-900 rounded-lg p-4 mt-6">
+              <p className="text-sm text-gray-900">
                 Para asignar una cuenta de Zoom a una clase, ve a la{' '}
-                <a href="/dashboard/academy/classes" className="font-semibold underline hover:text-gray-300">
+                <a href="/dashboard/academy/classes" className="font-semibold underline hover:text-gray-700">
                   página de clases
                 </a>
                 {' '}y edita la clase correspondiente.
