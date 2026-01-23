@@ -25,11 +25,13 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Clear npm cache
-        run: npm cache clean --force
+      - name: Clear npm cache and lock file
+        run: |
+          npm cache clean --force
+          rm -f package-lock.json
       
       - name: Install dependencies
-        run: npm install --omit=optional
+        run: npm install
       
       - name: Build with OpenNext
         run: |
