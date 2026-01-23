@@ -493,7 +493,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {zoomAccounts.map(account => (
                 <div key={account.id} className="group relative bg-white border border-gray-200 rounded-xl p-6 hover:border-brand-500 hover:shadow-lg transition-all">
-                  {/* Delete button - top right corner */}
+                  {/* Delete button - top right corner (shown on hover) */}
                   <button
                     onClick={() => handleDisconnectZoom(account.id)}
                     className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-2 text-red-600 hover:bg-red-50 rounded-lg z-10"
@@ -504,8 +504,8 @@ export default function ProfilePage() {
                     </svg>
                   </button>
                   
-                  {/* Date - top left corner */}
-                  <p className="text-xs text-gray-500 mb-4">
+                  {/* Date - top right corner (always visible) */}
+                  <p className="text-xs text-gray-500 mb-4 text-right pr-8">
                     Conectado el {new Date(account.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
                   

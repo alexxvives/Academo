@@ -1710,10 +1710,10 @@ export default function TeacherClassPage() {
                                       className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
                                     />
                                     <span className="text-sm text-gray-700 flex-1">
-                                      {recording.title} ({new Date(recording.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})
+                                      {recording.title}
                                     </span>
                                   </label>
-                                ))}
+                                ))}}
                               </div>
                             )}
                           </div>

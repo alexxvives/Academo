@@ -90,6 +90,9 @@ export function DashboardChartsGrid({
                 }} 
               />
             </div>
+            <div className="mt-2 text-xs text-gray-500">
+              Tiempo total de streams: {streamStats.totalHours}h
+            </div>
           </div>
           <style jsx>{`
             @keyframes slideIn {

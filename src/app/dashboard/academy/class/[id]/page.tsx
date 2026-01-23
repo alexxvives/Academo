@@ -214,10 +214,20 @@ export default function TeacherClassPage() {
     const createFromStreamId = searchParams.get('createFromStream');
     if (createFromStreamId) {
       // Load stream recordings and open modal
-      loadAvailableStreamRecordings().then(() => {
+      loadAvailableStreamRecordings().then((recordings) => {
         setShowLessonForm(true);
         setEditingLessonId(null);
-        // The recording will be auto-selected in the form if there's only one
+        // Auto-select the recording from this stream
+        if (recordings && recordings.length > 0) {
+          const matchingStream = recordings.find((r: any) => r.id === createFromStreamId);
+          if (matchingStream) {
+            setLessonFormData(prev => ({
+              ...prev,
+              selectedStreamRecordings: [matchingStream.id],
+              title: matchingStream.title || 'Nueva Lección'
+            }));
+          }
+        }
       });
     }
   }, [searchParams]);
@@ -1723,10 +1733,10 @@ export default function TeacherClassPage() {
                                       className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500"
                                     />
                                     <span className="text-sm text-gray-700 flex-1">
-                                      {recording.title} ({new Date(recording.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })})
+                                      {recording.title}
                                     </span>
                                   </label>
-                                ))}
+                                ))})
                               </div>
                             )}
                           </div>
