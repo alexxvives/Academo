@@ -1674,12 +1674,12 @@ export default function TeacherClassPage() {
                       
                       {/* Stream Recording Selection */}
                       <div className="relative">
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">O utiliza grabación(es) de stream</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">O utiliza grabaciones de stream</label>
                         <details className="w-full border border-gray-200 rounded-lg text-sm bg-white">
                           <summary className="px-3 py-2 cursor-pointer hover:bg-gray-50 rounded-lg flex items-center justify-between">
                             <span>
                               {lessonFormData.selectedStreamRecordings.length > 0 
-                                ? `${lessonFormData.selectedStreamRecordings.length} grabación(es) seleccionada(s)` 
+                                ? `${lessonFormData.selectedStreamRecordings.length} grabaciones seleccionadas` 
                                 : availableStreamRecordings.length === 0 
                                   ? 'No hay grabaciones disponibles' 
                                   : 'Seleccionar grabaciones'}
@@ -1898,12 +1898,12 @@ export default function TeacherClassPage() {
                           </div>
                           
                           <div className="mt-4 relative">
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">O utiliza grabación(es) de stream</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">O utiliza grabaciones de stream</label>
                             <details className="w-full border border-gray-200 rounded-lg text-sm bg-white">
                               <summary className="px-3 py-2 cursor-pointer hover:bg-gray-50 rounded-lg flex items-center justify-between">
                                 <span>
                                   {lessonFormData.selectedStreamRecordings.length > 0 
-                                    ? `${lessonFormData.selectedStreamRecordings.length} grabación(es) seleccionada(s)` 
+                                    ? `${lessonFormData.selectedStreamRecordings.length} grabaciones seleccionadas` 
                                     : availableStreamRecordings.length === 0 
                                       ? 'No hay grabaciones disponibles' 
                                       : 'Seleccionar grabaciones'}

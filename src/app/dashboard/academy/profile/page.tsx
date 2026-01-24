@@ -504,25 +504,25 @@ export default function ProfilePage() {
                     </svg>
                   </button>
                   
-                  {/* Date - top right corner (always visible) */}
-                  <p className="text-xs text-gray-500 mb-4 text-right pr-8">
-                    Conectado el {new Date(account.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </p>
-                  
                   <div className="flex items-start gap-4 mb-4">
                     <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
                       <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 576 512">
                         <path d="M0 128C0 92.7 28.7 64 64 64H320c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128zM559.1 99.8c10.4 5.6 16.9 16.4 16.9 28.2V384c0 11.8-6.5 22.6-16.9 28.2s-23 5-32.9-1.6l-96-64L416 337.1V320 192 174.9l14.2-9.5 96-64c9.8-6.5 22.4-7.2 32.9-1.6z"/>
                       </svg>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-gray-900 truncate">{account.accountName}</p>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Activa
-                        </span>
+                    <div className="flex-1 min-w-0 flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-900 truncate">{account.accountName}</p>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Activa
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">ID: {account.accountId}</p>
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">ID: {account.accountId}</p>
+                      <p className="text-xs text-gray-500 pr-8">
+                        Conectado el {new Date(account.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
                     </div>
                   </div>
                   
