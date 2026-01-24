@@ -33,8 +33,9 @@ https://akademo-edu.com/api/zoom/oauth/callback
 
 ### Event Notification Endpoint URL
 ```
-https://akademo-api.alexxvives.workers.dev/api/webhooks/zoom
+https://akademo-api.alexxvives.workers.dev/webhooks/zoom
 ```
+**⚠️ IMPORTANT**: No `/api/` prefix! The correct path is `/webhooks/zoom` not `/api/webhooks/zoom`
 
 ### Required Events to Subscribe
 

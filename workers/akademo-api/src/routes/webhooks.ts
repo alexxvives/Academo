@@ -63,7 +63,8 @@ webhooks.post('/zoom', async (c) => {
     } else if (event === 'recording.completed') {
       const meetingId = data.object.id;
       console.log('[Zoom Webhook] Recording completed for meeting:', meetingId);
-      console.log('[Zoom Webhook] Full payload:', JSON.stringify(data, null, 2));
+      console.log('[Zoom Webhook] Full recording payload:', JSON.stringify(data, null, 2));
+      console.log('[Zoom Webhook] Using OAuth flow (no server-to-server)');
       
       // Find the livestream
       const stream = await c.env.DB
@@ -74,76 +75,121 @@ webhooks.post('/zoom', async (c) => {
       if (stream) {
         console.log('[Zoom Webhook] Found stream:', stream.id, 'Title:', stream.title);
         
-        // Zoom has uploaded to Bunny - we need to find which Bunny video matches this stream
-        // We'll poll Bunny API to find videos with matching title
         try {
-          const bunnyResponse = await fetch(
-            `https://video.bunnycdn.com/library/${c.env.BUNNY_STREAM_LIBRARY_ID}/videos?page=1&itemsPerPage=100&orderBy=date`,
+          // Get Zoom account for this stream's class
+          const streamWithClass = await c.env.DB
+            .prepare('SELECT ls.*, c.zoomAccountId FROM LiveStream ls JOIN Class c ON ls.classId = c.id WHERE ls.id = ?')
+            .bind(stream.id)
+            .first() as any;
+
+          if (!streamWithClass?.zoomAccountId) {
+            console.error('[Zoom Webhook] No Zoom account assigned to class for stream:', stream.id);
+            return;
+          }
+
+          // Get Zoom account details
+          const zoomAccount = await c.env.DB
+            .prepare('SELECT * FROM ZoomAccount WHERE id = ?')
+            .bind(streamWithClass.zoomAccountId)
+            .first() as any;
+
+          if (!zoomAccount) {
+            console.error('[Zoom Webhook] Zoom account not found:', streamWithClass.zoomAccountId);
+            return;
+          }
+
+          console.log('[Zoom Webhook] Using OAuth token from account:', zoomAccount.accountName);
+          const accessToken = zoomAccount.accessToken;
+
+          // Fetch recording details from Zoom API (using OAuth token directly)
+          console.log('[Zoom Webhook] Fetching recordings from Zoom API...');
+          const recordingsResponse = await fetch(
+            `https://api.zoom.us/v2/meetings/${meetingId}/recordings`,
             {
               headers: {
-                'AccessKey': c.env.BUNNY_STREAM_API_KEY,
+                'Authorization': `Bearer ${accessToken}`,
               },
             }
           );
 
-          if (bunnyResponse.ok) {
-            const bunnyData = await bunnyResponse.json() as any;
-            const videos = bunnyData.items || [];
-            
-            console.log('[Zoom Webhook] Found', videos.length, 'videos in Bunny library');
-            console.log('[Zoom Webhook] Looking for title:', stream.title);
-            
-            // Try to match by title (case-insensitive)
-            const streamTitle = (stream.title || '').toLowerCase().trim();
-            let matchedVideo = videos.find((v: any) => 
-              v.title && v.title.toLowerCase().trim() === streamTitle
-            );
-            
-            // If exact match fails, try fuzzy matching (contains)
-            if (!matchedVideo) {
-              console.log('[Zoom Webhook] Exact match failed, trying fuzzy match');
-              matchedVideo = videos.find((v: any) => 
-                v.title && (
-                  v.title.toLowerCase().includes(streamTitle) ||
-                  streamTitle.includes(v.title.toLowerCase())
-                )
-              );
-            }
-
-            if (matchedVideo) {
-              console.log('[Zoom Webhook] Matched Bunny video:', matchedVideo.guid, 'Title:', matchedVideo.title);
-              
-              // Update stream with recordingId
-              await c.env.DB
-                .prepare('UPDATE LiveStream SET recordingId = ? WHERE id = ?')
-                .bind(matchedVideo.guid, stream.id)
-                .run();
-                
-              console.log('[Zoom Webhook] Updated stream', stream.id, 'with recordingId:', matchedVideo.guid);
-            } else {
-              console.log('[Zoom Webhook] No matching Bunny video found for title:', stream.title);
-              console.log('[Zoom Webhook] Available video titles (first 10):', videos.map((v: any) => v.title).slice(0, 10));
-            }
-          } else {
-            console.error('[Zoom Webhook] Bunny API returned error:', bunnyResponse.status);
+          if (!recordingsResponse.ok) {
+            console.error('[Zoom Webhook] Failed to fetch recordings:', recordingsResponse.status);
+            return;
           }
-        } catch (bunnyError: any) {
-          console.error('[Zoom Webhook] Error fetching Bunny videos:', bunnyError.message);
+
+          const recordingsData = await recordingsResponse.json() as any;
+          console.log('[Zoom Webhook] Recording files:', recordingsData.recording_files?.length || 0);
+
+          // Find the MP4 recording
+          const mp4Recording = recordingsData.recording_files?.find(
+            (file: any) => file.file_type === 'MP4' && file.recording_type === 'shared_screen_with_speaker_view'
+          );
+
+          if (!mp4Recording) {
+            console.log('[Zoom Webhook] No MP4 recording found');
+            return;
+          }
+
+          const downloadUrl = mp4Recording.download_url;
+          console.log('[Zoom Webhook] Download URL:', downloadUrl);
+
+          // Upload to Bunny Stream using /fetch endpoint
+          const bunnyFetchResponse = await fetch(
+            `https://video.bunnycdn.com/library/${c.env.BUNNY_STREAM_LIBRARY_ID}/videos/fetch`,
+            {
+              method: 'POST',
+              headers: {
+                'AccessKey': c.env.BUNNY_STREAM_API_KEY,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                url: `${downloadUrl}?access_token=${accessToken}`,
+                title: stream.title || `Recording ${new Date().toLocaleDateString()}`,
+              }),
+            }
+          );
+
+          if (!bunnyFetchResponse.ok) {
+            const errorText = await bunnyFetchResponse.text();
+            console.error('[Zoom Webhook] Bunny fetch failed:', bunnyFetchResponse.status, errorText);
+            return;
+          }
+
+          const bunnyData = await bunnyFetchResponse.json() as any;
+          const videoGuid = bunnyData.guid;
+          console.log('[Zoom Webhook] Bunny video created:', videoGuid);
+
+          // Update stream with recordingId
+          await c.env.DB
+            .prepare('UPDATE LiveStream SET recordingId = ? WHERE id = ?')
+            .bind(videoGuid, stream.id)
+            .run();
+
+          console.log('[Zoom Webhook] Updated stream', stream.id, 'with recordingId:', videoGuid);
+        } catch (error: any) {
+          console.error('[Zoom Webhook] Error processing recording:', error.message);
         }
       } else {
         console.log('[Zoom Webhook] No stream found for meetingId:', meetingId);
+        // Log all streams for debugging
+        const allStreams = await c.env.DB
+          .prepare('SELECT id, zoomMeetingId, title FROM LiveStream ORDER BY createdAt DESC LIMIT 5')
+          .all();
+        console.log('[Zoom Webhook] Recent streams:', allStreams.results);
       }
-    } else if (event === 'meeting.participant_joined' || event === 'meeting.participant_left') {
+    } else if (event === 'meeting.participant_joined' || event === 'meeting.participant_left' || event === 'participant.joined' || event === 'participant.left') {
       const meetingId = data.object.id;
       const participantCount = data.object.participant_count || 0;
 
+      console.log('[Zoom Webhook] Participant event:', event, 'Meeting:', meetingId, 'Count:', participantCount);
+
       // Update participant count
-      await c.env.DB
+      const result = await c.env.DB
         .prepare('UPDATE LiveStream SET participantCount = ?, participantsFetchedAt = ? WHERE zoomMeetingId = ?')
         .bind(participantCount, new Date().toISOString(), meetingId.toString())
         .run();
 
-      console.log('[Zoom Webhook] Participant update:', meetingId, participantCount);
+      console.log('[Zoom Webhook] Participant update result:', result.meta?.changes, 'rows affected');
     }
 
     return c.json(successResponse({ received: true }));

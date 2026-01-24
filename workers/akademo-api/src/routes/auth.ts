@@ -279,6 +279,13 @@ auth.post('/login', async (c) => {
     }
 
     console.log('[Login] Password valid, creating session');
+    
+    // Update lastLoginAt timestamp
+    await c.env.DB
+      .prepare('UPDATE User SET lastLoginAt = ? WHERE id = ?')
+      .bind(new Date().toISOString(), user.id)
+      .run();
+    
     // Create session (use btoa for base64 encoding in Workers)
     // We use lib/auth createSession if we imported it, but here we can just do it manually or import it.
     // For now, let's keep it manual but add the token to response.

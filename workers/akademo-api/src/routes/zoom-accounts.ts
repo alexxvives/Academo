@@ -130,24 +130,49 @@ zoomAccounts.post('/oauth/callback', async (c) => {
 
     const userInfo = await userResponse.json() as any;
 
-    // Store tokens in database
-    const accountId = crypto.randomUUID();
+    // Store tokens in database - use email as account name
+    const accountName = userInfo.email || `${userInfo.first_name} ${userInfo.last_name}`;
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
-    await c.env.DB.prepare(`
-      INSERT INTO ZoomAccount (id, academyId, accountName, accessToken, refreshToken, expiresAt, accountId)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).bind(
-      accountId,
-      academyId,
-      userInfo.first_name + ' ' + userInfo.last_name,
-      tokens.access_token,
-      tokens.refresh_token,
-      expiresAt,
-      userInfo.account_id
-    ).run();
+    // Check if account already exists (upsert pattern)
+    const existingAccount = await c.env.DB.prepare(`
+      SELECT id FROM ZoomAccount WHERE accountId = ?
+    `).bind(userInfo.account_id).first() as any;
 
-    return c.json({ success: true, data: { id: accountId } });
+    if (existingAccount) {
+      // Update existing account
+      await c.env.DB.prepare(`
+        UPDATE ZoomAccount 
+        SET accountName = ?, accessToken = ?, refreshToken = ?, expiresAt = ?, academyId = ?
+        WHERE accountId = ?
+      `).bind(
+        accountName,
+        tokens.access_token,
+        tokens.refresh_token,
+        expiresAt,
+        academyId,
+        userInfo.account_id
+      ).run();
+      
+      return c.json({ success: true, data: { id: existingAccount.id } });
+    } else {
+      // Insert new account
+      const newAccountId = crypto.randomUUID();
+      await c.env.DB.prepare(`
+        INSERT INTO ZoomAccount (id, academyId, accountName, accessToken, refreshToken, expiresAt, accountId)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).bind(
+        newAccountId,
+        academyId,
+        accountName,
+        tokens.access_token,
+        tokens.refresh_token,
+        expiresAt,
+        userInfo.account_id
+      ).run();
+      
+      return c.json({ success: true, data: { id: newAccountId } });
+    }
   } catch (error) {
     console.error('OAuth callback error:', error);
     return c.json(errorResponse('OAuth callback failed'), 500);
@@ -202,5 +227,45 @@ async function refreshZoomToken(c: Context<{ Bindings: Bindings }>, accountId: s
     return null;
   }
 }
+
+// GET /zoom-accounts/refresh-name/:id - Refresh account name from Zoom API
+zoomAccounts.get('/refresh-name/:id', async (c) => {
+  try {
+    const accountId = c.req.param('id');
+
+    // Get account from database
+    const account = await c.env.DB.prepare(
+      'SELECT * FROM ZoomAccount WHERE id = ?'
+    ).bind(accountId).first() as any;
+
+    if (!account) {
+      return c.json(errorResponse('Zoom account not found'), 404);
+    }
+
+    // Fetch user info from Zoom API
+    const userResponse = await fetch('https://api.zoom.us/v2/users/me', {
+      headers: {
+        'Authorization': `Bearer ${account.accessToken}`,
+      },
+    });
+
+    if (!userResponse.ok) {
+      return c.json(errorResponse('Failed to fetch Zoom user info'), 500);
+    }
+
+    const userInfo = await userResponse.json() as any;
+    const accountName = userInfo.email || `${userInfo.first_name} ${userInfo.last_name}`;
+
+    // Update account name
+    await c.env.DB.prepare(
+      'UPDATE ZoomAccount SET accountName = ? WHERE id = ?'
+    ).bind(accountName, accountId).run();
+
+    return c.json(successResponse({ accountName }));
+  } catch (error: any) {
+    console.error('Refresh name error:', error);
+    return c.json(errorResponse('Failed to refresh account name'), 500);
+  }
+});
 
 export { zoomAccounts, refreshZoomToken };

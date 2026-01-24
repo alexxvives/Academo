@@ -55,6 +55,22 @@ export function StudentsProgressTable({
     return 'bg-red-500';
   };
 
+  const getActivityStatus = (lastActive: string | null) => {
+    if (!lastActive) return { color: 'bg-gray-400', label: 'Sin actividad', textColor: 'text-gray-500' };
+    
+    const now = new Date();
+    const lastActiveDate = new Date(lastActive);
+    const hoursSinceActive = (now.getTime() - lastActiveDate.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursSinceActive <= 24) {
+      return { color: 'bg-green-500', label: 'Activo hace menos de 24h', textColor: 'text-green-600' };
+    } else if (hoursSinceActive <= 168) { // 7 days
+      return { color: 'bg-yellow-500', label: 'Activo hace menos de 7 días', textColor: 'text-yellow-600' };
+    } else {
+      return { color: 'bg-red-500', label: 'Inactivo hace más de 7 días', textColor: 'text-red-600' };
+    }
+  };
+
   const filteredStudents = useMemo(() => {
     return students.filter(student => {
       const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -203,12 +219,18 @@ export function StudentsProgressTable({
               ) : (
                 filteredStudents.map((student) => {
                 const progress = student.totalVideos > 0 ? (student.videosWatched / student.totalVideos) * 100 : 0;
+                const activityStatus = getActivityStatus(student.lastActive);
                 return (
                   <tr key={student.id} className="hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-6">
-                      <div>
-                        <p className="font-medium text-gray-900">{student.name}</p>
-                        <p className="text-sm text-gray-500">{student.email}</p>
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <div className={`w-3 h-3 rounded-full ${activityStatus.color}`} title={activityStatus.label}></div>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{student.name}</p>
+                          <p className="text-sm text-gray-500">{student.email}</p>
+                        </div>
                       </div>
                     </td>
                     <td className="py-4 px-6">
@@ -236,15 +258,17 @@ export function StudentsProgressTable({
                       <span className="text-gray-900">{formatTime(student.totalWatchTime)}</span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-sm text-gray-500">
-                        {student.lastActive
-                          ? new Date(student.lastActive).toLocaleDateString('es-ES', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })
-                          : 'Sin actividad'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-medium ${activityStatus.textColor}`}>
+                          {student.lastActive
+                            ? new Date(student.lastActive).toLocaleDateString('es-ES', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })
+                            : 'Sin actividad'}
+                        </span>
+                      </div>
                     </td>
                   </tr>
                 );

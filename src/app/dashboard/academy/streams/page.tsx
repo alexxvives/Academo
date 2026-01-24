@@ -386,28 +386,26 @@ export default function AcademyStreamsPage() {
                       {getStatusBadge(stream.status)}
                     </td>
                     <td className="py-4 px-4">
-                      <div className="flex items-center gap-2">
-                        {stream.participantCount != null && stream.participantCount > 0 ? (
-                          <span className="text-sm text-gray-600 font-medium">
-                            {stream.participantCount}
-                          </span>
-                        ) : stream.status === 'ended' ? (
-                          <span className="text-sm text-gray-400 italic">Obteniendo...</span>
-                        ) : (
-                          <span className="text-sm text-gray-400">—</span>
-                        )}
-                      </div>
+                      {stream.status === 'ended' && stream.participantCount != null ? (
+                        <span className="text-sm text-gray-600 font-medium">{stream.participantCount}</span>
+                      ) : (
+                        <span className="text-sm text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="py-4 px-4 text-sm text-gray-600">
                       {formatDate(stream.startedAt || stream.createdAt)}
                     </td>
                     <td className="py-4 px-4">
-                      <span className="inline-flex items-center gap-1 text-sm font-medium text-gray-900">
-                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {formatDuration(stream.startedAt || stream.createdAt, stream.endedAt)}
-                      </span>
+                      {stream.status === 'ended' && stream.startedAt && stream.endedAt ? (
+                        <span className="inline-flex items-center gap-1 text-sm font-medium text-gray-900">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {formatDuration(stream.startedAt, stream.endedAt)}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-400">—</span>
+                      )}
                     </td>
                     <td className="py-4 px-4">
                       {stream.recordingId ? (
@@ -417,10 +415,10 @@ export default function AcademyStreamsPage() {
                           </svg>
                           Disponible
                         </span>
-                      ) : stream.status === 'active' || stream.status === 'scheduled' ? (
-                        <span className="text-gray-400 text-sm">—</span>
+                      ) : stream.status === 'ended' ? (
+                        <span className="text-xs text-gray-400">Procesando...</span>
                       ) : (
-                        <span className="text-xs text-gray-400">Obteniendo...</span>
+                        <span className="text-gray-400 text-sm">—</span>
                       )}
                     </td>
                     <td className="py-4 px-4">

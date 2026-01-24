@@ -21,7 +21,7 @@ live.get('/', async (c) => {
         SELECT ls.*, u.firstName, u.lastName
         FROM LiveStream ls
         JOIN User u ON ls.teacherId = u.id
-        WHERE ls.classId = ? AND ls.status = 'active'
+        WHERE ls.classId = ? AND ls.status IN ('scheduled', 'active')
         ORDER BY ls.createdAt DESC
       `)
       .bind(classId)
@@ -106,12 +106,8 @@ live.post('/', async (c) => {
         zoomConfig = { accessToken: zoomAccount.accessToken };
       }
     } else {
-      // Use platform Zoom credentials
-      zoomConfig = {
-        ZOOM_ACCOUNT_ID: c.env.ZOOM_ACCOUNT_ID || '',
-        ZOOM_CLIENT_ID: c.env.ZOOM_CLIENT_ID || '',
-        ZOOM_CLIENT_SECRET: c.env.ZOOM_CLIENT_SECRET || '',
-      };
+      // No Zoom account assigned - teachers must contact academy
+      return c.json(errorResponse('Esta clase no tiene una cuenta de Zoom asignada. Por favor contacta a la academia para que asigne una cuenta de Zoom a esta clase.'), 400);
     }
 
     // Create Zoom meeting

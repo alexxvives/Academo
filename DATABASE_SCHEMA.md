@@ -23,6 +23,7 @@ Central user table for all roles.
 | role | TEXT | NO | 'STUDENT' | ADMIN, ACADEMY, TEACHER, STUDENT |
 | createdAt | TEXT | NO | datetime('now') | |
 | updatedAt | TEXT | NO | datetime('now') | |
+| lastLoginAt | TEXT | YES | - | Last login timestamp |
 
 **Roles:**
 - `ADMIN` - Platform administrator

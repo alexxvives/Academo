@@ -41,6 +41,7 @@ classes.get('/', async (c) => {
         SELECT 
           c.*,
           a.name as academyName,
+          za.accountName as zoomAccountName,
           (SELECT COUNT(*) FROM ClassEnrollment WHERE classId = c.id AND status = 'APPROVED') as studentCount,
           (SELECT COUNT(*) FROM Lesson WHERE classId = c.id) as lessonCount,
           (SELECT COUNT(*) FROM Video v JOIN Lesson l ON v.lessonId = l.id WHERE l.classId = c.id) as videoCount,
@@ -48,6 +49,7 @@ classes.get('/', async (c) => {
           (SELECT ROUND(AVG(lr.rating), 1) FROM LessonRating lr JOIN Lesson l ON lr.lessonId = l.id WHERE l.classId = c.id) as avgRating
         FROM Class c
         JOIN Academy a ON c.academyId = a.id
+        LEFT JOIN ZoomAccount za ON c.zoomAccountId = za.id
         WHERE c.teacherId = ?
         ORDER BY c.createdAt DESC
       `;

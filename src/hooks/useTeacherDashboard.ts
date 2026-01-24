@@ -23,6 +23,9 @@ export interface Class {
   academyName: string;
   enrollmentCount: number;
   students?: Student[];
+  zoomAccountName?: string | null;
+  videoCount?: number;
+  documentCount?: number;
 }
 
 export interface Student {
