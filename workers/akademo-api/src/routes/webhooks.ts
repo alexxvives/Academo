@@ -61,11 +61,9 @@ webhooks.post('/zoom', async (c) => {
 
       console.log('[Zoom Webhook] Meeting ended:', meetingId);
     } else if (event === 'recording.completed') {
-      // Zoom provides meeting UUID (encrypted meeting ID) for recordings
-      const meetingUuid = data.object.uuid;
+      // Use numeric meeting ID (preferred) from webhook payload
       const meetingId = data.object.id;
       console.log('[Zoom Webhook] Recording completed for meeting:', meetingId);
-      console.log('[Zoom Webhook] Meeting UUID:', meetingUuid);
       console.log('[Zoom Webhook] Full recording payload:', JSON.stringify(data, null, 2));
       console.log('[Zoom Webhook] Using OAuth flow (no server-to-server)');
       
@@ -87,7 +85,7 @@ webhooks.post('/zoom', async (c) => {
 
           if (!streamWithClass?.zoomAccountId) {
             console.error('[Zoom Webhook] No Zoom account assigned to class for stream:', stream.id);
-            return;
+            return c.json(successResponse({ received: true, error: 'No Zoom account' }));
           }
 
           // Get Zoom account details
@@ -98,18 +96,17 @@ webhooks.post('/zoom', async (c) => {
 
           if (!zoomAccount) {
             console.error('[Zoom Webhook] Zoom account not found:', streamWithClass.zoomAccountId);
-            return;
+            return c.json(successResponse({ received: true, error: 'Zoom account not found' }));
           }
 
           console.log('[Zoom Webhook] Using OAuth token from account:', zoomAccount.accountName);
           const accessToken = zoomAccount.accessToken;
 
-          // Fetch recording details from Zoom API (using OAuth token directly)
-          // IMPORTANT: Use UUID (double-encoded for API) instead of numeric meeting ID
-          const encodedUuid = encodeURIComponent(encodeURIComponent(meetingUuid));
-          console.log('[Zoom Webhook] Fetching recordings from Zoom API with UUID:', encodedUuid);
+          // Fetch recording details from Zoom API
+          // Use numeric meeting ID (preferred for recordings endpoint)
+          console.log('[Zoom Webhook] Fetching recordings from Zoom API with meeting ID:', meetingId);
           const recordingsResponse = await fetch(
-            `https://api.zoom.us/v2/meetings/${encodedUuid}/recordings`,
+            `https://api.zoom.us/v2/meetings/${meetingId}/recordings`,
             {
               headers: {
                 'Authorization': `Bearer ${accessToken}`,
