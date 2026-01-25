@@ -10,7 +10,7 @@ storage.post('/multipart/init', async (c) => {
   try {
     const session = await requireAuth(c);
 
-    if (!['ADMIN', 'TEACHER'].includes(session.role)) {
+    if (!['ADMIN', 'TEACHER', 'ACADEMY'].includes(session.role)) {
       return c.json(errorResponse('Not authorized'), 403);
     }
 
@@ -50,7 +50,7 @@ storage.put('/multipart/upload-part', async (c) => {
   try {
     const session = await requireAuth(c);
 
-    if (!['ADMIN', 'TEACHER'].includes(session.role)) {
+    if (!['ADMIN', 'TEACHER', 'ACADEMY'].includes(session.role)) {
       return c.json(errorResponse('Not authorized'), 403);
     }
 
@@ -111,7 +111,7 @@ storage.post('/multipart/complete', async (c) => {
   try {
     const session = await requireAuth(c);
 
-    if (!['ADMIN', 'TEACHER'].includes(session.role)) {
+    if (!['ADMIN', 'TEACHER', 'ACADEMY'].includes(session.role)) {
       return c.json(errorResponse('Not authorized'), 403);
     }
 
@@ -141,7 +141,7 @@ storage.post('/multipart/abort', async (c) => {
   try {
     const session = await requireAuth(c);
 
-    if (!['ADMIN', 'TEACHER'].includes(session.role)) {
+    if (!['ADMIN', 'TEACHER', 'ACADEMY'].includes(session.role)) {
       return c.json(errorResponse('Not authorized'), 403);
     }
 
