@@ -48,6 +48,11 @@ export function BarChart({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Validate data
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return;
+    }
+
     // Set canvas size
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
@@ -144,6 +149,11 @@ export function LineChart({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Validate data
+    if (!data || !Array.isArray(data) || data.length === 0 || !labels || labels.length === 0) {
+      return;
+    }
+
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
@@ -217,7 +227,7 @@ export function LineChart({
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">{title}</h3>
           <div className="flex flex-wrap gap-4">
-            {data.map((line, index) => (
+            {(data || []).map((line, index) => (
               <div key={index} className="flex items-center gap-2">
                 <div 
                   className="w-3 h-3 rounded-full"
@@ -252,6 +262,11 @@ export function DonutChart({
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Validate data
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return;
+    }
 
     const dpr = window.devicePixelRatio || 1;
     canvas.width = size * dpr;
@@ -322,7 +337,7 @@ export function DonutChart({
       <div className="flex items-center justify-center gap-8">
         <canvas ref={canvasRef} style={{ width: `${size}px`, height: `${size}px` }} />
         <div className="space-y-2">
-          {data.map((item, index) => (
+          {(data || []).map((item, index) => (
             <div key={index} className="flex items-center gap-3">
               <div 
                 className="w-4 h-4 rounded"
@@ -330,7 +345,7 @@ export function DonutChart({
               />
               <div>
                 <p className="text-sm font-medium text-gray-900">{item.label}</p>
-                <p className="text-xs text-gray-500">{item.value} ({((item.value / data.reduce((s, i) => s + i.value, 0)) * 100).toFixed(1)}%)</p>
+                <p className="text-xs text-gray-500">{item.value} ({((item.value / (data || []).reduce((s, i) => s + i.value, 0)) * 100).toFixed(1)}%)</p>
               </div>
             </div>
           ))}
