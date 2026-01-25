@@ -267,7 +267,7 @@ export function StudentsProgressTable({
                                 const month = date.toLocaleDateString('es-ES', { month: 'long' });
                                 const year = date.getFullYear();
                                 const time = date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
-                                return `Ú ${day} ${month.charAt(0).toUpperCase() + month.slice(1)} ${year} a las ${time}`;
+                                return `${day} ${month.charAt(0).toUpperCase() + month.slice(1)} ${year} a las ${time}`;
                               })()
                             : 'Sin actividad'}
                         </span>

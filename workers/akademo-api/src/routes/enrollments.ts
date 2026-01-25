@@ -44,6 +44,7 @@ enrollments.get('/', async (c) => {
             u.firstName as student_firstName,
             u.lastName as student_lastName,
             u.email as student_email,
+            u.lastLoginAt as student_lastLoginAt,
             c.name as class_name,
             c.id as class_id
           FROM ClassEnrollment e
@@ -69,6 +70,7 @@ enrollments.get('/', async (c) => {
           firstName: row.student_firstName,
           lastName: row.student_lastName,
           email: row.student_email,
+          lastLoginAt: row.student_lastLoginAt,
         },
         class: {
           id: row.class_id,

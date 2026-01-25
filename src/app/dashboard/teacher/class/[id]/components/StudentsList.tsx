@@ -7,14 +7,47 @@ interface StudentsListProps {
       firstName: string;
       lastName: string;
       email: string;
+      lastLoginAt?: string | null;
     };
   }>;
 }
 
 export default function StudentsList({ enrollments }: StudentsListProps) {
-  // Show only approved students (green dot)
-  // REJECTED and PENDING students are not shown
+  // Show only approved students
   const visibleEnrollments = (enrollments || []).filter(e => e.status === 'APPROVED');
+
+  // Calculate activity status color (same logic as StudentsProgressTable)
+  const getActivityColor = (lastLoginAt: string | null | undefined) => {
+    if (!lastLoginAt) return 'bg-gray-400';
+    
+    const now = new Date();
+    const lastActiveDate = new Date(lastLoginAt);
+    const hoursSinceActive = (now.getTime() - lastActiveDate.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursSinceActive <= 24) {
+      return 'bg-green-500';
+    } else if (hoursSinceActive <= 168) { // 7 days
+      return 'bg-yellow-500';
+    } else {
+      return 'bg-red-500';
+    }
+  };
+
+  const getActivityLabel = (lastLoginAt: string | null | undefined) => {
+    if (!lastLoginAt) return 'Sin actividad';
+    
+    const now = new Date();
+    const lastActiveDate = new Date(lastLoginAt);
+    const hoursSinceActive = (now.getTime() - lastActiveDate.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursSinceActive <= 24) {
+      return 'Activo hace menos de 24h';
+    } else if (hoursSinceActive <= 168) {
+      return 'Activo hace menos de 7 días';
+    } else {
+      return 'Inactivo hace más de 7 días';
+    }
+  };
 
   return (
     <div>
@@ -30,10 +63,10 @@ export default function StudentsList({ enrollments }: StudentsListProps) {
               <div className="flex items-center gap-3">
                 <div className="relative w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                   {e.student.firstName[0]}{e.student.lastName[0]}
-                  {/* Status dot: Green for all approved/active students */}
+                  {/* Status dot: Color based on last login time */}
                   <div 
-                    className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white bg-green-500" 
-                    title="Activo"
+                    className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${getActivityColor(e.student.lastLoginAt)}`}
+                    title={getActivityLabel(e.student.lastLoginAt)}
                   ></div>
                 </div>
                 <div className="flex-1 min-w-0">

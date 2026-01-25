@@ -18,7 +18,7 @@ students.get('/progress', async (c) => {
     let params: any[] = [];
 
     if (session.role === 'TEACHER') {
-      // Get aggregated progress for students across all classes taught by this teacher
+      // Get progress for each student-class combination (one row per student per class)
       query = `
         SELECT 
           u.id,
@@ -26,11 +26,8 @@ students.get('/progress', async (c) => {
           u.lastName,
           u.email,
           u.lastLoginAt as lastActive,
-          (SELECT c2.name FROM Class c2 
-           JOIN ClassEnrollment e2 ON e2.classId = c2.id 
-           WHERE e2.userId = u.id AND c2.teacherId = ? AND e2.status = 'APPROVED' 
-           LIMIT 1) as className,
-          COUNT(DISTINCT c.id) as classCount,
+          c.name as className,
+          c.id as classId,
           COUNT(DISTINCT CASE 
             WHEN vps.videoId IS NOT NULL AND v.lessonId IN (
               SELECT l2.id FROM Lesson l2 WHERE l2.classId = c.id
@@ -55,12 +52,12 @@ students.get('/progress', async (c) => {
         LEFT JOIN VideoPlayState vps ON vps.studentId = u.id
         LEFT JOIN Video v ON v.id = vps.videoId
         LEFT JOIN LessonRating lr ON lr.studentId = u.id AND lr.lessonId = l.id
-        GROUP BY u.id, u.firstName, u.lastName, u.email, u.lastLoginAt
-        ORDER BY u.lastName, u.firstName
+        GROUP BY u.id, u.firstName, u.lastName, u.email, u.lastLoginAt, c.id, c.name
+        ORDER BY u.lastName, u.firstName, c.name
       `;
-      params = [session.id, session.id];
+      params = [session.id];
     } else if (session.role === 'ACADEMY') {
-      // Get aggregated progress for all students in academy owner's classes
+      // Get progress for each student-class combination (one row per student per class)
       query = `
         SELECT 
           u.id,
@@ -68,16 +65,9 @@ students.get('/progress', async (c) => {
           u.lastName,
           u.email,
           u.lastLoginAt as lastActive,
-          (SELECT c2.name FROM Class c2 
-           JOIN ClassEnrollment e2 ON e2.classId = c2.id 
-           WHERE e2.userId = u.id AND e2.status = 'APPROVED' 
-           LIMIT 1) as className,
-          (SELECT ut.firstName || ' ' || ut.lastName FROM Class c2 
-           JOIN User ut ON c2.teacherId = ut.id
-           JOIN ClassEnrollment e2 ON e2.classId = c2.id 
-           WHERE e2.userId = u.id AND e2.status = 'APPROVED' 
-           LIMIT 1) as teacherName,
-          COUNT(DISTINCT c.id) as classCount,
+          c.name as className,
+          c.id as classId,
+          ut.firstName || ' ' || ut.lastName as teacherName,
           COUNT(DISTINCT CASE 
             WHEN vps.videoId IS NOT NULL AND v.lessonId IN (
               SELECT l2.id FROM Lesson l2 WHERE l2.classId = c.id
@@ -99,12 +89,13 @@ students.get('/progress', async (c) => {
         JOIN ClassEnrollment e ON e.userId = u.id AND e.status = 'APPROVED'
         JOIN Class c ON e.classId = c.id
         JOIN Academy a ON c.academyId = a.id AND a.ownerId = ?
+        LEFT JOIN User ut ON c.teacherId = ut.id
         LEFT JOIN Lesson l ON l.classId = c.id
         LEFT JOIN VideoPlayState vps ON vps.studentId = u.id
         LEFT JOIN Video v ON v.id = vps.videoId
         LEFT JOIN LessonRating lr ON lr.studentId = u.id AND lr.lessonId = l.id
-        GROUP BY u.id, u.firstName, u.lastName, u.email, u.lastLoginAt
-        ORDER BY u.lastName, u.firstName
+        GROUP BY u.id, u.firstName, u.lastName, u.email, u.lastLoginAt, c.id, c.name, ut.firstName, ut.lastName
+        ORDER BY u.lastName, u.firstName, c.name
       `;
       params = [session.id];
     }
