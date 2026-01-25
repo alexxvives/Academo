@@ -101,9 +101,9 @@ export function Sidebar({
   };
 
   return (
-    <aside className="hidden lg:flex flex-col bg-[#1a1d29] w-64 min-h-screen">
+    <aside className="hidden lg:flex flex-col bg-[#1a1d29] w-64 h-screen">
       {/* Logo */}
-      <div className="h-20 flex items-center justify-center px-4 gap-2">
+      <div className="flex-shrink-0 h-20 flex items-center justify-center px-4 gap-2">
         <Link href={`/dashboard/${role.toLowerCase()}`} className="flex items-center gap-2">
           <img
             src="/logo/AKADEMO_logo_OTHER2.svg"
@@ -117,7 +117,7 @@ export function Sidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
+      <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto min-h-0">
         {menuItems.map((item) => {
           const isDashboardRoute = item.href === `/dashboard/${role.toLowerCase()}`;
           const matchesPath = (item as any).matchPaths && (item as any).matchPaths.some((p: string) => pathname.startsWith(p));

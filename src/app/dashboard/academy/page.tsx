@@ -116,7 +116,7 @@ export default function AcademyDashboard() {
           const demoStreams = generateDemoStreams();
           const demoClasses = generateDemoClasses();
           
-          setClasses(demoClasses.map(c => ({
+          setClasses((demoClasses || []).map(c => ({
             id: c.id,
             name: c.name,
             description: c.description,
@@ -129,7 +129,7 @@ export default function AcademyDashboard() {
             enrollmentCount: c.studentCount,
           })));
           
-          setEnrolledStudents(demoStudents.map(s => ({
+          setEnrolledStudents((demoStudents || []).map(s => ({
             id: s.id,
             name: `${s.firstName} ${s.lastName}`,
             email: s.email,
@@ -141,11 +141,11 @@ export default function AcademyDashboard() {
           
           setRatingsData({
             overall: {
-              averageRating: demoStats.averageRating,
-              totalRatings: demoStats.totalRatings,
+              averageRating: demoStats?.averageRating || 4.5,
+              totalRatings: demoStats?.totalRatings || 250,
               ratedLessons: 8,
             },
-            lessons: (demoStats.recentRatings || []).map(r => ({
+            lessons: ((demoStats?.recentRatings) || []).map(r => ({
               lessonId: r.id,
               lessonTitle: r.lessonTitle,
               className: 'Programación Web',
