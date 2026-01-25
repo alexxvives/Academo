@@ -271,7 +271,7 @@ export function Sidebar({
         
         {/* User Profile */}
         {user && (
-          <div className="border-t border-gray-800/50 p-4">
+          <div className="border-t border-gray-800/50 p-4 pb-6">
           <Link
             href={`/dashboard/${role.toLowerCase()}/profile`}
             className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-800/30 rounded-xl p-2 -m-2 transition-colors group"
@@ -301,7 +301,7 @@ export function Sidebar({
                 logoutIconRef.current.stopAnimation();
               }
             }}
-            className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800/50 rounded-xl transition-colors"
+            className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm text-gray-300 hover:bg-gray-800/50 rounded-xl transition-colors"
           >
             <LogoutIcon ref={logoutIconRef} size={16} />
             Cerrar Sesión
