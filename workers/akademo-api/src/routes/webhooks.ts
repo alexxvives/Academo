@@ -125,7 +125,10 @@ webhooks.post('/zoom', async (c) => {
           }
 
           const recordingsData = await recordingsResponse.json() as any;
-          console.log('[Zoom Webhook] Recording files:', recordingsData.recording_files?.length || 0);
+          console.log('[Zoom Webhook] ✅ Recording files count:', recordingsData.recording_files?.length || 0);
+          console.log('[Zoom Webhook] 📋 All recording types:', JSON.stringify(
+            recordingsData.recording_files?.map((f: any) => ({ type: f.file_type, recording_type: f.recording_type })) || []
+          ));
 
           // Find the MP4 recording
           const mp4Recording = recordingsData.recording_files?.find(
@@ -133,46 +136,54 @@ webhooks.post('/zoom', async (c) => {
           );
 
           if (!mp4Recording) {
-            console.log('[Zoom Webhook] No MP4 recording found');
-            return;
+            console.log('[Zoom Webhook] ❌ No MP4 recording found with type "shared_screen_with_speaker_view"');
+            console.log('[Zoom Webhook] Available recordings:', JSON.stringify(recordingsData.recording_files || []));
+            return c.json(successResponse({ received: true, error: 'No MP4 recording found' }));
           }
 
           const downloadUrl = mp4Recording.download_url;
-          console.log('[Zoom Webhook] Download URL:', downloadUrl);
+          console.log('[Zoom Webhook] 📥 Download URL found:', downloadUrl.substring(0, 100) + '...');
 
           // Upload to Bunny Stream using /fetch endpoint
-          const bunnyFetchResponse = await fetch(
-            `https://video.bunnycdn.com/library/${c.env.BUNNY_STREAM_LIBRARY_ID}/videos/fetch`,
-            {
-              method: 'POST',
-              headers: {
-                'AccessKey': c.env.BUNNY_STREAM_API_KEY,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                url: `${downloadUrl}?access_token=${accessToken}`,
-                title: stream.title || `Recording ${new Date().toLocaleDateString()}`,
-              }),
-            }
-          );
+          const bunnyFetchUrl = `https://video.bunnycdn.com/library/${c.env.BUNNY_STREAM_LIBRARY_ID}/videos/fetch`;
+          const bunnyRequestBody = {
+            url: `${downloadUrl}?access_token=${accessToken}`,
+            title: stream.title || `Recording ${new Date().toLocaleDateString()}`,
+          };
+          
+          console.log('[Zoom Webhook] 🐰 Sending to Bunny Stream...');
+          console.log('[Zoom Webhook] 🐰 Bunny API URL:', bunnyFetchUrl);
+          console.log('[Zoom Webhook] 🐰 Video title:', bunnyRequestBody.title);
+          console.log('[Zoom Webhook] 🐰 Download URL length:', bunnyRequestBody.url.length);
+          
+          const bunnyFetchResponse = await fetch(bunnyFetchUrl, {
+            method: 'POST',
+            headers: {
+              'AccessKey': c.env.BUNNY_STREAM_API_KEY,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(bunnyRequestBody),
+          });
 
+          console.log('[Zoom Webhook] 🐰 Bunny response status:', bunnyFetchResponse.status);
+          
           if (!bunnyFetchResponse.ok) {
             const errorText = await bunnyFetchResponse.text();
-            console.error('[Zoom Webhook] Bunny fetch failed:', bunnyFetchResponse.status, errorText);
-            return;
+            console.error('[Zoom Webhook] ❌ Bunny fetch failed:', bunnyFetchResponse.status, errorText);
+            return c.json(successResponse({ received: true, error: 'Bunny upload failed' }));
           }
 
           const bunnyData = await bunnyFetchResponse.json() as any;
           const videoGuid = bunnyData.guid;
-          console.log('[Zoom Webhook] Bunny video created:', videoGuid);
+          console.log('[Zoom Webhook] ✅ Bunny video created! GUID:', videoGuid);
 
           // Update stream with recordingId
-          await c.env.DB
+          const updateResult = await c.env.DB
             .prepare('UPDATE LiveStream SET recordingId = ? WHERE id = ?')
             .bind(videoGuid, stream.id)
             .run();
 
-          console.log('[Zoom Webhook] Updated stream', stream.id, 'with recordingId:', videoGuid);
+          console.log('[Zoom Webhook] ✅ Database updated! Stream:', stream.id, 'RecordingId:', videoGuid, 'Rows affected:', updateResult.meta?.changes);
         } catch (error: any) {
           console.error('[Zoom Webhook] Error processing recording:', error.message);
         }
