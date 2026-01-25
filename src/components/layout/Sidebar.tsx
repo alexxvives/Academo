@@ -116,157 +116,160 @@ export function Sidebar({
         </Link>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto min-h-0">
-        {menuItems.map((item) => {
-          const isDashboardRoute = item.href === `/dashboard/${role.toLowerCase()}`;
-          const matchesPath = (item as any).matchPaths && (item as any).matchPaths.some((p: string) => pathname.startsWith(p));
-          const isActive = isDashboardRoute
-            ? pathname === item.href
-            : pathname === item.href || pathname.startsWith(item.href + '/') || matchesPath;
+      {/* Scrollable content - everything except user profile */}
+      <div className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+        {/* Navigation */}
+        <nav className="px-3 py-6 space-y-2">
+          {menuItems.map((item) => {
+            const isDashboardRoute = item.href === `/dashboard/${role.toLowerCase()}`;
+            const matchesPath = (item as any).matchPaths && (item as any).matchPaths.some((p: string) => pathname.startsWith(p));
+            const isActive = isDashboardRoute
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(item.href + '/') || matchesPath;
 
-          const hasLiveStream = role === 'STUDENT' && item.label === 'Mis Clases' && activeStreams.length > 0;
-          const iconRef = iconRefs.current[item.href];
+            const hasLiveStream = role === 'STUDENT' && item.label === 'Mis Clases' && activeStreams.length > 0;
+            const iconRef = iconRefs.current[item.href];
 
-          const handleMouseEnter = () => {
-            if (iconRef && iconRef.current && typeof iconRef.current.startAnimation === 'function') {
-              iconRef.current.startAnimation();
-            }
-          };
+            const handleMouseEnter = () => {
+              if (iconRef && iconRef.current && typeof iconRef.current.startAnimation === 'function') {
+                iconRef.current.startAnimation();
+              }
+            };
 
-          const handleMouseLeave = () => {
-            if (iconRef && iconRef.current && typeof iconRef.current.stopAnimation === 'function') {
-              iconRef.current.stopAnimation();
-            }
-          };
+            const handleMouseLeave = () => {
+              if (iconRef && iconRef.current && typeof iconRef.current.stopAnimation === 'function') {
+                iconRef.current.stopAnimation();
+              }
+            };
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all group ${
-                isActive
-                  ? 'bg-gray-800/50 text-white'
-                  : 'text-gray-400 hover:bg-gray-800/50 hover:text-white'
-              }`}
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-            >
-              {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#b1e787] rounded-r-full" />
-              )}
-              <span className={`relative flex-shrink-0 ${
-                isActive ? 'text-[#b1e787]' : 'text-gray-400 group-hover:text-white'
-              }`}>
-                {renderIcon(item)}
-              </span>
-              <span className="text-sm font-medium">{item.label}</span>
-              {hasLiveStream && (
-                <span className="ml-auto w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
-              )}
-              {!hasLiveStream && item.badge !== undefined && item.badge > 0 && (
-                <span className="ml-auto text-xs font-bold px-2 py-1 rounded-full bg-[#b1e787]/20 text-[#b1e787]">
-                  {item.badge}
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all group ${
+                  isActive
+                    ? 'bg-gray-800/50 text-white'
+                    : 'text-gray-400 hover:bg-gray-800/50 hover:text-white'
+                }`}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+              >
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#b1e787] rounded-r-full" />
+                )}
+                <span className={`relative flex-shrink-0 ${
+                  isActive ? 'text-[#b1e787]' : 'text-gray-400 group-hover:text-white'
+                }`}>
+                  {renderIcon(item)}
                 </span>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
+                <span className="text-sm font-medium">{item.label}</span>
+                {hasLiveStream && (
+                  <span className="ml-auto w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+                )}
+                {!hasLiveStream && item.badge !== undefined && item.badge > 0 && (
+                  <span className="ml-auto text-xs font-bold px-2 py-1 rounded-full bg-[#b1e787]/20 text-[#b1e787]">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
 
-      {/* Quick Action Button */}
-      <div className="px-3 pb-3">
-        {role === 'STUDENT' && (
-          <Link
-            href="/dashboard/student/enrolled-academies/classes"
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#b1e787] hover:bg-[#9dd46f] text-gray-900 rounded-xl transition-all shadow-lg font-semibold"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span className="text-sm">Explorar Clases</span>
-          </Link>
+        {/* Quick Action Button */}
+        <div className="px-3 pb-3">
+          {role === 'STUDENT' && (
+            <Link
+              href="/dashboard/student/enrolled-academies/classes"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#b1e787] hover:bg-[#9dd46f] text-gray-900 rounded-xl transition-all shadow-lg font-semibold"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="text-sm">Explorar Clases</span>
+            </Link>
+          )}
+        </div>
+
+        {/* Role Switcher (MonoAcademy) */}
+        {user?.monoacademy && (role === 'ACADEMY' || role === 'TEACHER') && (
+          <div className="px-3 py-2 border-t border-gray-800/50">
+            <button
+              onClick={onSwitchRole}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-all"
+            >
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              <span className="text-sm font-medium">
+                {role === 'ACADEMY' ? 'Cambiar a Profesor' : 'Cambiar a Academia'}
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* Academy Invite Link */}
+        {role === 'ACADEMY' && academyId && (
+          <div className="px-3 py-2 border-t border-gray-800/50">
+            <button
+              onClick={onCopyAcademyLink}
+              onMouseEnter={() => {
+                if (linkIconRef.current && typeof linkIconRef.current.startAnimation === 'function') {
+                  linkIconRef.current.startAnimation();
+                }
+              }}
+              onMouseLeave={() => {
+                if (linkIconRef.current && typeof linkIconRef.current.stopAnimation === 'function') {
+                  linkIconRef.current.stopAnimation();
+                }
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+                linkCopied
+                  ? 'bg-[#b1e787]/20 text-[#b1e787]'
+                  : 'bg-[#b1e787]/10 text-[#b1e787] hover:bg-[#b1e787]/20'
+              }`}
+            >
+              <LinkIcon ref={linkIconRef} size={20} className="flex-shrink-0" />
+              <span className="text-sm font-medium truncate">
+                {linkCopied ? '¡Enlace copiado!' : 'Copiar enlace de invitación'}
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* Teacher Invite Link */}
+        {role === 'TEACHER' && user && (
+          <div className="px-3 py-2 border-t border-gray-800/50">
+            <button
+              onClick={onCopyJoinLink}
+              onMouseEnter={() => {
+                if (linkIconRef.current && typeof linkIconRef.current.startAnimation === 'function') {
+                  linkIconRef.current.startAnimation();
+                }
+              }}
+              onMouseLeave={() => {
+                if (linkIconRef.current && typeof linkIconRef.current.stopAnimation === 'function') {
+                  linkIconRef.current.stopAnimation();
+                }
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+                linkCopied
+                  ? 'bg-[#b1e787]/20 text-[#b1e787]'
+                  : 'bg-[#b1e787]/10 text-[#b1e787] hover:bg-[#b1e787]/20'
+              }`}
+            >
+              <LinkIcon ref={linkIconRef} size={20} className="flex-shrink-0" />
+              <span className="text-sm font-medium truncate">
+                {linkCopied ? '¡Enlace copiado!' : 'Copiar enlace de invitación'}
+              </span>
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Role Switcher (MonoAcademy) - Moved to top */}
-      {user?.monoacademy && (role === 'ACADEMY' || role === 'TEACHER') && (
-        <div className="px-3 py-2 border-t border-gray-800/50">
-          <button
-            onClick={onSwitchRole}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-all"
-          >
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
-            <span className="text-sm font-medium">
-              {role === 'ACADEMY' ? 'Cambiar a Profesor' : 'Cambiar a Academia'}
-            </span>
-          </button>
-        </div>
-      )}
-
-      {/* Academy Invite Link */}
-      {role === 'ACADEMY' && academyId && (
-        <div className="px-3 py-2 border-t border-gray-800/50">
-          <button
-            onClick={onCopyAcademyLink}
-            onMouseEnter={() => {
-              if (linkIconRef.current && typeof linkIconRef.current.startAnimation === 'function') {
-                linkIconRef.current.startAnimation();
-              }
-            }}
-            onMouseLeave={() => {
-              if (linkIconRef.current && typeof linkIconRef.current.stopAnimation === 'function') {
-                linkIconRef.current.stopAnimation();
-              }
-            }}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
-              linkCopied
-                ? 'bg-[#b1e787]/20 text-[#b1e787]'
-                : 'bg-[#b1e787]/10 text-[#b1e787] hover:bg-[#b1e787]/20'
-            }`}
-          >
-            <LinkIcon ref={linkIconRef} size={20} className="flex-shrink-0" />
-            <span className="text-sm font-medium truncate">
-              {linkCopied ? '¡Enlace copiado!' : 'Copiar enlace de invitación'}
-            </span>
-          </button>
-        </div>
-      )}
-
-      {/* Teacher Invite Link */}
-      {role === 'TEACHER' && user && (
-        <div className="px-3 py-2 border-t border-gray-800/50">
-          <button
-            onClick={onCopyJoinLink}
-            onMouseEnter={() => {
-              if (linkIconRef.current && typeof linkIconRef.current.startAnimation === 'function') {
-                linkIconRef.current.startAnimation();
-              }
-            }}
-            onMouseLeave={() => {
-              if (linkIconRef.current && typeof linkIconRef.current.stopAnimation === 'function') {
-                linkIconRef.current.stopAnimation();
-              }
-            }}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
-              linkCopied
-                ? 'bg-[#b1e787]/20 text-[#b1e787]'
-                : 'bg-[#b1e787]/10 text-[#b1e787] hover:bg-[#b1e787]/20'
-            }`}
-          >
-            <LinkIcon ref={linkIconRef} size={20} className="flex-shrink-0" />
-            <span className="text-sm font-medium truncate">
-              {linkCopied ? '¡Enlace copiado!' : 'Copiar enlace de invitación'}
-            </span>
-          </button>
-        </div>
-      )}
-
-      {/* User Profile */}
+      {/* User Profile - Fixed at bottom, always visible */}
       {user && (
-        <div className="border-t border-gray-800/50 p-4">
+        <div className="flex-shrink-0 border-t border-gray-800/50 p-4">
           <Link
             href={`/dashboard/${role.toLowerCase()}/profile`}
             className="flex items-center gap-3 mb-3 cursor-pointer hover:bg-gray-800/30 rounded-xl p-2 -m-2 transition-colors group"
