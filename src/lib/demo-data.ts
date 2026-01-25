@@ -125,6 +125,7 @@ export function generateDemoRatings(count: number = 250): DemoRating[] {
     4: ['Muy buena clase', 'Bien explicado', 'Buen contenido', 'Me gustó mucho'],
     3: ['Buena clase', 'Podría mejorar', 'Interesante', 'Está bien'],
     2: ['Regular', 'No me quedó claro', 'Un poco confuso'],
+    1: ['Muy decepcionante', 'No entendí nada', 'Pérdida de tiempo', 'Necesita mejorar mucho'],
   };
   
   const firstNames = ['Juan', 'María', 'Carlos', 'Ana', 'Luis', 'Carmen', 'José', 'Laura'];
