@@ -403,13 +403,19 @@ export default function TeacherClassPage() {
             .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
         };
         
-        const urlSlug = normalizeSlug(classId);
+        const urlSlug = normalizeSlug(decodeURIComponent(classId));
+        console.log('[Demo Class] URL classId:', classId);
+        console.log('[Demo Class] Decoded:', decodeURIComponent(classId));
+        console.log('[Demo Class] Normalized URL slug:', urlSlug);
         
         // Find demo class by ID or by normalized slug
         const demoClass = demoClasses.find(c => {
           const classSlug = normalizeSlug(c.name);
+          console.log(`[Demo Class] Checking ${c.name} -> ${classSlug} vs ${urlSlug}`);
           return c.id === classId || classSlug === urlSlug;
         });
+        
+        console.log('[Demo Class] Found demo class:', demoClass);
         
         if (demoClass) {
           setClassData({
