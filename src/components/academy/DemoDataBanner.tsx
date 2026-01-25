@@ -21,7 +21,7 @@ export function DemoDataBanner() {
             </div>
           </div>
           <a
-            href="https://buy.stripe.com/test_7sYcN55YBghq2MP5YD"
+            href="https://buy.stripe.com/test_aFa14m20ndS212ReGr"
             target="_blank"
             rel="noopener noreferrer"
             className="flex-shrink-0 px-5 py-2 bg-white text-red-700 font-semibold rounded-md hover:bg-red-50 transition-colors shadow-sm text-sm whitespace-nowrap"
