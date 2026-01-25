@@ -36,7 +36,7 @@ export function EmailPasswordSection({
     <>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-        {showVerification && role === 'STUDENT' ? (
+        {showVerification && (role === 'STUDENT' || role === 'ACADEMY') ? (
           <EmailVerificationInput
             email={email}
             onVerified={onVerified}

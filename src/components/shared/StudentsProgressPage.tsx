@@ -26,7 +26,6 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
   const [selectedClass, setSelectedClass] = useState('all');
 
   useEffect(() => {
-    loadProgress();
     loadAcademyName();
   }, []);
 
@@ -41,6 +40,7 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
         if (result.length > 0) {
           setAcademyName(result[0].academyName || '');
         }
+        await loadProgress();
       } else if (result.success && Array.isArray(result.data) && result.data.length > 0) {
         // Academy endpoint returns { success, data }
         const academy = result.data[0];
@@ -66,6 +66,7 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
           setLoading(false);
           return;
         }
+        await loadProgress();
       }
     } catch (error) {
       console.error('Failed to load academy name:', error);

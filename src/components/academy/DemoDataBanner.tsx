@@ -4,29 +4,29 @@ import Link from 'next/link';
 
 export function DemoDataBanner() {
   return (
-    <div className="sticky top-0 z-50 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 border-b-4 border-amber-600 shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 py-3">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div className="sticky top-0 z-50 bg-gradient-to-r from-red-600 to-red-700 border-b-2 border-red-800 shadow-md">
+      <div className="max-w-7xl mx-auto px-4 py-2">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-3 text-center sm:text-left">
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 flex-shrink-0">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-1.5 flex-shrink-0">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
             <div>
-              <p className="text-white font-semibold text-sm sm:text-base">
-                📊 Estás viendo datos de demostración
+              <p className="text-white font-semibold text-sm">
+                Modo de Demostración Activo
               </p>
-              <p className="text-amber-50 text-xs sm:text-sm">
-                Estos datos son solo para mostrar cómo se vería tu academia con contenido real
+              <p className="text-red-100 text-xs">
+                Los datos mostrados son ejemplos ilustrativos. Active su academia para acceder a funcionalidad completa.
               </p>
             </div>
           </div>
           <Link
             href="/dashboard/academy/facturas"
-            className="flex-shrink-0 px-6 py-2.5 bg-white text-amber-600 font-bold rounded-lg hover:bg-amber-50 transition-all shadow-md hover:shadow-xl transform hover:scale-105 text-sm sm:text-base whitespace-nowrap"
+            className="flex-shrink-0 px-5 py-2 bg-white text-red-700 font-semibold rounded-md hover:bg-red-50 transition-colors shadow-sm text-sm whitespace-nowrap"
           >
-            🚀 Activar Mi Academia
+            Activar Academia
           </Link>
         </div>
       </div>
