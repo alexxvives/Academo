@@ -7,6 +7,10 @@
         "/^Set-Location workers/akademo-api$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^git add \\.$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

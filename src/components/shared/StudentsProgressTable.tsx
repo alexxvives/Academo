@@ -39,13 +39,11 @@ export function StudentsProgressTable({
   showClassFilter = true,
   showTeacherColumn = false,
 }: StudentsProgressTableProps) {
-  const formatTime = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}h ${mins}m`;
-    }
-    return `${mins}m`;
+  const formatTime = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    return hours > 0 ? `${hours}h ${minutes}m ${seconds}s` : minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
   };
 
   const getProgressColor = (watched: number, total: number) => {
@@ -75,7 +73,7 @@ export function StudentsProgressTable({
     return students.filter(student => {
       const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                            student.email.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesClass = selectedClass === 'all' || student.className === selectedClass;
+      const matchesClass = selectedClass === 'all' || student.classId === selectedClass;
       
       return matchesSearch && matchesClass;
     });
@@ -221,7 +219,7 @@ export function StudentsProgressTable({
                 const progress = student.totalVideos > 0 ? (student.videosWatched / student.totalVideos) * 100 : 0;
                 const activityStatus = getActivityStatus(student.lastActive);
                 return (
-                  <tr key={student.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={`${student.id}-${student.classId}`} className="hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
                         <div className="relative">

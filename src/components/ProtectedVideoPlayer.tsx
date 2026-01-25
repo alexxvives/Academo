@@ -179,7 +179,23 @@ export default function ProtectedVideoPlayer({
   useEffect(() => {
     if (!isUnlimitedUser && watchTimeRemaining <= 0 && effectiveDuration > 0) {
       setIsLocked(true);
-      plyrRef.current?.pause();
+      
+      // Stop video completely
+      if (plyrRef.current) {
+        plyrRef.current.pause();
+        plyrRef.current.stop();
+      }
+      
+      // Also ensure native video element stops
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
+      
+      // Exit fullscreen if active
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(err => console.error('Error exiting fullscreen:', err));
+      }
     }
   }, [watchTimeRemaining, isUnlimitedUser, effectiveDuration]);
 

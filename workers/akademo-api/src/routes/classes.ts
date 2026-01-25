@@ -8,6 +8,28 @@ const classes = new Hono<{ Bindings: Bindings }>();
 // GET /classes - Get user's classes
 classes.get('/', async (c) => {
   try {
+    const academyIdParam = c.req.query('academyId'); // For public/signup filtering
+    
+    // If academyId is provided, return classes for that academy (public access for signup)
+    if (academyIdParam) {
+      const query = `
+        SELECT 
+          c.id,
+          c.name,
+          c.description,
+          c.academyId,
+          u.firstName || ' ' || u.lastName as teacherName,
+          (SELECT COUNT(*) FROM ClassEnrollment WHERE classId = c.id AND status = 'APPROVED') as studentCount,
+          (SELECT COUNT(*) FROM Lesson WHERE classId = c.id) as lessonCount
+        FROM Class c
+        LEFT JOIN User u ON c.teacherId = u.id
+        WHERE c.academyId = ?
+        ORDER BY c.name ASC
+      `;
+      const result = await c.env.DB.prepare(query).bind(academyIdParam).all();
+      return c.json(successResponse(result.results || []));
+    }
+
     const session = await requireAuth(c);
 
     let query = '';
@@ -276,7 +298,7 @@ classes.get('/:id', async (c) => {
         const enrollmentsResult = await c.env.DB.prepare(`
           SELECT 
             ce.id, ce.status, ce.enrolledAt, ce.createdAt,
-            u.id as studentId, u.firstName, u.lastName, u.email
+            u.id as studentId, u.firstName, u.lastName, u.email, u.lastLoginAt
           FROM ClassEnrollment ce
           JOIN User u ON ce.userId = u.id
           WHERE ce.classId = ?
@@ -292,7 +314,8 @@ classes.get('/:id', async (c) => {
             id: e.studentId,
             firstName: e.firstName,
             lastName: e.lastName,
-            email: e.email
+            email: e.email,
+            lastLoginAt: e.lastLoginAt
           }
         }));
       } catch (enrollError: any) {

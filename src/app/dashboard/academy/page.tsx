@@ -117,7 +117,16 @@ export default function AcademyDashboard() {
         const thisMonthStreams = streams.filter((s: any) => new Date(s.createdAt) >= thisMonthStart);
         
         const totalParticipants = streams.reduce((sum: number, s: any) => sum + (s.participantCount || 0), 0);
-        const totalDuration = streams.reduce((sum: number, s: any) => sum + (s.durationMinutes || 0), 0);
+        // Calculate duration from startedAt and endedAt timestamps
+        const totalDurationMs = streams.reduce((sum: number, s: any) => {
+          if (s.startedAt && s.endedAt) {
+            const start = new Date(s.startedAt).getTime();
+            const end = new Date(s.endedAt).getTime();
+            return sum + (end - start);
+          }
+          return sum;
+        }, 0);
+        const totalDuration = Math.floor(totalDurationMs / (1000 * 60)); // Convert to minutes
         const totalHours = Math.floor(totalDuration / 60);
         const totalMinutes = totalDuration % 60;
         

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { Bindings } from '../types';
 import { getSession } from '../lib/auth';
-import { errorResponse } from '../lib/utils';
+import { errorResponse, successResponse } from '../lib/utils';
 import type { Context } from 'hono';
 
 const zoomAccounts = new Hono<{ Bindings: Bindings }>();

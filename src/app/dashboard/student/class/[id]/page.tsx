@@ -390,6 +390,10 @@ export default function ClassPage() {
         {/* Header - Same style as teacher */}
         {!selectedLesson && classData && (
           <>
+            {/* Back Button */}
+            <Link href="/dashboard/student/classes" className="text-sm text-gray-500 hover:text-gray-900 inline-block">
+              ← Volver a asignaturas
+            </Link>
             {/* Title and Stats */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
@@ -651,7 +655,7 @@ export default function ClassPage() {
                       .map((doc) => (
                       <a
                         key={doc.id}
-                        href={`${API_BASE_URL}/storage/serve/${doc.upload.storagePath.split('/').map(encodeURIComponent).join('/')}`}
+                        href={`/api/documents/${doc.upload.storagePath.split('/').map(encodeURIComponent).join('/')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors group"

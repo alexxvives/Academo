@@ -68,8 +68,9 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
           name: `${student.firstName} ${student.lastName}`,
           email: student.email,
           className: student.className || `${student.classCount} ${student.classCount === 1 ? 'clase' : 'clases'}`,
+          classId: student.classId, // Include classId for filtering
           teacherName: student.teacherName,
-          totalWatchTime: Math.floor((student.totalWatchTime || 0) / 60), // Convert seconds to minutes
+          totalWatchTime: student.totalWatchTime || 0, // Already in seconds - formatTime expects seconds
           videosWatched: student.lessonsCompleted || 0,
           totalVideos: student.totalLessons || 0,
           lastActive: student.lastActive,
@@ -119,8 +120,8 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
               className="appearance-none w-48 pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             >
               <option value="all">Todas las clases</option>
-              {uniqueClasses.map((className) => (
-                <option key={className} value={className}>{className}</option>
+              {classes.map((cls) => (
+                <option key={cls.id} value={cls.id}>{cls.name}</option>
               ))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">

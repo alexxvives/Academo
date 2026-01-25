@@ -29,28 +29,22 @@ students.get('/progress', async (c) => {
           c.name as className,
           c.id as classId,
           COUNT(DISTINCT CASE 
-            WHEN vps.videoId IS NOT NULL AND v.lessonId IN (
-              SELECT l2.id FROM Lesson l2 WHERE l2.classId = c.id
-            ) THEN vps.videoId 
+            WHEN vps.videoId IS NOT NULL AND v.id IS NOT NULL THEN vps.videoId 
           END) as lessonsCompleted,
           COUNT(DISTINCT l.id) as totalLessons,
           COALESCE(SUM(CASE 
-            WHEN vps.videoId IS NOT NULL AND v.lessonId IN (
-              SELECT l2.id FROM Lesson l2 WHERE l2.classId = c.id
-            ) THEN vps.totalWatchTimeSeconds 
+            WHEN vps.videoId IS NOT NULL AND v.id IS NOT NULL THEN vps.totalWatchTimeSeconds 
             ELSE 0 
           END), 0) as totalWatchTime,
           COALESCE(AVG(CASE 
-            WHEN lr.lessonId IN (
-              SELECT l2.id FROM Lesson l2 WHERE l2.classId = c.id
-            ) THEN lr.rating 
+            WHEN lr.lessonId IS NOT NULL THEN lr.rating 
           END), 0) as averageRating
         FROM User u
         JOIN ClassEnrollment e ON e.userId = u.id AND e.status = 'APPROVED'
         JOIN Class c ON e.classId = c.id AND c.teacherId = ?
         LEFT JOIN Lesson l ON l.classId = c.id
-        LEFT JOIN VideoPlayState vps ON vps.studentId = u.id
-        LEFT JOIN Video v ON v.id = vps.videoId
+        LEFT JOIN Video v ON v.lessonId = l.id
+        LEFT JOIN VideoPlayState vps ON vps.videoId = v.id AND vps.studentId = u.id
         LEFT JOIN LessonRating lr ON lr.studentId = u.id AND lr.lessonId = l.id
         GROUP BY u.id, u.firstName, u.lastName, u.email, u.lastLoginAt, c.id, c.name
         ORDER BY u.lastName, u.firstName, c.name
@@ -69,21 +63,15 @@ students.get('/progress', async (c) => {
           c.id as classId,
           ut.firstName || ' ' || ut.lastName as teacherName,
           COUNT(DISTINCT CASE 
-            WHEN vps.videoId IS NOT NULL AND v.lessonId IN (
-              SELECT l2.id FROM Lesson l2 WHERE l2.classId = c.id
-            ) THEN vps.videoId 
+            WHEN vps.videoId IS NOT NULL AND v.id IS NOT NULL THEN vps.videoId 
           END) as lessonsCompleted,
           COUNT(DISTINCT l.id) as totalLessons,
           COALESCE(SUM(CASE 
-            WHEN vps.videoId IS NOT NULL AND v.lessonId IN (
-              SELECT l2.id FROM Lesson l2 WHERE l2.classId = c.id
-            ) THEN vps.totalWatchTimeSeconds 
+            WHEN vps.videoId IS NOT NULL AND v.id IS NOT NULL THEN vps.totalWatchTimeSeconds 
             ELSE 0 
           END), 0) as totalWatchTime,
           COALESCE(AVG(CASE 
-            WHEN lr.lessonId IN (
-              SELECT l2.id FROM Lesson l2 WHERE l2.classId = c.id
-            ) THEN lr.rating 
+            WHEN lr.lessonId IS NOT NULL THEN lr.rating 
           END), 0) as averageRating
         FROM User u
         JOIN ClassEnrollment e ON e.userId = u.id AND e.status = 'APPROVED'
@@ -91,8 +79,8 @@ students.get('/progress', async (c) => {
         JOIN Academy a ON c.academyId = a.id AND a.ownerId = ?
         LEFT JOIN User ut ON c.teacherId = ut.id
         LEFT JOIN Lesson l ON l.classId = c.id
-        LEFT JOIN VideoPlayState vps ON vps.studentId = u.id
-        LEFT JOIN Video v ON v.id = vps.videoId
+        LEFT JOIN Video v ON v.lessonId = l.id
+        LEFT JOIN VideoPlayState vps ON vps.videoId = v.id AND vps.studentId = u.id
         LEFT JOIN LessonRating lr ON lr.studentId = u.id AND lr.lessonId = l.id
         GROUP BY u.id, u.firstName, u.lastName, u.email, u.lastLoginAt, c.id, c.name, ut.firstName, ut.lastName
         ORDER BY u.lastName, u.firstName, c.name

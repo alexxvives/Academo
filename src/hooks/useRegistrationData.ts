@@ -35,7 +35,7 @@ export function useRegistrationData(role: string, academyId: string) {
   const loadAcademies = async () => {
     setLoadingAcademies(true);
     try {
-      const res = await apiClient('/academies');
+      const res = await apiClient('/academies?publicMode=true');
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setAcademies(data.data);

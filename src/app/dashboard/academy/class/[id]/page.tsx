@@ -1326,7 +1326,7 @@ export default function TeacherClassPage() {
                       .map((doc) => (
                       <a
                         key={doc.id}
-                        href={`${API_BASE_URL}/storage/serve/${doc.upload!.storagePath.split('/').map(encodeURIComponent).join('/')}`}
+                        href={`/api/documents/${doc.upload!.storagePath.split('/').map(encodeURIComponent).join('/')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors group"
