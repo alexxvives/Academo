@@ -86,6 +86,7 @@ export function useTeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const [rejectedCount, setRejectedCount] = useState(0);
   const [streamStats, setStreamStats] = useState({ total: 0, avgParticipants: 0, thisMonth: 0, totalHours: 0, totalMinutes: 0 });
+  const [classWatchTime, setClassWatchTime] = useState({ hours: 0, minutes: 0 });
 
   const loadData = useCallback(async () => {
     try {
@@ -130,6 +131,19 @@ export function useTeacherDashboard() {
           thisMonth: thisMonthStreams.length,
           totalHours: totalHours,
           totalMinutes: totalMinutes,
+        });
+      }
+
+      // Calculate total class watch time
+      // Need to fetch student progress data
+      const progressRes = await apiClient('/students/progress');
+      const progressResult = await progressRes.json();
+      if (progressResult.success && Array.isArray(progressResult.data)) {
+        const totalSeconds = progressResult.data.reduce((sum: number, student: any) => sum + (student.totalWatchTime || 0), 0);
+        const totalMinutes = Math.floor(totalSeconds / 60);
+        setClassWatchTime({
+          hours: Math.floor(totalMinutes / 60),
+          minutes: totalMinutes % 60,
         });
       }
 
@@ -199,6 +213,7 @@ export function useTeacherDashboard() {
     loading,
     rejectedCount,
     streamStats,
+    classWatchTime,
     loadData,
   };
 }

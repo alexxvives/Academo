@@ -73,6 +73,7 @@ export default function AcademyDashboard() {
   const [loading, setLoading] = useState(true);
   const [rejectedCount, setRejectedCount] = useState(0);
   const [streamStats, setStreamStats] = useState({ total: 0, avgParticipants: 0, thisMonth: 0, totalHours: 0, totalMinutes: 0 });
+  const [classWatchTime, setClassWatchTime] = useState({ hours: 0, minutes: 0 });
   const [selectedClass, setSelectedClass] = useState('all');
 
   useEffect(() => {
@@ -126,6 +127,16 @@ export default function AcademyDashboard() {
           thisMonth: thisMonthStreams.length,
           totalHours: totalHours,
           totalMinutes: totalMinutes,
+        });
+      }
+
+      // Calculate total class watch time from progress data
+      if (progressResult.success && Array.isArray(progressResult.data)) {
+        const totalSeconds = progressResult.data.reduce((sum: number, student: any) => sum + (student.totalWatchTime || 0), 0);
+        const totalMinutes = Math.floor(totalSeconds / 60);
+        setClassWatchTime({
+          hours: Math.floor(totalMinutes / 60),
+          minutes: totalMinutes % 60,
         });
       }
 
@@ -305,6 +316,16 @@ export default function AcademyDashboard() {
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                     <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${avgLessonProgress}%`, animation: 'slideIn 1s ease-out' }} />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm text-gray-600">Tiempo Total de Clases</span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {classWatchTime.hours > 0 || classWatchTime.minutes > 0
+                        ? `${classWatchTime.hours}h ${classWatchTime.minutes}min`
+                        : '0h 0min'}
+                    </span>
                   </div>
                 </div>
                 <div>

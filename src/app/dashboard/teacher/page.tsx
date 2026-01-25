@@ -20,6 +20,7 @@ export default function TeacherDashboard() {
     loading,
     rejectedCount,
     streamStats,
+    classWatchTime,
     loadData,
   } = useTeacherDashboard();
 
@@ -96,6 +97,7 @@ export default function TeacherDashboard() {
         pendingEnrollments={pendingEnrollments}
         rejectedCount={rejectedCount}
         streamStats={streamStats}
+        classWatchTime={classWatchTime}
         ratingsData={ratingsData}
         selectedClass={selectedClass}
       />

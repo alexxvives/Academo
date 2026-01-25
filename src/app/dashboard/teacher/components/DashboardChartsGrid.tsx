@@ -14,6 +14,7 @@ interface DashboardChartsGridProps {
   pendingEnrollments: PendingEnrollment[];
   rejectedCount: number;
   streamStats: { total: number; avgParticipants: number; thisMonth: number; totalHours: number; totalMinutes: number };
+  classWatchTime: { hours: number; minutes: number };
   ratingsData: RatingsData | null;
   selectedClass: string;
 }
@@ -22,7 +23,8 @@ export function DashboardChartsGrid({
   filteredStudents, 
   pendingEnrollments,
   rejectedCount, 
-  streamStats, 
+  streamStats,
+  classWatchTime, 
   ratingsData,
   selectedClass 
 }: DashboardChartsGridProps) {
@@ -68,6 +70,16 @@ export function DashboardChartsGrid({
             </div>
             <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
               <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${avgLessonProgress}%`, animation: 'slideIn 1s ease-out' }} />
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between mb-2">
+              <span className="text-sm text-gray-600">Tiempo Total de Clases</span>
+              <span className="text-sm font-semibold text-gray-900">
+                {classWatchTime.hours > 0 || classWatchTime.minutes > 0
+                  ? `${classWatchTime.hours}h ${classWatchTime.minutes}min`
+                  : '0h 0min'}
+              </span>
             </div>
           </div>
           <div>
