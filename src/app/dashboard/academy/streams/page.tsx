@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
-import ConfirmModal from '@/components/ConfirmModal';
 
 interface Stream {
   id: string;
@@ -39,7 +38,6 @@ export default function AcademyStreamsPage() {
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitleValue, setEditingTitleValue] = useState<string>('');
   const [deletingStreamId, setDeletingStreamId] = useState<string | null>(null);
-  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; streamId: string; streamTitle: string }>({ isOpen: false, streamId: '', streamTitle: '' });
 
   useEffect(() => {
     loadStreams();
@@ -131,12 +129,13 @@ export default function AcademyStreamsPage() {
   };
 
   const handleDeleteClick = (streamId: string, streamTitle: string) => {
-    setConfirmModal({ isOpen: true, streamId, streamTitle });
+    if (!confirm(`¿Estás seguro que deseas eliminar el stream "${streamTitle}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    handleDeleteStream(streamId);
   };
 
-  const handleDeleteStream = async () => {
-    const streamId = confirmModal.streamId;
-    setConfirmModal({ isOpen: false, streamId: '', streamTitle: '' });
+  const handleDeleteStream = async (streamId: string) => {
     setDeletingStreamId(streamId);
 
     try {
@@ -441,18 +440,6 @@ export default function AcademyStreamsPage() {
           </div>
         </div>
       )}
-      
-      {/* Confirmation Modal */}
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        title="Eliminar Stream"
-        message={`¿Estás seguro que deseas eliminar el stream "${confirmModal.streamTitle}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-        type="warning"
-        onConfirm={handleDeleteStream}
-        onCancel={() => setConfirmModal({ isOpen: false, streamId: '', streamTitle: '' })}
-      />
     </div>
   );
 }

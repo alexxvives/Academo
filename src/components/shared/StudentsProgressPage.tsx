@@ -72,7 +72,7 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
           totalWatchTime: Math.floor((student.totalWatchTime || 0) / 60), // Convert seconds to minutes
           videosWatched: student.lessonsCompleted || 0,
           totalVideos: student.totalLessons || 0,
-          lastActive: student.lastActivity,
+          lastActive: student.lastActive,
         }));
         
         setStudents(progressData);

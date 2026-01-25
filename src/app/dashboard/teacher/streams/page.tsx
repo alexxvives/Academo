@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react';
 import { apiClient } from '@/lib/api-client';
-import ConfirmModal from '@/components/ConfirmModal';
 import { useStreamsData, Stream } from '@/hooks/useStreamsData';
 import { StreamsHeader } from './components/StreamsHeader';
 import { StreamsTable } from './components/StreamsTable';
@@ -11,23 +10,19 @@ export default function StreamsPage() {
   const { streams, setStreams, classes, academyName, loading } = useStreamsData();
   const [selectedClass, setSelectedClass] = useState('all');
   const [deletingStreamId, setDeletingStreamId] = useState<string | null>(null);
-  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; streamId: string; streamTitle: string }>({ 
-    isOpen: false, 
-    streamId: '', 
-    streamTitle: '' 
-  });
 
   const openDeleteConfirmation = (streamId: string, streamTitle: string) => {
-    setConfirmModal({ isOpen: true, streamId, streamTitle });
+    if (!confirm(`¿Estás seguro que deseas eliminar el stream "${streamTitle}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    handleDeleteStream(streamId);
   };
 
   const updateStream = (streamId: string, updates: Partial<Stream>) => {
     setStreams(prev => prev.map(s => s.id === streamId ? { ...s, ...updates } : s));
   };
 
-  const handleDeleteStream = async () => {
-    const { streamId } = confirmModal;
-    setConfirmModal({ isOpen: false, streamId: '', streamTitle: '' });
+  const handleDeleteStream = async (streamId: string) => {
     setDeletingStreamId(streamId);
     
     try {
@@ -67,17 +62,6 @@ export default function StreamsPage() {
         deletingStreamId={deletingStreamId}
         onDelete={openDeleteConfirmation}
         onUpdateStream={updateStream}
-      />
-
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        title="Eliminar Stream"
-        message={`¿Estás seguro que deseas eliminar el stream "${confirmModal.streamTitle}"? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-        type="warning"
-        onConfirm={handleDeleteStream}
-        onCancel={() => setConfirmModal({ isOpen: false, streamId: '', streamTitle: '' })}
       />
     </div>
   );
