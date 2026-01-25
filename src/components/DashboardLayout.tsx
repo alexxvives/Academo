@@ -363,7 +363,11 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="dashboard-layout h-screen bg-gray-50 flex overflow-hidden">
+    <div className="h-screen flex flex-col bg-gray-50">
+      {role === 'ACADEMY' && academyPaymentStatus === 'NOT PAID' && (
+        <DemoDataBanner />
+      )}
+      <div className="dashboard-layout flex-1 flex overflow-hidden">
       <Sidebar
         role={role}
         menuItems={menuItems}
@@ -408,6 +412,7 @@ export default function DashboardLayout({
           </div>
         </main>
       </div>
+    </div>
     </div>
   );
 }

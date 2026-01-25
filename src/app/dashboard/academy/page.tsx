@@ -405,14 +405,8 @@ export default function AcademyDashboard() {
                         ? `${classWatchTime.hours}h ${classWatchTime.minutes}min`
                         : '0h 0min'}
                     </span>
-                  </div>                  <div className="flex-1 text-center group/rejected relative cursor-help">
-                    <AnimatedNumber value={rejectedCount} className="text-2xl font-bold text-red-600" />
-                    <div className="text-xs text-gray-500">rechazados</div>
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 text-slate-200 text-xs rounded-lg shadow-xl border border-slate-700 opacity-0 invisible group-hover/rejected:opacity-100 group-hover/rejected:visible transition-all duration-200 whitespace-nowrap z-20">
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-slate-800 border-b border-r border-slate-700 rotate-45"></div>
-                      Solicitudes rechazadas
-                    </div>
-                  </div>                </div>
+                  </div>
+                </div>
                 <div>
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-gray-600">Asistencia Promedio (Streams)</span>
