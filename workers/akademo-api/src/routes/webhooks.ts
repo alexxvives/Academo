@@ -171,7 +171,16 @@ webhooks.post('/zoom', async (c) => {
           }
 
           const bunnyData = await bunnyFetchResponse.json() as any;
-          const videoGuid = bunnyData.guid;
+          console.log('[Zoom Webhook] 🐰 Bunny response data:', JSON.stringify(bunnyData));
+          
+          // Bunny /fetch endpoint returns success=true and guid in response
+          const videoGuid = bunnyData.guid || bunnyData.videoGuid || bunnyData.id;
+          
+          if (!videoGuid) {
+            console.error('[Zoom Webhook] ❌ No GUID in Bunny response:', JSON.stringify(bunnyData));
+            return c.json(successResponse({ received: true, error: 'Bunny returned no GUID' }));
+          }
+          
           console.log('[Zoom Webhook] ✅ Bunny video created! GUID:', videoGuid);
 
           // Update stream with recordingId
@@ -194,17 +203,35 @@ webhooks.post('/zoom', async (c) => {
       }
     } else if (event === 'meeting.participant_joined' || event === 'meeting.participant_left' || event === 'participant.joined' || event === 'participant.left') {
       const meetingId = data.object.id;
-      const participantCount = data.object.participant_count || 0;
+      const participant = data.payload?.object?.participant || data.object?.participant;
+      const participantUserId = participant?.user_id || participant?.id || 'unknown';
+      
+      // Don't trust participant_count from webhooks - maintain our own counter
+      console.log('[Zoom Webhook] Participant event:', event, 'Meeting:', meetingId, 'Participant:', participantUserId);
 
-      console.log('[Zoom Webhook] Participant event:', event, 'Meeting:', meetingId, 'Count:', participantCount);
+      // Get current stream
+      const stream = await c.env.DB
+        .prepare('SELECT * FROM LiveStream WHERE zoomMeetingId = ?')
+        .bind(meetingId.toString())
+        .first() as any;
 
-      // Update participant count
-      const result = await c.env.DB
-        .prepare('UPDATE LiveStream SET participantCount = ?, participantsFetchedAt = ? WHERE zoomMeetingId = ?')
-        .bind(participantCount, new Date().toISOString(), meetingId.toString())
-        .run();
+      if (stream) {
+        const isJoin = event.includes('joined');
+        const currentCount = stream.participantCount || 0;
+        const newCount = isJoin ? currentCount + 1 : Math.max(0, currentCount - 1);
+        
+        console.log('[Zoom Webhook] Updating count:', currentCount, '→', newCount, '(', isJoin ? 'joined' : 'left', ')');
 
-      console.log('[Zoom Webhook] Participant update result:', result.meta?.changes, 'rows affected');
+        // Update participant count
+        const result = await c.env.DB
+          .prepare('UPDATE LiveStream SET participantCount = ?, participantsFetchedAt = ? WHERE id = ?')
+          .bind(newCount, new Date().toISOString(), stream.id)
+          .run();
+
+        console.log('[Zoom Webhook] Participant update result:', result.meta?.changes, 'rows affected');
+      } else {
+        console.log('[Zoom Webhook] No stream found for participant event, meetingId:', meetingId);
+      }
     }
 
     return c.json(successResponse({ received: true }));
