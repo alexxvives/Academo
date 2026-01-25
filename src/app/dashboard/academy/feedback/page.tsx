@@ -3,11 +3,14 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { FeedbackView, type ClassFeedback } from '@/components/shared';
+import { DemoDataBanner } from '@/components/academy/DemoDataBanner';
+import { generateDemoRatings, generateDemoClasses } from '@/lib/demo-data';
 
 export default function AcademyFeedbackPage() {
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState<ClassFeedback[]>([]);
   const [academyName, setAcademyName] = useState<string>('');
+  const [paymentStatus, setPaymentStatus] = useState<string>('NOT PAID');
 
   useEffect(() => {
     loadFeedback();
@@ -19,7 +22,40 @@ export default function AcademyFeedbackPage() {
       const res = await apiClient('/academies');
       const result = await res.json();
       if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-        setAcademyName(result.data[0].name);
+        const academy = result.data[0];
+        setAcademyName(academy.name);
+        const status = academy.paymentStatus || 'NOT PAID';
+        setPaymentStatus(status);
+        
+        // If NOT PAID, show demo feedback
+        if (status === 'NOT PAID') {
+          const demoClasses = generateDemoClasses();
+          const demoRatings = generateDemoRatings(250);
+          
+          setClasses(demoClasses.map(c => ({
+            id: c.id,
+            name: c.name,
+            teacherName: c.teacherName,
+            totalRatings: Math.floor(Math.random() * 50) + 20,
+            averageRating: 4.3 + Math.random() * 0.7,
+            topics: [
+              {
+                lessonId: `${c.id}-l1`,
+                lessonTitle: 'Introducción',
+                ratings: demoRatings.slice(0, 15).map(r => ({
+                  id: r.id,
+                  rating: r.rating,
+                  studentFirstName: r.studentFirstName,
+                  studentLastName: r.studentLastName,
+                  comment: r.comment,
+                  createdAt: r.createdAt,
+                })),
+              },
+            ],
+          })));
+          setLoading(false);
+          return;
+        }
       }
     } catch (error) {
       console.error('Failed to load academy name:', error);
@@ -71,11 +107,13 @@ export default function AcademyFeedbackPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Feedback de Estudiantes</h1>
-        {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
-      </div>
+    <>
+      <DemoDataBanner paymentStatus={paymentStatus} />
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Feedback de Estudiantes</h1>
+          {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
+        </div>
 
       <FeedbackView
         classes={classes}

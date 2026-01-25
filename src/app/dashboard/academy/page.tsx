@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { BarChart, DonutChart } from '@/components/Charts';
 import { apiClient } from '@/lib/api-client';
 import { useAnimatedNumber } from '@/hooks';
+import { DemoDataBanner } from '@/components/academy/DemoDataBanner';
+import { generateDemoStudents, generateDemoStats, generateDemoStreams } from '@/lib/demo-data';
 
 interface Class {
   id: string;
@@ -69,12 +71,13 @@ export default function AcademyDashboard() {
   const [enrolledStudents, setEnrolledStudents] = useState<EnrolledStudent[]>([]);
   const [pendingEnrollments, setPendingEnrollments] = useState<PendingEnrollment[]>([]);
   const [ratingsData, setRatingsData] = useState<RatingsData | null>(null);
-  const [academyInfo, setAcademyInfo] = useState<{ id: string; name: string } | null>(null);
+  const [academyInfo, setAcademyInfo] = useState<{ id: string; name: string; paymentStatus?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [rejectedCount, setRejectedCount] = useState(0);
   const [streamStats, setStreamStats] = useState({ total: 0, avgParticipants: 0, thisMonth: 0, totalHours: 0, totalMinutes: 0 });
   const [classWatchTime, setClassWatchTime] = useState({ hours: 0, minutes: 0 });
   const [selectedClass, setSelectedClass] = useState('all');
+  const [paymentStatus, setPaymentStatus] = useState<string>('NOT PAID');
 
   useEffect(() => {
     loadData();
@@ -102,7 +105,60 @@ export default function AcademyDashboard() {
         progressRes.json(),
       ]);
 
-      if (academiesResult.success && Array.isArray(academiesResult.data) && academiesResult.data.length > 0) {
+      ifconst academy = academiesResult.data[0];
+        setAcademyInfo(academy);
+        setPaymentStatus(academy.paymentStatus || 'NOT PAID');
+        
+        // If academy hasn't paid, use demo data
+        if (academy.paymentStatus === 'NOT PAID') {
+          const demoStats = generateDemoStats();
+          const demoStudents = generateDemoStudents(100);
+          const demoStreams = generateDemoStreams();
+          
+          setEnrolledStudents(demoStudents.map(s => ({
+            id: s.id,
+            name: `${s.firstName} ${s.lastName}`,
+            email: s.email,
+            classId: s.className,
+            className: s.className,
+            lessonsCompleted: Math.floor(Math.random() * 10),
+            totalLessons: 10,
+          })));
+          
+          setRatingsData({
+            overall: {
+              averageRating: demoStats.averageRating,
+              totalRatings: demoStats.totalRatings,
+              ratedLessons: 8,
+            },
+            lessons: demoStats.recentRatings.map(r => ({
+              lessonId: r.id,
+              lessonTitle: r.lessonTitle,
+              className: 'Programación Web',
+              classId: 'demo-c1',
+              averageRating: r.rating,
+              ratingCount: Math.floor(Math.random() * 20) + 5,
+            })),
+          });
+          
+          setStreamStats({
+            total: demoStats.totalStreams,
+            avgParticipants: demoStats.avgParticipants,
+            thisMonth: demoStats.streamsThisMonth,
+            totalHours: demoStats.totalStreamHours,
+            totalMinutes: demoStats.totalStreamMinutes,
+          });
+          
+          setClassWatchTime({
+            hours: 45,
+            minutes: 30,
+          });
+          
+          setPendingEnrollments([]);
+          setRejectedCount(0);
+          setLoading(false);
+          return;
+        }ay(academiesResult.data) && academiesResult.data.length > 0) {
         setAcademyInfo(academiesResult.data[0]);
       }
 
@@ -279,6 +335,7 @@ export default function AcademyDashboard() {
 
   return (
     <>
+      <DemoDataBanner paymentStatus={paymentStatus} />
       <div className="w-full space-y-6">
         {/* Page Header with Class Filter */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100">

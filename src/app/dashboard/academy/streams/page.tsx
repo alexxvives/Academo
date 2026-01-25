@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
+import { DemoDataBanner } from '@/components/academy/DemoDataBanner';
+import { generateDemoStreams } from '@/lib/demo-data';
 
 interface Stream {
   id: string;
@@ -33,6 +35,7 @@ export default function AcademyStreamsPage() {
   const [streams, setStreams] = useState<Stream[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [academyName, setAcademyName] = useState<string>('');
+  const [paymentStatus, setPaymentStatus] = useState<string>('NOT PAID');
   const [loading, setLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState('all');
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
@@ -62,7 +65,21 @@ export default function AcademyStreamsPage() {
       ]);
       
       if (academiesResult.success && Array.isArray(academiesResult.data) && academiesResult.data.length > 0) {
-        setAcademyName(academiesResult.data[0].name);
+        const academy = academiesResult.data[0];
+        setAcademyName(academy.name);
+        const status = academy.paymentStatus || 'NOT PAID';
+        setPaymentStatus(status);
+        
+        // If NOT PAID, show demo streams
+        if (status === 'NOT PAID') {
+          const demoStreams = generateDemoStreams();
+          setStreams(demoStreams.map((s: any) => ({
+            ...s,
+            classSlug: s.className.toLowerCase().replace(/\s+/g, '-'),
+          })));
+          setLoading(false);
+          return;
+        }
       }
       
       if (classesResult.success && Array.isArray(classesResult.data)) {
@@ -231,13 +248,15 @@ export default function AcademyStreamsPage() {
   const totalMinutes = Math.floor((totalDurationMs % (1000 * 60 * 60)) / (1000 * 60));
 
   return (
-    <div className="space-y-6">
-      {/* Header with Filter */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Historial de Streams</h1>
-          {academyName && <p className="text-gray-600 text-sm mt-1">{academyName}</p>}
-        </div>
+    <>
+      <DemoDataBanner paymentStatus={paymentStatus} />
+      <div className="space-y-6">
+        {/* Header with Filter */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Historial de Streams</h1>
+            {academyName && <p className="text-gray-600 text-sm mt-1">{academyName}</p>}
+          </div>
   {classes.length > 0 && (
           <div className="relative">
             <select
@@ -440,6 +459,7 @@ export default function AcademyStreamsPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
+import { DemoDataBanner } from '@/components/academy/DemoDataBanner';
+import { generateDemoClasses, generateDemoTeachers } from '@/lib/demo-data';
 
 interface Teacher {
   id: string;
@@ -62,19 +64,57 @@ export default function AcademyClassesPage() {
         apiClient('/zoom-accounts')
       ]);
       
+      // Load academy info first to check payment status
+      if (academiesRes.ok) {
+        const academiesJson = await academiesRes.json();
+        if (academiesJson.success && Array.isArray(academiesJson.data) && academiesJson.data.length > 0) {
+          const academy = academiesJson.data[0];
+          setAcademyName(academy.name);
+          const status = academy.paymentStatus || 'NOT PAID';
+          setPaymentStatus(status);
+          
+          // If NOT PAID, show demo data
+          if (status === 'NOT PAID') {
+            const demoClasses = generateDemoClasses();
+            const demoTeachers = generateDemoTeachers();
+            
+            setClasses(demoClasses.map(c => ({
+              id: c.id,
+              name: c.name,
+              slug: c.name.toLowerCase().replace(/\s+/g, '-'),
+              description: c.description,
+              teacherName: c.teacherName,
+              teacherEmail: demoTeachers.find(t => t.id === c.teacherId)?.email || null,
+              teacherId: c.teacherId,
+              teacherFirstName: demoTeachers.find(t => t.id === c.teacherId)?.firstName,
+              teacherLastName: demoTeachers.find(t => t.id === c.teacherId)?.lastName,
+              studentCount: c.studentCount,
+              videoCount: c.videoCount,
+              lessonCount: c.videoCount,
+              documentCount: c.documentCount,
+              avgRating: 4.5 + Math.random() * 0.5,
+            })));
+            
+            setTeachers(demoTeachers.map(t => ({
+              id: t.id,
+              userId: t.id,
+              firstName: t.firstName,
+              lastName: t.lastName,
+              email: t.email,
+            })));
+            
+            setLoading(false);
+            return;
+          }
+        }
+      }
+      
+      // Load real data if PAID
       if (classesRes.ok) {
         const json = await classesRes.json();
         // API returns { success: true, data: [...] }
         const data = json.success && json.data ? json.data : json;
         setClasses(Array.isArray(data) ? data : []);
-      }
-      
-      if (academiesRes.ok) {
-        const academiesJson = await academiesRes.json();
-        if (academiesJson.success && Array.isArray(academiesJson.data) && academiesJson.data.length > 0) {
-          setAcademyName(academiesJson.data[0].name);
-          setPaymentStatus(academiesJson.data[0].paymentStatus || 'NOT PAID');
-        }
       }
       
       if (teachersRes.ok) {
@@ -193,6 +233,7 @@ export default function AcademyClassesPage() {
 
   return (
     <>
+      <DemoDataBanner paymentStatus={paymentStatus} />
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -200,7 +241,7 @@ export default function AcademyClassesPage() {
             {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
           </div>
           <button
-            onClick={openCreateModal}
+            onClick={paymentStatus === 'NOT PAID' ? () => window.location.href = '/dashboard/academy/facturas' : openCreateModal}
             disabled={teachers.length === 0 || paymentStatus === 'NOT PAID'}
             className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             title={

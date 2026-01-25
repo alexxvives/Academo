@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { DemoDataBanner } from '@/components/academy/DemoDataBanner';
+import { generateDemoTeachers } from '@/lib/demo-data';
 
 interface Teacher {
   id: string;
@@ -15,6 +17,7 @@ interface Teacher {
 export default function AcademyTeachers() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [academyName, setAcademyName] = useState<string>('');
+  const [paymentStatus, setPaymentStatus] = useState<string>('NOT PAID');
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -33,14 +36,32 @@ export default function AcademyTeachers() {
         apiClient('/academies')
       ]);
       
+      const academiesJson = await academiesRes.json();
+      if (academiesJson.success && Array.isArray(academiesJson.data) && academiesJson.data.length > 0) {
+        const academy = academiesJson.data[0];
+        setAcademyName(academy.name);
+        const status = academy.paymentStatus || 'NOT PAID';
+        setPaymentStatus(status);
+        
+        // If NOT PAID, show demo teachers
+        if (status === 'NOT PAID') {
+          const demoTeachers = generateDemoTeachers();
+          setTeachers(demoTeachers.map(t => ({
+            id: t.id,
+            name: `${t.firstName} ${t.lastName}`,
+            email: t.email,
+            classCount: t.classCount,
+            studentCount: Math.floor(Math.random() * 30) + 10,
+            createdAt: new Date().toISOString(),
+          })));
+          setLoading(false);
+          return;
+        }
+      }
+      
       const teachersJson = await teachersRes.json();
       const data = teachersJson.success && teachersJson.data ? teachersJson.data : teachersJson;
       setTeachers(Array.isArray(data) ? data : []);
-      
-      const academiesJson = await academiesRes.json();
-      if (academiesJson.success && Array.isArray(academiesJson.data) && academiesJson.data.length > 0) {
-        setAcademyName(academiesJson.data[0].name);
-      }
     } catch (error) {
       console.error('Error loading teachers:', error);
     } finally {
@@ -96,6 +117,7 @@ export default function AcademyTeachers() {
 
   return (
     <>
+      <DemoDataBanner paymentStatus={paymentStatus} />
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -103,8 +125,10 @@ export default function AcademyTeachers() {
             {academyName && <p className="text-sm text-gray-500 mt-1">{academyName}</p>}
           </div>
           <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors font-semibold"
+            onClick={paymentStatus === 'NOT PAID' ? () => window.location.href = '/dashboard/academy/facturas' : () => setShowCreateModal(true)}
+            disabled={paymentStatus === 'NOT PAID'}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+            title={paymentStatus === 'NOT PAID' ? 'Debes comprar un plan para crear profesores' : ''}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
