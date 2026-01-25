@@ -1,10 +1,8 @@
 'use client';
 
-import Link from 'next/link';
-
 export function DemoDataBanner() {
   return (
-    <div className="sticky top-0 z-50 bg-gradient-to-r from-red-600 to-red-700 border-b-2 border-red-800 shadow-md">
+    <div className="sticky top-0 z-50 bg-gradient-to-r from-red-600 to-red-700 shadow-md">
       <div className="max-w-7xl mx-auto px-4 py-2">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-3 text-center sm:text-left">
@@ -22,12 +20,12 @@ export function DemoDataBanner() {
               </p>
             </div>
           </div>
-          <Link
-            href="/dashboard/academy/facturas"
+          <a
+            href="/api/stripe/create-checkout-session"
             className="flex-shrink-0 px-5 py-2 bg-white text-red-700 font-semibold rounded-md hover:bg-red-50 transition-colors shadow-sm text-sm whitespace-nowrap"
           >
             Activar Academia
-          </Link>
+          </a>
         </div>
       </div>
     </div>

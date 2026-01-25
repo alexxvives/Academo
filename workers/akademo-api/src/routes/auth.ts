@@ -152,18 +152,17 @@ auth.post('/register', async (c) => {
 
     // Handle different signup flows
     if (role === 'ACADEMY') {
-      // Academy owner - create academy with PENDING status
+      // Academy owner - create academy
       const newAcademyId = crypto.randomUUID();
       const monoacademyFlag = monoacademy ? 1 : 0;
       const now = new Date().toISOString();
       await c.env.DB
-        .prepare('INSERT INTO Academy (id, name, description, ownerId, status, monoacademy, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+        .prepare('INSERT INTO Academy (id, name, description, ownerId, monoacademy, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
         .bind(
           newAcademyId,
           academyName,
           `Welcome to ${academyName}`,
           userId,
-          'APPROVED', // Auto-approve academies - payment is the only barrier
           monoacademyFlag,
           now,
           now
@@ -185,8 +184,8 @@ auth.post('/register', async (c) => {
         // Create Teacher record linking to academy
         const teacherId = crypto.randomUUID();
         await c.env.DB
-          .prepare('INSERT INTO Teacher (id, userId, academyId, status, monoacademy, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
-          .bind(teacherId, teacherUserId, newAcademyId, 'APPROVED', monoacademyFlag, now, now)
+          .prepare('INSERT INTO Teacher (id, userId, academyId, monoacademy, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)')
+          .bind(teacherId, teacherUserId, newAcademyId, monoacademyFlag, now, now)
           .run();
       }
 

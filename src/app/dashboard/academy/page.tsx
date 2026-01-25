@@ -405,8 +405,14 @@ export default function AcademyDashboard() {
                         ? `${classWatchTime.hours}h ${classWatchTime.minutes}min`
                         : '0h 0min'}
                     </span>
-                  </div>
-                </div>
+                  </div>                  <div className="flex-1 text-center group/rejected relative cursor-help">
+                    <AnimatedNumber value={rejectedCount} className="text-2xl font-bold text-red-600" />
+                    <div className="text-xs text-gray-500">rechazados</div>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 text-slate-200 text-xs rounded-lg shadow-xl border border-slate-700 opacity-0 invisible group-hover/rejected:opacity-100 group-hover/rejected:visible transition-all duration-200 whitespace-nowrap z-20">
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-slate-800 border-b border-r border-slate-700 rotate-45"></div>
+                      Solicitudes rechazadas
+                    </div>
+                  </div>                </div>
                 <div>
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-gray-600">Asistencia Promedio (Streams)</span>
@@ -465,9 +471,17 @@ export default function AcademyDashboard() {
               <div className="space-y-6">
                 <div className="text-center">
                   <AnimatedNumber value={filteredStudents.length} className="text-5xl font-bold text-gray-900 mb-2" />
-                  <div className="text-sm text-gray-500">estudiantes {selectedClass === 'all' ? 'totales' : 'en esta clase'}</div>
+                  <div className="text-sm text-gray-500">{selectedClass === 'all' ? 'Número de matriculados' : 'matriculados en esta clase'}</div>
                 </div>
                 <div className="flex justify-between gap-4 pt-4 border-t border-gray-100">
+                  <div className="flex-1 text-center group/accepted relative cursor-help">
+                    <AnimatedNumber value={filteredStudents.length} className="text-2xl font-bold text-green-600" />
+                    <div className="text-xs text-gray-500">aceptados</div>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 text-slate-200 text-xs rounded-lg shadow-xl border border-slate-700 opacity-0 invisible group-hover/accepted:opacity-100 group-hover/accepted:visible transition-all duration-200 whitespace-nowrap z-20">
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-slate-800 border-b border-r border-slate-700 rotate-45"></div>
+                      Estudiantes aprobados
+                    </div>
+                  </div>
                   <div className="flex-1 text-center group/pending relative cursor-help">
                     <AnimatedNumber value={pendingEnrollments.length} className="text-2xl font-bold text-amber-600" />
                     <div className="text-xs text-gray-500">pendientes</div>

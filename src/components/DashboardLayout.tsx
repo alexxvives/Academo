@@ -402,10 +402,6 @@ export default function DashboardLayout({
           />
         )}
 
-        {role === 'ACADEMY' && academyPaymentStatus === 'NOT PAID' && (
-          <DemoDataBanner />
-        )}
-
         <main className="flex-1 overflow-y-auto bg-gray-100">
           <div className="py-12 pl-20 pr-20">
             {children}
