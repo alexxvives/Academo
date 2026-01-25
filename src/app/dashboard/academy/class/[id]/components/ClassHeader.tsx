@@ -12,6 +12,7 @@ interface ClassHeaderProps {
   pendingCount: number;
   creatingStream: boolean;
   showPendingRequests: boolean;
+  paymentStatus?: string;
   onCreateLesson: () => void;
   onCreateStream: () => void;
   onTogglePendingRequests: () => void;
@@ -24,6 +25,7 @@ export default function ClassHeader({
   pendingCount,
   creatingStream,
   showPendingRequests,
+  paymentStatus = 'PAID',
   onCreateLesson,
   onCreateStream,
   onTogglePendingRequests,
@@ -56,8 +58,9 @@ export default function ClassHeader({
           </button>
           <button
             onClick={onCreateStream}
-            disabled={creatingStream}
+            disabled={creatingStream || paymentStatus === 'NOT PAID'}
             className="px-5 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
+            title={paymentStatus === 'NOT PAID' ? 'Active su academia para usar streaming en vivo' : ''}
           >
             {creatingStream ? (
               <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>

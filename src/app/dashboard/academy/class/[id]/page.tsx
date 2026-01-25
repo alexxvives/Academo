@@ -1304,6 +1304,7 @@ export default function TeacherClassPage() {
               pendingCount={pendingEnrollments.length}
               creatingStream={creatingStream}
               showPendingRequests={showPendingRequests}
+              paymentStatus={paymentStatus}
               onCreateLesson={() => { router.push(`/dashboard/academy/class/${classId}?action=create`); }}
               onCreateStream={createLiveClass}
               onTogglePendingRequests={() => setShowPendingRequests(!showPendingRequests)}
@@ -2083,7 +2084,12 @@ export default function TeacherClassPage() {
                     )}
 
                     <div className="flex gap-3">
-                      <button type="submit" className="px-6 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium text-sm">
+                      <button 
+                        type="submit" 
+                        disabled={paymentStatus === 'NOT PAID'}
+                        className="px-6 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={paymentStatus === 'NOT PAID' ? 'Active su academia para crear lecciones' : ''}
+                      >
                         {uploading ? 'Creando...' : editingLessonId ? 'Actualizar Lección' : 'Crear Lección'}
                       </button>
                       <button type="button" onClick={() => { setShowLessonForm(false); setEditingLessonId(null); setEditingLessonMedia(null); }} className="px-6 py-2.5 text-gray-600 hover:text-gray-900 font-medium text-sm">
