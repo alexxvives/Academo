@@ -95,9 +95,13 @@ export function generateDemoStudents(count: number = 100): DemoStudent[] {
 }
 
 export function generateDemoRatings(count: number = 250): DemoRating[] {
-  // 70% 5-star, 20% 4-star, 8% 3-star, 2% 2-star
+  // 60% 5-star, 20% 4-star, 10% 3-star, 5% 2-star, 5% 1-star (more realistic)
   const ratings = [
-    ...Array(Math.floor(count * 0.7)).fill(5),
+    ...Array(Math.floor(count * 0.6)).fill(5),
+    ...Array(Math.floor(count * 0.2)).fill(4),
+    ...Array(Math.floor(count * 0.1)).fill(3),
+    ...Array(Math.floor(count * 0.05)).fill(2),
+    ...Array(Math.floor(count * 0.05)).fill(1),
     ...Array(Math.floor(count * 0.2)).fill(4),
     ...Array(Math.floor(count * 0.08)).fill(3),
     ...Array(Math.floor(count * 0.02)).fill(2),
@@ -195,7 +199,11 @@ export function generateDemoStreams(): DemoStream[] {
       status: 'ENDED',
       duration: 105,
     },
-  ];
+  ].map((stream, index) => ({
+    ...stream,
+    recordingId: `demo-recording-${index + 1}`,
+    lessonId: `demo-lesson-${index + 1}`,
+  }));
 }
 
 export function generateDemoClasses(): DemoClass[] {

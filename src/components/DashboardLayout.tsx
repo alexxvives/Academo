@@ -324,7 +324,6 @@ export default function DashboardLayout({
           { label: 'Profesores', href: '/dashboard/academy/teachers', iconType: 'botMessage' as const },
           { label: 'Estudiantes', href: '/dashboard/academy/students', iconType: 'users' as const },
           { label: 'Pagos', href: '/dashboard/academy/payments', iconType: 'handCoins' as const },
-          { label: 'Facturas', href: '/dashboard/academy/facturas', iconType: 'fileText' as const },
         ];
         
         // Filter out Profesores menu for monoacademies

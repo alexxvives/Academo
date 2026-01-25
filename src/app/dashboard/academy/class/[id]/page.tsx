@@ -379,6 +379,57 @@ export default function TeacherClassPage() {
 
   const loadData = async () => {
     try {
+      // Check payment status first
+      const academiesRes = await apiClient('/academies');
+      const academiesResult = await academiesRes.json();
+      let paymentStatus = 'NOT PAID';
+      if (academiesResult.success && Array.isArray(academiesResult.data) && academiesResult.data.length > 0) {
+        paymentStatus = academiesResult.data[0].paymentStatus || 'NOT PAID';
+      }
+
+      // If NOT PAID and this is a demo class, load demo data
+      if (paymentStatus === 'NOT PAID' && classId.startsWith('demo-')) {
+        const { generateDemoClasses, generateDemoLessons } = await import('@/lib/demo-data');
+        const demoClasses = generateDemoClasses();
+        const demoLessons = generateDemoLessons();
+        
+        const demoClass = demoClasses.find(c => c.id === classId);
+        if (demoClass) {
+          setClassData({
+            id: demoClass.id,
+            name: demoClass.name,
+            description: demoClass.description,
+            academy: { id: 'demo-academy', name: 'Mi Academia Demo' },
+            enrollments: [] // Empty enrollments for demo
+          });
+          
+          // Filter lessons for this class and map to Lesson interface
+          const classLessons = demoLessons
+            .filter(l => l.classId === classId)
+            .map(l => ({
+              id: l.id,
+              title: l.title,
+              description: 'Lección de demostración con video de 1 hora',
+              releaseDate: l.createdAt,
+              topicId: null,
+              maxWatchTimeMultiplier: 2.0,
+              watermarkIntervalMins: 5,
+              videoCount: 1,
+              documentCount: 0,
+              avgRating: 4.5 + Math.random() * 0.5,
+              ratingCount: Math.floor(Math.random() * 20) + 5,
+              firstVideoBunnyGuid: l.videoGuid,
+            } as Lesson));
+          
+          setLessons(classLessons);
+          setTopics([]); // No topics for demo
+          setPendingEnrollments([]);
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Normal flow for paid academies
       // First, fetch class data to get the actual ID (in case classId is a slug)
       const classRes = await apiClient(`/classes/${classId}`);
       const classResult = await classRes.json();
