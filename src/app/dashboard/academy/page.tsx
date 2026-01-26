@@ -196,9 +196,28 @@ export default function AcademyDashboard() {
             totalMinutes: demoStats.totalStreamMinutes,
           });
           
+          // Demo class watch time per class (will be filtered)
+          const demoClassWatchData = [
+            { classId: 'demo-c1', hours: 15, minutes: 45 },  // Programación Web
+            { classId: 'demo-c2', hours: 12, minutes: 30 },  // Matemáticas
+            { classId: 'demo-c3', hours: 10, minutes: 15 },  // Diseño Gráfico
+            { classId: 'demo-c4', hours: 7, minutes: 0 },    // Física Cuántica
+          ];
+          
+          // Store raw class watch data for filtering
+          const allClassWatchData: any[] = [];
+          mappedStudents.forEach(s => {
+            const classData = demoClassWatchData.find(d => d.classId === s.classId);
+            if (classData) {
+              allClassWatchData.push({ ...s, watchHours: classData.hours, watchMinutes: classData.minutes });
+            }
+          });
+          
+          // Calculate initial total (all classes)
+          const totalMinutes = demoClassWatchData.reduce((sum, d) => sum + d.hours * 60 + d.minutes, 0);
           setClassWatchTime({
-            hours: 45,
-            minutes: 30,
+            hours: Math.floor(totalMinutes / 60),
+            minutes: totalMinutes % 60,
           });
           
           // Add demo pending enrollments and rejected students
@@ -403,6 +422,28 @@ export default function AcademyDashboard() {
     };
   }, [allStreams, selectedClass]);
 
+  // Calculate filtered class watch time
+  const filteredClassWatchTime = useMemo(() => {
+    if (paymentStatus === 'NOT PAID') {
+      // Demo data: calculate based on selected class
+      const demoClassWatchData = [
+        { classId: 'demo-c1', hours: 15, minutes: 45 },
+        { classId: 'demo-c2', hours: 12, minutes: 30 },
+        { classId: 'demo-c3', hours: 10, minutes: 15 },
+        { classId: 'demo-c4', hours: 7, minutes: 0 },
+      ];
+      
+      if (selectedClass === 'all') {
+        const totalMinutes = demoClassWatchData.reduce((sum, d) => sum + d.hours * 60 + d.minutes, 0);
+        return { hours: Math.floor(totalMinutes / 60), minutes: totalMinutes % 60 };
+      } else {
+        const classData = demoClassWatchData.find(d => d.classId === selectedClass);
+        return classData || { hours: 0, minutes: 0 };
+      }
+    }
+    return classWatchTime;  // Use state value for real data
+  }, [selectedClass, classWatchTime, paymentStatus]);
+
   if (loading) {
     return (
       <>
@@ -467,8 +508,8 @@ export default function AcademyDashboard() {
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-gray-600">Tiempo Total de Clases</span>
                     <span className="text-sm font-semibold text-gray-900">
-                      {classWatchTime.hours > 0 || classWatchTime.minutes > 0
-                        ? `${classWatchTime.hours}h ${classWatchTime.minutes}min`
+                      {filteredClassWatchTime.hours > 0 || filteredClassWatchTime.minutes > 0
+                        ? `${filteredClassWatchTime.hours}h ${filteredClassWatchTime.minutes}min`
                         : '0h 0min'}
                     </span>
                   </div>
