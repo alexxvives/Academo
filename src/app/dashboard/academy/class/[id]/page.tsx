@@ -466,10 +466,18 @@ export default function TeacherClassPage() {
               maxWatchTimeMultiplier: 2.0,
               watermarkIntervalMins: 5,
               videoCount: 1,
-              documentCount: 0,
+              documentCount: l.documents?.length || 0,
               avgRating: 4.5 + Math.random() * 0.5,
               ratingCount: Math.floor(Math.random() * 20) + 5,
               firstVideoBunnyGuid: l.videoGuid,
+              videos: [{
+                id: `${l.id}-video`,
+                title: l.title,
+                bunnyGuid: l.videoGuid,
+                durationSeconds: l.duration,
+                createdAt: l.createdAt,
+              }],
+              documents: l.documents || [],
             } as Lesson));
           
           setLessons(classLessons);
