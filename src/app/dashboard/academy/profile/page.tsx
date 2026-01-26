@@ -104,12 +104,12 @@ export default function ProfilePage() {
   };
 
   const handleConnectZoom = () => {
-    // Redirect to Zoom OAuth
+    // Redirect to Zoom OAuth in new tab
     // Note: This is a public OAuth client ID, safe to hardcode
     const clientId = 'W2jPo9CJR0uZbFnEWtBF7Q';
     const redirectUri = encodeURIComponent(`${window.location.origin}/api/zoom/oauth/callback`);
     const state = academy?.id || '';
-    window.location.href = `https://zoom.us/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}`;
+    window.open(`https://zoom.us/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}`, '_blank');
   };
 
   const handleDisconnectZoom = async (accountId: string) => {
@@ -467,7 +467,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Zoom Accounts */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-12">
         <div className="px-8 py-6 bg-gray-900 text-white">
           <div className="flex items-center justify-between">
             <div>
