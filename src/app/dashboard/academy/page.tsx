@@ -26,6 +26,7 @@ interface EnrolledStudent {
   className: string;
   lessonsCompleted?: number;
   totalLessons?: number;
+  lastLoginAt?: string | null;
 }
 
 interface PendingEnrollment {
@@ -147,6 +148,7 @@ export default function AcademyDashboard() {
               className: s.className,
               lessonsCompleted: Math.floor(Math.random() * 10),
               totalLessons: 10,
+              lastLoginAt: s.lastLoginAt,
             };
           });
           setEnrolledStudents(mappedStudents);
@@ -649,10 +651,43 @@ export default function AcademyDashboard() {
             {filteredStudents.length > 0 ? (
               <div className="h-40 flex items-center justify-center">
                 <DonutChart
-                  data={[
-                    { label: 'Activos', value: Math.round(filteredStudents.length * 0.65), color: '#22c55e' },
-                    { label: 'Inactivos', value: Math.round(filteredStudents.length * 0.35), color: '#ef4444' },
-                  ]}
+                  data={(() => {
+                    const now = Date.now();
+                    const oneDayAgo = now - (24 * 60 * 60 * 1000);
+                    const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
+                    const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
+                    
+                    const activos = filteredStudents.filter(s => {
+                      if (!s.lastLoginAt) return false;
+                      const loginTime = new Date(s.lastLoginAt).getTime();
+                      return loginTime >= oneDayAgo;
+                    }).length;
+                    
+                    const activos7dias = filteredStudents.filter(s => {
+                      if (!s.lastLoginAt) return false;
+                      const loginTime = new Date(s.lastLoginAt).getTime();
+                      return loginTime < oneDayAgo && loginTime >= sevenDaysAgo;
+                    }).length;
+                    
+                    const activos30dias = filteredStudents.filter(s => {
+                      if (!s.lastLoginAt) return false;
+                      const loginTime = new Date(s.lastLoginAt).getTime();
+                      return loginTime < sevenDaysAgo && loginTime >= thirtyDaysAgo;
+                    }).length;
+                    
+                    const inactivos = filteredStudents.filter(s => {
+                      if (!s.lastLoginAt) return true;
+                      const loginTime = new Date(s.lastLoginAt).getTime();
+                      return loginTime < thirtyDaysAgo;
+                    }).length;
+                    
+                    return [
+                      { label: 'Activos (<24h)', value: activos, color: '#22c55e' },
+                      { label: 'Activos 7d', value: activos7dias, color: '#f97316' },
+                      { label: 'Activos 30d', value: activos30dias, color: '#ef4444' },
+                      { label: 'Inactivos', value: inactivos, color: '#9ca3af' },
+                    ];
+                  })()}
                 />
               </div>
             ) : (
