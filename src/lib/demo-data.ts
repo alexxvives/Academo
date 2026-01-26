@@ -231,8 +231,8 @@ export function generateDemoRatings(count: number = 250): DemoRating[] {
     1: ['Muy decepcionante', 'No entendí nada', 'Pérdida de tiempo', 'Necesita mejorar mucho'],
   };
   
-  const firstNames = ['Juan', 'María', 'Carlos', 'Ana', 'Luis', 'Carmen', 'José', 'Laura'];
-  const lastNames = ['García', 'Rodríguez', 'Martínez', 'López'];
+  const firstNames = ['Juan', 'María', 'Carlos', 'Ana', 'Luis', 'Carmen', 'José', 'Laura', 'Miguel', 'Isabel', 'Pedro', 'Sofía', 'Diego', 'Elena', 'Javier', 'Lucía', 'Pablo', 'Valentina'];
+  const lastNames = ['García', 'Rodríguez', 'Martínez', 'López', 'Sánchez', 'Pérez', 'Gómez', 'Fernández', 'Torres', 'Díaz', 'Ramírez', 'Vargas', 'Castro', 'Morales'];
   
   return shuffle(ratings).slice(0, count).map((rating, i) => ({
     id: `demo-r${i + 1}`,
