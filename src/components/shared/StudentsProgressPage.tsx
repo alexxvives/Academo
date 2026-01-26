@@ -61,7 +61,7 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
             totalWatchTime: Math.floor(Math.random() * 7200),
             videosWatched: Math.floor(Math.random() * 15),
             totalVideos: 20,
-            lastActive: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+            lastActive: s.lastLoginAt, // Use the properly distributed lastLoginAt from generateDemoStudents
           })));
           setLoading(false);
           return;
@@ -81,7 +81,7 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
             totalWatchTime: Math.floor(Math.random() * 7200),
             videosWatched: Math.floor(Math.random() * 15),
             totalVideos: 20,
-            lastActive: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+            lastActive: s.lastLoginAt, // Use the properly distributed lastLoginAt from generateDemoStudents
           })));
           setLoading(false);
         } else {
@@ -103,7 +103,7 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
           totalWatchTime: Math.floor(Math.random() * 7200),
           videosWatched: Math.floor(Math.random() * 15),
           totalVideos: 20,
-          lastActive: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+          lastActive: s.lastLoginAt, // Use the properly distributed lastLoginAt from generateDemoStudents
         })));
       }
       setLoading(false);
