@@ -43,9 +43,10 @@ export interface DemoStream {
   startedAt: string;
   endedAt: string;
   status: string;
-  duration?: number;
+  duration: number; // Duration in minutes (required)
   recordingId: string;
   classId: string;
+  createdAt: string; // When stream was created
   participantsData?: string; // JSON string with participant details
 }
 
@@ -256,6 +257,7 @@ export function generateDemoStreams(): DemoStream[] {
       participantCount: 35,
       startedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
       endedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 75 * 60 * 1000).toISOString(),
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 - 60 * 60 * 1000).toISOString(),
       status: 'ended',
       duration: 75,
       recordingId: DEMO_VIDEO_GUID,
@@ -278,6 +280,7 @@ export function generateDemoStreams(): DemoStream[] {
       participantCount: 22,
       startedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
       endedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000).toISOString(),
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 - 30 * 60 * 1000).toISOString(),
       status: 'ended',
       duration: 50,
       recordingId: DEMO_VIDEO_GUID,
@@ -291,8 +294,7 @@ export function generateDemoStreams(): DemoStream[] {
       teacherName: 'Ana Martínez',
       participantCount: 18,
       startedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      endedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000).toISOString(),
-      status: 'ended',
+      endedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000).toISOString(),      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 - 45 * 60 * 1000).toISOString(),      status: 'ended',
       duration: 120,
       recordingId: DEMO_VIDEO_GUID,
       classId: 'demo-class3',
@@ -306,6 +308,7 @@ export function generateDemoStreams(): DemoStream[] {
       participantCount: 28,
       startedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       endedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 45 * 60 * 1000).toISOString(),
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 - 20 * 60 * 1000).toISOString(),
       status: 'ended',
       duration: 45,
       recordingId: DEMO_VIDEO_GUID,
@@ -320,6 +323,7 @@ export function generateDemoStreams(): DemoStream[] {
       participantCount: 31,
       startedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
       endedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 65 * 60 * 1000).toISOString(),
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 - 15 * 60 * 1000).toISOString(),
       status: 'ended',
       duration: 65,
       recordingId: DEMO_VIDEO_GUID,
