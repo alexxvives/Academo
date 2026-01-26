@@ -37,6 +37,7 @@ enrollments.get('/', async (c) => {
             e.classId,
             e.userId,
             e.status,
+            e.documentSigned,
             e.enrolledAt,
             e.approvedAt,
             u.id as student_id,
@@ -61,6 +62,7 @@ enrollments.get('/', async (c) => {
         classId: row.classId,
         userId: row.userId,
         status: row.status,
+        documentSigned: row.documentSigned,
         enrolledAt: row.enrolledAt,
         approvedAt: row.approvedAt,
         student: {
@@ -122,7 +124,12 @@ enrollments.post('/sign-document', async (c) => {
       return c.json(errorResponse('Enrollment not found'), 404);
     }
 
-    // Document signing feature not currently used (documentSigned column removed)
+    // Update documentSigned
+    await c.env.DB
+      .prepare('UPDATE ClassEnrollment SET documentSigned = 1 WHERE userId = ? AND classId = ?')
+      .bind(session.id, classId)
+      .run();
+
     return c.json(successResponse({ message: 'Document signed successfully' }));
   } catch (error: any) {
     console.error('[Sign Document] Error:', error);
@@ -146,6 +153,7 @@ enrollments.get('/pending', async (c) => {
           e.classId,
           e.userId,
           e.status,
+          e.documentSigned,
           e.enrolledAt,
           e.approvedAt,
           u.id as student_id,
@@ -174,6 +182,7 @@ enrollments.get('/pending', async (c) => {
           e.classId,
           e.userId,
           e.status,
+          e.documentSigned,
           e.enrolledAt,
           e.approvedAt,
           u.id as student_id,
@@ -206,6 +215,7 @@ enrollments.get('/pending', async (c) => {
       classId: row.classId,
       userId: row.userId,
       status: row.status,
+      documentSigned: row.documentSigned,
       enrolledAt: row.enrolledAt,
       approvedAt: row.approvedAt,
       student: {
