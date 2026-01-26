@@ -200,15 +200,13 @@ export function generateDemoStudents(count: number = 100): DemoStudent[] {
 
 export function generateDemoRatings(count: number = 250): DemoRating[] {
   // 60% 5-star, 20% 4-star, 10% 3-star, 5% 2-star, 5% 1-star (more realistic)
+  // More varied ratings: mostly 2, 4, and 5 stars, some 1 and 3
   const ratings = [
-    ...Array(Math.floor(count * 0.6)).fill(5),
-    ...Array(Math.floor(count * 0.2)).fill(4),
-    ...Array(Math.floor(count * 0.1)).fill(3),
-    ...Array(Math.floor(count * 0.05)).fill(2),
-    ...Array(Math.floor(count * 0.05)).fill(1),
-    ...Array(Math.floor(count * 0.2)).fill(4),
-    ...Array(Math.floor(count * 0.08)).fill(3),
-    ...Array(Math.floor(count * 0.02)).fill(2),
+    ...Array(Math.floor(count * 0.35)).fill(5),  // 35% - 5 stars
+    ...Array(Math.floor(count * 0.30)).fill(4),  // 30% - 4 stars
+    ...Array(Math.floor(count * 0.10)).fill(3),  // 10% - 3 stars
+    ...Array(Math.floor(count * 0.20)).fill(2),  // 20% - 2 stars
+    ...Array(Math.floor(count * 0.05)).fill(1),  // 5% - 1 star
   ];
   
   const lessons = [
@@ -292,13 +290,13 @@ export function generateDemoStreams(): DemoStream[] {
       title: 'Diseño de Logotipos',
       className: 'Diseño Gráfico Profesional',
       teacherName: 'Ana Martínez',
-      participantCount: 18,
+      participantCount: 16,
       startedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
       endedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000).toISOString(),      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 - 45 * 60 * 1000).toISOString(),      status: 'ended',
       duration: 120,
       recordingId: DEMO_VIDEO_GUID,
       classId: 'demo-c3',
-      participantsData: JSON.stringify({ totalRecords: 18, uniqueCount: 18, participants: [{ name: 'Luis Fernández', email: 'luis@example.com', duration: 7200 }] }),
+      participantsData: JSON.stringify({ totalRecords: 16, uniqueCount: 16, participants: [{ name: 'Luis Fernández', email: 'luis@example.com', duration: 7200 }] }),
     },
     {
       id: 'demo-stream4',
@@ -320,7 +318,7 @@ export function generateDemoStreams(): DemoStream[] {
       title: 'Clase Especial',
       className: 'Diseño Gráfico',
       teacherName: 'Ana Martínez',
-      participantCount: 31,
+      participantCount: 19,
       startedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
       endedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 65 * 60 * 1000).toISOString(),
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 - 15 * 60 * 1000).toISOString(),
@@ -335,6 +333,22 @@ export function generateDemoStreams(): DemoStream[] {
 
 export function generateDemoClasses(): DemoClass[] {
   const now = new Date().toISOString();
+  
+  // Calculate actual student counts dynamically from generateDemoStudents()
+  const students = generateDemoStudents(100);
+  const classNameToId: Record<string, string> = {
+    'Programación Web': 'demo-c1',
+    'Matemáticas Avanzadas': 'demo-c2',
+    'Física Cuántica': 'demo-c4',
+    'Diseño Gráfico': 'demo-c3',
+  };
+  
+  const counts: Record<string, number> = {};
+  students.forEach(s => {
+    const classId = classNameToId[s.className] || 'demo-c1';
+    counts[classId] = (counts[classId] || 0) + 1;
+  });
+  
   return [
     {
       id: 'demo-c1',
@@ -342,7 +356,7 @@ export function generateDemoClasses(): DemoClass[] {
       description: 'Aprende React, Next.js y TypeScript desde cero hasta nivel avanzado',
       teacherName: 'Carlos Rodríguez',
       teacherId: 'demo-t2',
-      studentCount: 34,
+      studentCount: counts['demo-c1'] || 0,
       videoCount: 8,
       documentCount: 5,
       price: 49.99,
@@ -355,7 +369,7 @@ export function generateDemoClasses(): DemoClass[] {
       description: 'Cálculo diferencial e integral con aplicaciones prácticas',
       teacherName: 'María García',
       teacherId: 'demo-t1',
-      studentCount: 28,
+      studentCount: counts['demo-c2'] || 0,
       videoCount: 12,
       documentCount: 8,
       price: 39.99,
@@ -368,7 +382,7 @@ export function generateDemoClasses(): DemoClass[] {
       description: 'Domina Adobe Creative Suite y crea diseños impactantes',
       teacherName: 'Ana Martínez',
       teacherId: 'demo-t3',
-      studentCount: 22,
+      studentCount: counts['demo-c3'] || 0,
       videoCount: 15,
       documentCount: 10,
       price: 59.99,
@@ -381,7 +395,7 @@ export function generateDemoClasses(): DemoClass[] {
       description: 'Introducción a la mecánica cuántica y sus aplicaciones',
       teacherName: 'Luis López',
       teacherId: 'demo-t4',
-      studentCount: 16,
+      studentCount: counts['demo-c4'] || 0,
       videoCount: 6,
       documentCount: 4,
       price: 44.99,

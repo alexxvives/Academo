@@ -152,30 +152,36 @@ export default function AcademyDashboard() {
           });
           setEnrolledStudents(mappedStudents);
           
+          // More varied ratings (1-5 stars) with realistic distribution
           const lessonsData = [
-            // Programación Web (demo-c1) - 8 lessons
+            // Programación Web (demo-c1) - varied ratings
             { lessonId: 'demo-l1', lessonTitle: 'Introducción a React', className: 'Programación Web Moderna', classId: 'demo-c1', averageRating: 4.8, ratingCount: 25 },
-            { lessonId: 'demo-l2', lessonTitle: 'Variables y Tipos', className: 'Programación Web Moderna', classId: 'demo-c1', averageRating: 4.5, ratingCount: 23 },
+            { lessonId: 'demo-l2', lessonTitle: 'Variables y Tipos', className: 'Programación Web Moderna', classId: 'demo-c1', averageRating: 3.5, ratingCount: 23 },
             { lessonId: 'demo-l3', lessonTitle: 'Funciones y Scope', className: 'Programación Web Moderna', classId: 'demo-c1', averageRating: 4.7, ratingCount: 22 },
-            { lessonId: 'demo-l4', lessonTitle: 'Arrays y Objetos', className: 'Programación Web Moderna', classId: 'demo-c1', averageRating: 4.6, ratingCount: 21 },
-            // Matemáticas (demo-c2) - 6 lessons
-            { lessonId: 'demo-l5', lessonTitle: 'Límites y Continuidad', className: 'Matemáticas Avanzadas', classId: 'demo-c2', averageRating: 4.3, ratingCount: 18 },
-            { lessonId: 'demo-l6', lessonTitle: 'Derivadas', className: 'Matemáticas Avanzadas', classId: 'demo-c2', averageRating: 4.4, ratingCount: 17 },
-            { lessonId: 'demo-l7', lessonTitle: 'Integrales Definidas', className: 'Matemáticas Avanzadas', classId: 'demo-c2', averageRating: 4.2, ratingCount: 16 },
-            // Diseño Gráfico (demo-c3) - 5 lessons
-            { lessonId: 'demo-l8', lessonTitle: 'Principios de Diseño', className: 'Diseño Gráfico Profesional', classId: 'demo-c3', averageRating: 4.9, ratingCount: 20 },
-            { lessonId: 'demo-l9', lessonTitle: 'Photoshop Básico', className: 'Diseño Gráfico Profesional', classId: 'demo-c3', averageRating: 4.7, ratingCount: 19 },
-            { lessonId: 'demo-l10', lessonTitle: 'Tipografía', className: 'Diseño Gráfico Profesional', classId: 'demo-c3', averageRating: 4.6, ratingCount: 18 },
-            // Física Cuántica (demo-c4) - 4 lessons
-            { lessonId: 'demo-l11', lessonTitle: 'Mecánica Cuántica', className: 'Física Cuántica', classId: 'demo-c4', averageRating: 4.5, ratingCount: 14 },
-            { lessonId: 'demo-l12', lessonTitle: 'Partículas y Ondas', className: 'Física Cuántica', classId: 'demo-c4', averageRating: 4.4, ratingCount: 13 },
+            { lessonId: 'demo-l4', lessonTitle: 'Arrays y Objetos', className: 'Programación Web Moderna', classId: 'demo-c1', averageRating: 2.1, ratingCount: 21 },
+            { lessonId: 'demo-l5', lessonTitle: 'Programación Asíncrona', className: 'Programación Web Moderna', classId: 'demo-c1', averageRating: 5.0, ratingCount: 19 },
+            { lessonId: 'demo-l6', lessonTitle: 'React Hooks', className: 'Programación Web Moderna', classId: 'demo-c1', averageRating: 4.2, ratingCount: 18 },
+            // Matemáticas (demo-c2) - varied ratings
+            { lessonId: 'demo-l7', lessonTitle: 'Límites y Continuidad', className: 'Matemáticas Avanzadas', classId: 'demo-c2', averageRating: 4.3, ratingCount: 18 },
+            { lessonId: 'demo-l8', lessonTitle: 'Derivadas', className: 'Matemáticas Avanzadas', classId: 'demo-c2', averageRating: 1.8, ratingCount: 17 },
+            { lessonId: 'demo-l9', lessonTitle: 'Integrales Definidas', className: 'Matemáticas Avanzadas', classId: 'demo-c2', averageRating: 4.9, ratingCount: 16 },
+            { lessonId: 'demo-l10', lessonTitle: 'Series y Sucesiones', className: 'Matemáticas Avanzadas', classId: 'demo-c2', averageRating: 2.4, ratingCount: 15 },
+            // Diseño Gráfico (demo-c3) - varied ratings
+            { lessonId: 'demo-l11', lessonTitle: 'Principios de Diseño', className: 'Diseño Gráfico Profesional', classId: 'demo-c3', averageRating: 4.9, ratingCount: 20 },
+            { lessonId: 'demo-l12', lessonTitle: 'Photoshop Básico', className: 'Diseño Gráfico Profesional', classId: 'demo-c3', averageRating: 3.2, ratingCount: 19 },
+            { lessonId: 'demo-l13', lessonTitle: 'Tipografía', className: 'Diseño Gráfico Profesional', classId: 'demo-c3', averageRating: 5.0, ratingCount: 18 },
+            { lessonId: 'demo-l14', lessonTitle: 'Teoría del Color', className: 'Diseño Gráfico Profesional', classId: 'demo-c3', averageRating: 2.7, ratingCount: 17 },
+            // Física Cuántica (demo-c4) - varied ratings
+            { lessonId: 'demo-l15', lessonTitle: 'Mecánica Cuántica', className: 'Física Cuántica', classId: 'demo-c4', averageRating: 4.5, ratingCount: 14 },
+            { lessonId: 'demo-l16', lessonTitle: 'Partículas y Ondas', className: 'Física Cuántica', classId: 'demo-c4', averageRating: 1.9, ratingCount: 13 },
+            { lessonId: 'demo-l17', lessonTitle: 'Dualidad Onda-Partícula', className: 'Física Cuántica', classId: 'demo-c4', averageRating: 3.8, ratingCount: 12 },
           ];
           
           const ratingsDataObj = {
             overall: {
-              averageRating: demoStats.averageRating || 4.5,
+              averageRating: 3.8,  // Average of varied ratings
               totalRatings: demoStats.totalRatings || 250,
-              ratedLessons: 8,
+              ratedLessons: 17,  // Now we have 17 lessons with ratings
             },
             lessons: lessonsData,
           };
@@ -382,12 +388,18 @@ export default function AcademyDashboard() {
   // Calculate filtered stream stats
   const filteredStreamStats = useMemo(() => {
     const filtered = selectedClass === 'all' ? allStreams : allStreams.filter(s => s.classId === selectedClass);
-    if (filtered.length === 0) return { avgParticipants: 0, total: 0 };
+    if (filtered.length === 0) return { avgParticipants: 0, total: 0, totalHours: 0, totalMinutes: 0 };
     
     const totalParticipants = filtered.reduce((sum, s) => sum + (s.participantCount || 0), 0);
+    const totalDuration = filtered.reduce((sum, s) => sum + (s.duration || 0), 0);
+    const totalHours = Math.floor(totalDuration / 60);
+    const totalMinutes = totalDuration % 60;
+    
     return {
       avgParticipants: Math.round(totalParticipants / filtered.length),
       total: filtered.length,
+      totalHours,
+      totalMinutes,
     };
   }, [allStreams, selectedClass]);
 
@@ -486,8 +498,8 @@ export default function AcademyDashboard() {
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-gray-600">Tiempo Total de Streams</span>
                     <span className="text-sm font-semibold text-gray-900">
-                      {streamStats.totalHours > 0 || streamStats.totalMinutes > 0
-                        ? `${streamStats.totalHours}h ${streamStats.totalMinutes}min`
+                      {filteredStreamStats.totalHours > 0 || filteredStreamStats.totalMinutes > 0
+                        ? `${filteredStreamStats.totalHours}h ${filteredStreamStats.totalMinutes}min`
                         : '0h 0min'}
                     </span>
                   </div>
