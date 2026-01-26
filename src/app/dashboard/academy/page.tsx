@@ -74,6 +74,7 @@ export default function AcademyDashboard() {
   const [loading, setLoading] = useState(true);
   const [rejectedCount, setRejectedCount] = useState(0);
   const [streamStats, setStreamStats] = useState({ total: 0, avgParticipants: 0, thisMonth: 0, totalHours: 0, totalMinutes: 0 });
+  const [allStreams, setAllStreams] = useState<any[]>([]);
   const [classWatchTime, setClassWatchTime] = useState({ hours: 0, minutes: 0 });
   const [selectedClass, setSelectedClass] = useState('all');
   const [paymentStatus, setPaymentStatus] = useState<string>('NOT PAID');
@@ -135,7 +136,7 @@ export default function AcademyDashboard() {
             const classNameToId: Record<string, string> = {
               'Programación Web': 'demo-c1',
               'Matemáticas Avanzadas': 'demo-c2',
-              'Física Cuántica': 'demo-c3',
+              'Física Cuántica': 'demo-c4',
               'Diseño Gráfico': 'demo-c3',
               'Diseño Gráfico Profesional': 'demo-c3',
             };
@@ -151,14 +152,24 @@ export default function AcademyDashboard() {
           });
           setEnrolledStudents(mappedStudents);
           
-          const lessonsData = (demoStats.recentRatings || []).map(r => ({
-            lessonId: r.id,
-            lessonTitle: r.lessonTitle,
-            className: 'Programación Web',
-            classId: 'demo-c1',
-            averageRating: r.rating,
-            ratingCount: Math.floor(Math.random() * 20) + 5,
-          }));
+          const lessonsData = [
+            // Programación Web (demo-c1) - 8 lessons
+            { lessonId: 'demo-l1', lessonTitle: 'Introducción a React', className: 'Programación Web Moderna', classId: 'demo-c1', averageRating: 4.8, ratingCount: 25 },
+            { lessonId: 'demo-l2', lessonTitle: 'Variables y Tipos', className: 'Programación Web Moderna', classId: 'demo-c1', averageRating: 4.5, ratingCount: 23 },
+            { lessonId: 'demo-l3', lessonTitle: 'Funciones y Scope', className: 'Programación Web Moderna', classId: 'demo-c1', averageRating: 4.7, ratingCount: 22 },
+            { lessonId: 'demo-l4', lessonTitle: 'Arrays y Objetos', className: 'Programación Web Moderna', classId: 'demo-c1', averageRating: 4.6, ratingCount: 21 },
+            // Matemáticas (demo-c2) - 6 lessons
+            { lessonId: 'demo-l5', lessonTitle: 'Límites y Continuidad', className: 'Matemáticas Avanzadas', classId: 'demo-c2', averageRating: 4.3, ratingCount: 18 },
+            { lessonId: 'demo-l6', lessonTitle: 'Derivadas', className: 'Matemáticas Avanzadas', classId: 'demo-c2', averageRating: 4.4, ratingCount: 17 },
+            { lessonId: 'demo-l7', lessonTitle: 'Integrales Definidas', className: 'Matemáticas Avanzadas', classId: 'demo-c2', averageRating: 4.2, ratingCount: 16 },
+            // Diseño Gráfico (demo-c3) - 5 lessons
+            { lessonId: 'demo-l8', lessonTitle: 'Principios de Diseño', className: 'Diseño Gráfico Profesional', classId: 'demo-c3', averageRating: 4.9, ratingCount: 20 },
+            { lessonId: 'demo-l9', lessonTitle: 'Photoshop Básico', className: 'Diseño Gráfico Profesional', classId: 'demo-c3', averageRating: 4.7, ratingCount: 19 },
+            { lessonId: 'demo-l10', lessonTitle: 'Tipografía', className: 'Diseño Gráfico Profesional', classId: 'demo-c3', averageRating: 4.6, ratingCount: 18 },
+            // Física Cuántica (demo-c4) - 4 lessons
+            { lessonId: 'demo-l11', lessonTitle: 'Mecánica Cuántica', className: 'Física Cuántica', classId: 'demo-c4', averageRating: 4.5, ratingCount: 14 },
+            { lessonId: 'demo-l12', lessonTitle: 'Partículas y Ondas', className: 'Física Cuántica', classId: 'demo-c4', averageRating: 4.4, ratingCount: 13 },
+          ];
           
           const ratingsDataObj = {
             overall: {
@@ -170,6 +181,7 @@ export default function AcademyDashboard() {
           };
           setRatingsData(ratingsDataObj);
           
+          setAllStreams(demoStreams);
           setStreamStats({
             total: demoStats.totalStreams,
             avgParticipants: demoStats.avgParticipants,
@@ -211,6 +223,7 @@ export default function AcademyDashboard() {
 
       if (streamsResult.success && Array.isArray(streamsResult.data)) {
         const streams = streamsResult.data;
+        setAllStreams(streams);
         const now = new Date();
         const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const thisMonthStreams = streams.filter((s: any) => new Date(s.createdAt) >= thisMonthStart);
@@ -366,6 +379,18 @@ export default function AcademyDashboard() {
     return Math.round((totalProgress / studentsWithLessons.length) * 100);
   }, [filteredStudents]);
 
+  // Calculate filtered stream stats
+  const filteredStreamStats = useMemo(() => {
+    const filtered = selectedClass === 'all' ? allStreams : allStreams.filter(s => s.classId === selectedClass);
+    if (filtered.length === 0) return { avgParticipants: 0, total: 0 };
+    
+    const totalParticipants = filtered.reduce((sum, s) => sum + (s.participantCount || 0), 0);
+    return {
+      avgParticipants: Math.round(totalParticipants / filtered.length),
+      total: filtered.length,
+    };
+  }, [allStreams, selectedClass]);
+
   if (loading) {
     return (
       <>
@@ -440,8 +465,8 @@ export default function AcademyDashboard() {
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-gray-600">Asistencia Promedio (Streams)</span>
                     <span className="text-sm font-semibold text-gray-900">
-                      {streamStats.total > 0 && filteredStudents.length > 0
-                        ? Math.round(((streamStats.avgParticipants - 1) / filteredStudents.length) * 100)
+                      {filteredStreamStats.total > 0 && filteredStudents.length > 0
+                        ? Math.min(100, Math.round((filteredStreamStats.avgParticipants / filteredStudents.length) * 100))
                         : 0}%
                     </span>
                   </div>
@@ -449,8 +474,8 @@ export default function AcademyDashboard() {
                     <div 
                       className="bg-purple-500 h-2 rounded-full" 
                       style={{ 
-                        width: `${streamStats.total > 0 && filteredStudents.length > 0
-                          ? Math.round(((streamStats.avgParticipants - 1) / filteredStudents.length) * 100)
+                        width: `${filteredStreamStats.total > 0 && filteredStudents.length > 0
+                          ? Math.min(100, Math.round((filteredStreamStats.avgParticipants / filteredStudents.length) * 100))
                           : 0}%`, 
                         animation: 'slideIn 1s ease-out 0.1s backwards' 
                       }} 

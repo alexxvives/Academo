@@ -72,6 +72,7 @@ export default function AcademyPaymentsPage() {
             { id: 'demo-c1', name: 'Programación Web Moderna' },
             { id: 'demo-c2', name: 'Matemáticas Avanzadas' },
             { id: 'demo-c3', name: 'Diseño Gráfico Profesional' },
+            { id: 'demo-c4', name: 'Física Cuántica' },
           ]);
           setLoading(false);
           return;
@@ -301,14 +302,14 @@ export default function AcademyPaymentsPage() {
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <button
                     onClick={() => handleReject(payment.enrollmentId)}
-                    disabled={processingIds.has(payment.enrollmentId)}
+                    disabled={processingIds.has(payment.enrollmentId) || paymentStatus === 'NOT PAID'}
                     className="px-5 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {processingIds.has(payment.enrollmentId) ? 'Procesando...' : 'Denegar'}
                   </button>
                   <button
                     onClick={() => handleApprove(payment.enrollmentId)}
-                    disabled={processingIds.has(payment.enrollmentId)}
+                    disabled={processingIds.has(payment.enrollmentId) || paymentStatus === 'NOT PAID'}
                     className="px-5 py-2.5 bg-accent-300 text-gray-900 border-2 border-accent-300 rounded-lg hover:bg-accent-400 hover:border-accent-400 font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {processingIds.has(payment.enrollmentId) ? 'Procesando...' : 'Confirmar'}

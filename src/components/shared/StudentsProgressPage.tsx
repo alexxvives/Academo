@@ -108,6 +108,7 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
             { id: 'demo-c1', name: 'Programación Web Moderna' },
             { id: 'demo-c2', name: 'Matemáticas Avanzadas' },
             { id: 'demo-c3', name: 'Diseño Gráfico Profesional' },
+            { id: 'demo-c4', name: 'Física Cuántica' },
           ]);
           setLoading(false);
         } else {
@@ -122,7 +123,7 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
         const classNameToId: Record<string, string> = {
           'Programación Web': 'demo-c1',
           'Matemáticas Avanzadas': 'demo-c2',
-          'Física Cuántica': 'demo-c3',
+          'Física Cuántica': 'demo-c4',
           'Diseño Gráfico': 'demo-c3',
           'Diseño Gráfico Profesional': 'demo-c3',
         };
@@ -142,6 +143,7 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
           { id: 'demo-c1', name: 'Programación Web Moderna' },
           { id: 'demo-c2', name: 'Matemáticas Avanzadas' },
           { id: 'demo-c3', name: 'Diseño Gráfico Profesional' },
+          { id: 'demo-c4', name: 'Física Cuántica' },
         ]);
       }
       setLoading(false);

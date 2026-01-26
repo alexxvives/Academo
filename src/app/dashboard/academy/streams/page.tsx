@@ -75,6 +75,7 @@ export default function AcademyStreamsPage() {
             { id: 'demo-c1', name: 'Programación Web Moderna' },
             { id: 'demo-c2', name: 'Matemáticas Avanzadas' },
             { id: 'demo-c3', name: 'Diseño Gráfico Profesional' },
+            { id: 'demo-c4', name: 'Física Cuántica' },
           ]);
           setLoading(false);
           return;
