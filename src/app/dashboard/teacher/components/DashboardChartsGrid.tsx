@@ -72,6 +72,13 @@ export function DashboardChartsGrid({
               <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${avgLessonProgress}%`, animation: 'slideIn 1s ease-out' }} />
             </div>
           </div>
+          <style jsx>{`
+            @keyframes slideIn {
+              from {
+                width: 0;
+              }
+            }
+          `}</style>
           <div>
             <div className="flex justify-between mb-2">
               <span className="text-sm text-gray-600">Tiempo Total de Clases</span>
@@ -185,17 +192,59 @@ export function DashboardChartsGrid({
       </div>
 
       {/* Student Status */}
-      <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm h-full">
+      <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm h-full flex flex-col">
         <h3 className="text-lg font-semibold text-gray-900 mb-6">Actividad</h3>
-        <div className="h-64 flex items-center justify-center">
-          <DonutChart
-            size={250}
-            data={[
-              { label: 'Activos', value: Math.round(filteredStudents.length * 0.65), color: '#22c55e' },
-              { label: 'Inactivos', value: Math.round(filteredStudents.length * 0.35), color: '#ef4444' },
-            ]}
-          />
-        </div>
+        {filteredStudents.length > 0 ? (
+          <div className="flex-1 flex items-center justify-center min-h-40">
+            <DonutChart
+              data={(() => {
+                const now = Date.now();
+                const oneDayAgo = now - (24 * 60 * 60 * 1000);
+                const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
+                const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
+                
+                const activos = filteredStudents.filter(s => {
+                  if (!s.lastActive) return false;
+                  const loginTime = new Date(s.lastActive).getTime();
+                  return loginTime >= oneDayAgo;
+                }).length;
+                
+                const activos7dias = filteredStudents.filter(s => {
+                  if (!s.lastActive) return false;
+                  const loginTime = new Date(s.lastActive).getTime();
+                  return loginTime < oneDayAgo && loginTime >= sevenDaysAgo;
+                }).length;
+                
+                const activos30dias = filteredStudents.filter(s => {
+                  if (!s.lastActive) return false;
+                  const loginTime = new Date(s.lastActive).getTime();
+                  return loginTime < sevenDaysAgo && loginTime >= thirtyDaysAgo;
+                }).length;
+                
+                const inactivos = filteredStudents.filter(s => {
+                  if (!s.lastActive) return true;
+                  const loginTime = new Date(s.lastActive).getTime();
+                  return loginTime < thirtyDaysAgo;
+                }).length;
+                
+                return [
+                  { label: 'Activos (<24h)', value: activos, color: '#22c55e' },
+                  { label: 'Activos 7d', value: activos7dias, color: '#f97316' },
+                  { label: 'Activos 30d', value: activos30dias, color: '#ef4444' },
+                  { label: 'Inactivos', value: inactivos, color: '#9ca3af' },
+                ];
+              })()}
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+            <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <p className="text-sm font-medium">Sin datos de actividad</p>
+            <p className="text-xs text-gray-400 mt-1">La actividad de los estudiantes se mostrará aquí</p>
+          </div>
+        )}
       </div>
     </div>
   );

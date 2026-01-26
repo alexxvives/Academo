@@ -46,10 +46,15 @@ export function StudentsProgressTable({
     return hours > 0 ? `${hours}h ${minutes}m ${seconds}s` : minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
   };
 
-  const getProgressColor = (watched: number, total: number) => {
-    const pct = total > 0 ? (watched / total) * 100 : 0;
-    if (pct >= 80) return 'bg-green-500';
-    if (pct >= 50) return 'bg-yellow-500';
+  const getProgressBarColor = (lastActive: string | null) => {
+    if (!lastActive) return 'bg-gray-400';
+    
+    const now = new Date();
+    const lastActiveDate = new Date(lastActive);
+    const hoursSinceActive = (now.getTime() - lastActiveDate.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursSinceActive <= 24) return 'bg-green-500';
+    if (hoursSinceActive <= 168) return 'bg-yellow-500'; // 7 days
     return 'bg-red-500';
   };
 
@@ -245,7 +250,7 @@ export function StudentsProgressTable({
                         <div className="flex-1 max-w-[100px]">
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div
-                              className={`h-2 rounded-full transition-all ${getProgressColor(student.videosWatched, student.totalVideos)}`}
+                              className={`h-2 rounded-full transition-all ${getProgressBarColor(student.lastActive)}`}
                               style={{ width: `${progress}%` }}
                             />
                           </div>
