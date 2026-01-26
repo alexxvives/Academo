@@ -342,16 +342,17 @@ webhooks.post('/stripe', async (c) => {
     const data = payload.data.object;
 
     console.log('[Stripe Webhook] Received:', event);
+    console.log('[Stripe Webhook] Payment data:', data);
 
     if (event === 'checkout.session.completed') {
-      const { id: sessionId, metadata, payment_status } = data;
+      const { id: sessionId, metadata, payment_status, customer_details } = data;
 
       if (payment_status === 'paid') {
         // Check if this is an academy activation payment or enrollment payment
-        if (metadata.type === 'academy_activation') {
+        if (metadata?.type === 'academy_activation' && metadata?.academyId) {
+          // Has explicit academyId in metadata
           const { academyId } = metadata;
 
-          // Update academy payment status
           await c.env.DB
             .prepare(`
               UPDATE Academy 
@@ -362,12 +363,11 @@ webhooks.post('/stripe', async (c) => {
             .bind(academyId)
             .run();
 
-          console.log('[Stripe Webhook] Academy activated:', academyId);
-        } else {
+          console.log('[Stripe Webhook] Academy activated via metadata:', academyId);
+        } else if (metadata?.enrollmentId) {
           // Enrollment payment
-          const { enrollmentId, classId, userId } = metadata;
+          const { enrollmentId } = metadata;
 
-          // Update enrollment payment status
           await c.env.DB
             .prepare(`
               UPDATE ClassEnrollment 
@@ -380,6 +380,40 @@ webhooks.post('/stripe', async (c) => {
             .run();
 
           console.log('[Stripe Webhook] Payment confirmed for enrollment:', enrollmentId);
+        } else {
+          // No metadata - assume academy activation, look up by customer email
+          const customerEmail = customer_details?.email;
+          
+          if (customerEmail) {
+            console.log('[Stripe Webhook] Looking up academy by owner email:', customerEmail);
+            
+            const academy: any = await c.env.DB
+              .prepare(`
+                SELECT a.id, a.name 
+                FROM Academy a
+                JOIN User u ON a.ownerId = u.id
+                WHERE u.email = ? AND a.paymentStatus = 'NOT PAID'
+                LIMIT 1
+              `)
+              .bind(customerEmail)
+              .first();
+
+            if (academy) {
+              await c.env.DB
+                .prepare(`
+                  UPDATE Academy 
+                  SET paymentStatus = 'PAID',
+                      updatedAt = datetime('now')
+                  WHERE id = ?
+                `)
+                .bind(academy.id)
+                .run();
+
+              console.log('[Stripe Webhook] Academy activated via email lookup:', academy.id, academy.name);
+            } else {
+              console.log('[Stripe Webhook] No unpaid academy found for email:', customerEmail);
+            }
+          }
         }
       }
     }

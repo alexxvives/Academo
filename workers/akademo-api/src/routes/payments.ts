@@ -483,4 +483,34 @@ payments.put('/history/:id/reverse', async (c) => {
   }
 });
 
+// POST /payments/academy-activation - Create Stripe Checkout Session for academy activation
+payments.post('/academy-activation', async (c) => {
+  try {
+    const session = await requireAuth(c);
+    await requireRole(c, ['ACADEMY']);
+
+    // Get academy info
+    const academy: any = await c.env.DB
+      .prepare('SELECT id, name, ownerId FROM Academy WHERE ownerId = ?')
+      .bind(session.id)
+      .first();
+
+    if (!academy) {
+      return c.json(errorResponse('Academy not found'), 404);
+    }
+
+    // For now, use the existing Payment Link but return it in JSON
+    // TODO: Replace with actual Stripe API integration when STRIPE_SECRET_KEY is configured
+    const paymentLinkUrl = 'https://buy.stripe.com/test_aFa14m20ndS212ReGr77O01';
+    
+    return c.json(successResponse({ 
+      checkoutUrl: paymentLinkUrl,
+      message: 'Redirect to Stripe checkout. Note: Webhook metadata must be configured in Stripe Dashboard.'
+    }));
+  } catch (error: any) {
+    console.error('[Academy Activation Payment] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
 export default payments;
