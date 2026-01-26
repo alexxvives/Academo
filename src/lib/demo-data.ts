@@ -20,6 +20,7 @@ export interface DemoStudent {
   email: string;
   enrolledAt: string;
   className: string;
+  lastLoginAt: string | null;
 }
 
 export interface DemoRating {
