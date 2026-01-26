@@ -26,7 +26,7 @@ interface EnrolledStudent {
   className: string;
   lessonsCompleted?: number;
   totalLessons?: number;
-  lastLoginAt?: string | null;
+  lastActive?: string | null;
 }
 
 interface PendingEnrollment {

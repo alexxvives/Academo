@@ -93,7 +93,7 @@ payments.get('/pending-cash', async (c) => {
           e.paymentStatus,
           e.paymentMethod,
           e.paymentAmount,
-          e.createdAt,
+          e.enrolledAt,
           u.id as studentId,
           u.firstName as studentFirstName,
           u.lastName as studentLastName,
@@ -111,7 +111,7 @@ payments.get('/pending-cash', async (c) => {
         LEFT JOIN User teacher ON c.teacherId = teacher.id
         WHERE a.ownerId = ? 
         AND e.paymentStatus = 'CASH_PENDING'
-        ORDER BY e.createdAt DESC
+        ORDER BY e.enrolledAt DESC
       `;
       params = [session.id];
     } else if (session.role === 'TEACHER') {
@@ -122,7 +122,7 @@ payments.get('/pending-cash', async (c) => {
           e.paymentStatus,
           e.paymentMethod,
           e.paymentAmount,
-          e.createdAt,
+          e.enrolledAt,
           u.id as studentId,
           u.firstName as studentFirstName,
           u.lastName as studentLastName,
@@ -138,7 +138,7 @@ payments.get('/pending-cash', async (c) => {
         JOIN Academy a ON c.academyId = a.id
         WHERE c.teacherId = ? 
         AND e.paymentStatus = 'CASH_PENDING'
-        ORDER BY e.createdAt DESC
+        ORDER BY e.enrolledAt DESC
       `;
       params = [session.id];
     } else {
@@ -387,7 +387,7 @@ payments.get('/history', async (c) => {
           e.paymentAmount,
           c.currency,
           e.paymentMethod,
-          e.updatedAt,
+          e.approvedAt,
           e.approvedByName,
           u.firstName as studentFirstName,
           u.lastName as studentLastName,
@@ -402,7 +402,7 @@ payments.get('/history', async (c) => {
         WHERE a.ownerId = ? 
           AND e.paymentAmount > 0
           AND e.paymentStatus IN ('PAID', 'PENDING', 'CASH_PENDING')
-        ORDER BY e.updatedAt DESC
+        ORDER BY e.approvedAt DESC
         LIMIT 50
       `;
       params = [session.id];

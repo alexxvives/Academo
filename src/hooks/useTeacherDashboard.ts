@@ -42,6 +42,7 @@ export interface EnrolledStudent {
   className: string;
   lessonsCompleted?: number;
   totalLessons?: number;
+  lastActive?: string | null;
 }
 
 export interface PendingEnrollment {

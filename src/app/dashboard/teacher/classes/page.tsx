@@ -229,7 +229,7 @@ export default function TeacherClasses() {
                 </Link>
 
                 {/* Feedback Dropdown */}
-              {openFeedbackDropdown === cls.id && (
+                {openFeedbackDropdown === cls.id && (
                 <div className="mt-4 bg-white/95 backdrop-blur-md border-2 border-brand-200 rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-top-2">
                   <div className="bg-gradient-to-r from-brand-50/80 to-purple-50/80 px-4 py-3 border-b border-brand-200">
                     <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
@@ -287,7 +287,8 @@ export default function TeacherClasses() {
                             </div>
                             <p className="text-sm text-gray-700 leading-relaxed">{comment.comment}</p>
                           </div>
-                        ))}
+                        );
+                        })}
                       </div>
                     ) : (
                       <div className="text-center py-8 text-gray-500">
