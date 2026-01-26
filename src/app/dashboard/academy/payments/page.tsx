@@ -389,17 +389,13 @@ export default function AcademyPaymentsPage() {
                       })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {paymentStatus !== 'NOT PAID' ? (
-                        <button
-                          onClick={() => handleReversePayment(history.enrollmentId, history.paymentStatus)}
-                          disabled={reversingIds.has(history.enrollmentId)}
-                          className="text-sm text-accent-600 hover:text-accent-800 disabled:opacity-50"
-                        >
-                          {reversingIds.has(history.enrollmentId) ? 'Procesando...' : 'Revertir'}
-                        </button>
-                      ) : (
-                        <span className="text-sm text-gray-400">-</span>
-                      )}
+                      <button
+                        onClick={() => handleReversePayment(history.enrollmentId, history.paymentStatus)}
+                        disabled={reversingIds.has(history.enrollmentId) || paymentStatus === 'NOT PAID'}
+                        className="text-sm text-accent-600 hover:text-accent-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {reversingIds.has(history.enrollmentId) ? 'Procesando...' : 'Revertir'}
+                      </button>
                     </td>
                   </tr>
                 ))}

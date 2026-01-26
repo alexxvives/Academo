@@ -596,7 +596,7 @@ export default function AcademyDashboard() {
                     </div>
                   </div>
                   <div className="flex-1 text-center group/pending relative cursor-help">
-                    <AnimatedNumber value={pendingEnrollments.length} className="text-2xl font-bold text-amber-600" />
+                    <AnimatedNumber value={selectedClass === 'all' ? pendingEnrollments.length : pendingEnrollments.filter(p => p.class.id === selectedClass).length} className="text-2xl font-bold text-amber-600" />
                     <div className="text-xs text-gray-500">pendientes</div>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 text-slate-200 text-xs rounded-lg shadow-xl border border-slate-700 opacity-0 invisible group-hover/pending:opacity-100 group-hover/pending:visible transition-all duration-200 whitespace-nowrap z-20">
                       <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-slate-800 border-b border-r border-slate-700 rotate-45"></div>
@@ -604,7 +604,7 @@ export default function AcademyDashboard() {
                     </div>
                   </div>
                   <div className="flex-1 text-center group/rejected relative cursor-help">
-                    <AnimatedNumber value={rejectedCount} className="text-2xl font-bold text-red-600" />
+                    <AnimatedNumber value={selectedClass === 'all' ? rejectedCount : Math.round(rejectedCount * (filteredStudents.length / enrolledStudents.length))} className="text-2xl font-bold text-red-600" />
                     <div className="text-xs text-gray-500">rechazados</div>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 text-slate-200 text-xs rounded-lg shadow-xl border border-slate-700 opacity-0 invisible group-hover/rejected:opacity-100 group-hover/rejected:visible transition-all duration-200 whitespace-nowrap z-20">
                       <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-slate-800 border-b border-r border-slate-700 rotate-45"></div>
