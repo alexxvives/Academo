@@ -51,18 +51,32 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
         // If NOT PAID, show demo students
         if (status === 'NOT PAID' && role === 'ACADEMY') {
           const demoStudents = generateDemoStudents(100);
+          // Map class names to demo class IDs
+          const classNameToId: Record<string, string> = {
+            'Programación Web': 'demo-c1',
+            'Matemáticas Avanzadas': 'demo-c2',
+            'Física Cuántica': 'demo-c3',
+            'Diseño Gráfico': 'demo-c3',
+            'Diseño Gráfico Profesional': 'demo-c3',
+          };
           setStudents(demoStudents.map(s => ({
             id: s.id,
             name: `${s.firstName} ${s.lastName}`,
             email: s.email,
             className: s.className,
-            classId: s.className,
+            classId: classNameToId[s.className] || 'demo-c1',
             teacherName: ['Carlos Rodríguez', 'María García', 'Ana Martínez'][Math.floor(Math.random() * 3)],
             totalWatchTime: Math.floor(Math.random() * 7200),
             videosWatched: Math.floor(Math.random() * 15),
             totalVideos: 20,
             lastActive: s.lastLoginAt, // Use the properly distributed lastLoginAt from generateDemoStudents
           })));
+          // Load demo classes for filter
+          setClasses([
+            { id: 'demo-c1', name: 'Programación Web Moderna' },
+            { id: 'demo-c2', name: 'Matemáticas Avanzadas' },
+            { id: 'demo-c3', name: 'Diseño Gráfico Profesional' },
+          ]);
           setLoading(false);
           return;
         }
@@ -71,18 +85,30 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
         // If API returns unexpected format, show demo data as fallback
         if (role === 'ACADEMY') {
           const demoStudents = generateDemoStudents(100);
+          const classNameToId: Record<string, string> = {
+            'Programación Web': 'demo-c1',
+            'Matemáticas Avanzadas': 'demo-c2',
+            'Física Cuántica': 'demo-c3',
+            'Diseño Gráfico': 'demo-c3',
+            'Diseño Gráfico Profesional': 'demo-c3',
+          };
           setStudents(demoStudents.map(s => ({
             id: s.id,
             name: `${s.firstName} ${s.lastName}`,
             email: s.email,
             className: s.className,
-            classId: s.className,
+            classId: classNameToId[s.className] || 'demo-c1',
             teacherName: ['Carlos Rodríguez', 'María García', 'Ana Martínez'][Math.floor(Math.random() * 3)],
             totalWatchTime: Math.floor(Math.random() * 7200),
             videosWatched: Math.floor(Math.random() * 15),
             totalVideos: 20,
-            lastActive: s.lastLoginAt, // Use the properly distributed lastLoginAt from generateDemoStudents
+            lastActive: s.lastLoginAt,
           })));
+          setClasses([
+            { id: 'demo-c1', name: 'Programación Web Moderna' },
+            { id: 'demo-c2', name: 'Matemáticas Avanzadas' },
+            { id: 'demo-c3', name: 'Diseño Gráfico Profesional' },
+          ]);
           setLoading(false);
         } else {
           await loadProgress();
@@ -93,18 +119,30 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
       // On error, show demo data for academy role
       if (role === 'ACADEMY') {
         const demoStudents = generateDemoStudents(100);
+        const classNameToId: Record<string, string> = {
+          'Programación Web': 'demo-c1',
+          'Matemáticas Avanzadas': 'demo-c2',
+          'Física Cuántica': 'demo-c3',
+          'Diseño Gráfico': 'demo-c3',
+          'Diseño Gráfico Profesional': 'demo-c3',
+        };
         setStudents(demoStudents.map(s => ({
           id: s.id,
           name: `${s.firstName} ${s.lastName}`,
           email: s.email,
           className: s.className,
-          classId: s.className,
+          classId: classNameToId[s.className] || 'demo-c1',
           teacherName: ['Carlos Rodríguez', 'María García', 'Ana Martínez'][Math.floor(Math.random() * 3)],
           totalWatchTime: Math.floor(Math.random() * 7200),
           videosWatched: Math.floor(Math.random() * 15),
           totalVideos: 20,
-          lastActive: s.lastLoginAt, // Use the properly distributed lastLoginAt from generateDemoStudents
+          lastActive: s.lastLoginAt,
         })));
+        setClasses([
+          { id: 'demo-c1', name: 'Programación Web Moderna' },
+          { id: 'demo-c2', name: 'Matemáticas Avanzadas' },
+          { id: 'demo-c3', name: 'Diseño Gráfico Profesional' },
+        ]);
       }
       setLoading(false);
     }

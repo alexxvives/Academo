@@ -70,6 +70,12 @@ export default function AcademyStreamsPage() {
             ...s,
             classSlug: s.className.toLowerCase().replace(/\s+/g, '-'),
           })));
+          // Load demo classes for filter
+          setClasses([
+            { id: 'demo-c1', name: 'Programación Web Moderna' },
+            { id: 'demo-c2', name: 'Matemáticas Avanzadas' },
+            { id: 'demo-c3', name: 'Diseño Gráfico Profesional' },
+          ]);
           setLoading(false);
           return;
         }
@@ -194,7 +200,7 @@ export default function AcademyStreamsPage() {
   const formatDate = (date: string): string => {
     const formatted = new Date(date).toLocaleDateString('es-ES', {
       day: 'numeric',
-      month: 'short',
+      month: 'long',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
