@@ -23,6 +23,7 @@ interface Stream {
   participantCount?: number | null;
   participantsFetchedAt?: string | null;
   bunnyStatus?: number | null;
+  duration?: number; // Duration in minutes
 }
 
 interface Class {
@@ -414,12 +415,12 @@ export default function AcademyStreamsPage() {
                       {formatDate(stream.startedAt || stream.createdAt)}
                     </td>
                     <td className="py-4 px-4">
-                      {stream.status === 'ended' && stream.startedAt && stream.endedAt ? (
+                      {stream.status === 'ended' && (stream.duration || (stream.startedAt && stream.endedAt)) ? (
                         <span className="inline-flex items-center gap-1 text-sm font-medium text-gray-900">
                           <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          {formatDuration(stream.startedAt, stream.endedAt)}
+                          {stream.duration ? `${stream.duration} min` : formatDuration(stream.startedAt, stream.endedAt)}
                         </span>
                       ) : (
                         <span className="text-sm text-gray-400">—</span>

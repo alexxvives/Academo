@@ -366,6 +366,12 @@ export default function TeacherClassPage() {
   }, [uploading]);
 
   const loadLessonFeedback = async (lessonId: string) => {
+    // Skip API call for demo lessons
+    if (lessonId.startsWith('demo-')) {
+      setLessonFeedback([]);
+      return;
+    }
+    
     try {
       const res = await apiClient(`/lessons/${lessonId}/ratings`);
       const result = await res.json();
@@ -626,6 +632,28 @@ export default function TeacherClassPage() {
   };
 
   const loadLessonDetail = async (lessonId: string): Promise<LessonDetail | null> => {
+    // Handle demo lessons locally
+    if (lessonId.startsWith('demo-') && paymentStatus === 'NOT PAID') {
+      const lesson = lessons.find(l => l.id === lessonId);
+      if (lesson) {
+        const detailLesson: LessonDetail = {
+          id: lesson.id,
+          title: lesson.title,
+          description: lesson.description,
+          externalUrl: null,
+          releaseDate: lesson.releaseDate,
+          maxWatchTimeMultiplier: lesson.maxWatchTimeMultiplier,
+          watermarkIntervalMins: lesson.watermarkIntervalMins,
+          videos: (lesson as any).videos || [],
+          documents: (lesson as any).documents || [],
+        };
+        setSelectedLesson(detailLesson);
+        loadLessonFeedback(lessonId);
+        return detailLesson;
+      }
+      return null;
+    }
+    
     try {
       const res = await apiClient(`/lessons/${lessonId}`);
       const result = await res.json();
