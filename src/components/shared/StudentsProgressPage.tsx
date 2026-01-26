@@ -249,3 +249,4 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
     </div>
   );
 }
+

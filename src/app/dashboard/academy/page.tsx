@@ -134,10 +134,9 @@ export default function AcademyDashboard() {
           const mappedStudents = (demoStudents || []).map(s => {
             // Map class names to demo class IDs
             const classNameToId: Record<string, string> = {
-              'Programación Web': 'demo-c1',
+              'Programación Web Moderna': 'demo-c1',
               'Matemáticas Avanzadas': 'demo-c2',
               'Física Cuántica': 'demo-c4',
-              'Diseño Gráfico': 'demo-c3',
               'Diseño Gráfico Profesional': 'demo-c3',
             };
             return {
