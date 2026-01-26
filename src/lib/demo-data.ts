@@ -85,39 +85,116 @@ export function generateDemoTeachers(): DemoTeacher[] {
 }
 
 export function generateDemoStudents(count: number = 100): DemoStudent[] {
-  const firstNames = ['Juan', 'María', 'Carlos', 'Ana', 'Luis', 'Carmen', 'José', 'Laura', 'Miguel', 'Isabel', 'Pedro', 'Sofía', 'Diego', 'Elena', 'Javier'];
-  const lastNames = ['García', 'Rodríguez', 'Martínez', 'López', 'Sánchez', 'Pérez', 'Gómez', 'Fernández', 'Torres', 'Díaz'];
-  const classes = ['Programación Web', 'Matemáticas Avanzadas', 'Física Cuántica', 'Diseño Gráfico'];
-  
-  return Array.from({ length: count }, (_, i) => {
-    let lastLoginAt: string | null;
-    
-    // Activity distribution: 30% active (<24h), 40% recent (<7d), 20% inactive (>7d), 10% never logged in
-    const activityRoll = Math.random();
-    if (activityRoll < 0.3) {
-      // Active: last 24 hours
-      lastLoginAt = new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString();
-    } else if (activityRoll < 0.7) {
-      // Recent: 1-7 days ago
-      lastLoginAt = new Date(Date.now() - (1 + Math.random() * 6) * 24 * 60 * 60 * 1000).toISOString();
-    } else if (activityRoll < 0.9) {
-      // Inactive: 7-30 days ago
-      lastLoginAt = new Date(Date.now() - (7 + Math.random() * 23) * 24 * 60 * 60 * 1000).toISOString();
-    } else {
-      // Never logged in
-      lastLoginAt = null;
-    }
-    
-    return {
-      id: `demo-s${i + 1}`,
-      firstName: firstNames[i % firstNames.length],
-      lastName: lastNames[Math.floor(i / firstNames.length) % lastNames.length],
-      email: `estudiante${i + 1}@demo.com`,
-      enrolledAt: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString(),
-      className: classes[i % classes.length],
-      lastLoginAt,
-    };
-  });
+  // Fully hardcoded demo students with consistent activity patterns
+  const baseDate = new Date('2026-01-26T00:00:00Z');
+  const hardcodedStudents: DemoStudent[] = [
+    // Active students (last 24h) - 30%
+    { id: 'demo-s1', firstName: 'Juan', lastName: 'García', email: 'estudiante1@demo.com', enrolledAt: new Date(baseDate.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 2 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s2', firstName: 'María', lastName: 'Rodríguez', email: 'estudiante2@demo.com', enrolledAt: new Date(baseDate.getTime() - 55 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 5 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s3', firstName: 'Carlos', lastName: 'Martínez', email: 'estudiante3@demo.com', enrolledAt: new Date(baseDate.getTime() - 45 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 10 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s4', firstName: 'Ana', lastName: 'López', email: 'estudiante4@demo.com', enrolledAt: new Date(baseDate.getTime() - 50 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 1 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s5', firstName: 'Luis', lastName: 'Sánchez', email: 'estudiante5@demo.com', enrolledAt: new Date(baseDate.getTime() - 70 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 8 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s6', firstName: 'Carmen', lastName: 'Pérez', email: 'estudiante6@demo.com', enrolledAt: new Date(baseDate.getTime() - 40 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 15 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s7', firstName: 'José', lastName: 'Gómez', email: 'estudiante7@demo.com', enrolledAt: new Date(baseDate.getTime() - 35 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 3 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s8', firstName: 'Laura', lastName: 'Fernández', email: 'estudiante8@demo.com', enrolledAt: new Date(baseDate.getTime() - 65 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 12 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s9', firstName: 'Miguel', lastName: 'Torres', email: 'estudiante9@demo.com', enrolledAt: new Date(baseDate.getTime() - 48 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 6 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s10', firstName: 'Isabel', lastName: 'Díaz', email: 'estudiante10@demo.com', enrolledAt: new Date(baseDate.getTime() - 52 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 18 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s11', firstName: 'Pedro', lastName: 'García', email: 'estudiante11@demo.com', enrolledAt: new Date(baseDate.getTime() - 44 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 4 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s12', firstName: 'Sofía', lastName: 'Rodríguez', email: 'estudiante12@demo.com', enrolledAt: new Date(baseDate.getTime() - 38 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 20 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s13', firstName: 'Diego', lastName: 'Martínez', email: 'estudiante13@demo.com', enrolledAt: new Date(baseDate.getTime() - 58 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 7 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s14', firstName: 'Elena', lastName: 'López', email: 'estudiante14@demo.com', enrolledAt: new Date(baseDate.getTime() - 62 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 9 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s15', firstName: 'Javier', lastName: 'Sánchez', email: 'estudiante15@demo.com', enrolledAt: new Date(baseDate.getTime() - 42 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 11 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s16', firstName: 'Juan', lastName: 'Pérez', email: 'estudiante16@demo.com', enrolledAt: new Date(baseDate.getTime() - 56 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 16 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s17', firstName: 'María', lastName: 'Gómez', email: 'estudiante17@demo.com', enrolledAt: new Date(baseDate.getTime() - 68 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 13 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s18', firstName: 'Carlos', lastName: 'Fernández', email: 'estudiante18@demo.com', enrolledAt: new Date(baseDate.getTime() - 54 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 17 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s19', firstName: 'Ana', lastName: 'Torres', email: 'estudiante19@demo.com', enrolledAt: new Date(baseDate.getTime() - 46 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 14 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s20', firstName: 'Luis', lastName: 'Díaz', email: 'estudiante20@demo.com', enrolledAt: new Date(baseDate.getTime() - 64 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 19 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s21', firstName: 'Carmen', lastName: 'García', email: 'estudiante21@demo.com', enrolledAt: new Date(baseDate.getTime() - 51 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 21 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s22', firstName: 'José', lastName: 'Rodríguez', email: 'estudiante22@demo.com', enrolledAt: new Date(baseDate.getTime() - 57 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 22 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s23', firstName: 'Laura', lastName: 'Martínez', email: 'estudiante23@demo.com', enrolledAt: new Date(baseDate.getTime() - 47 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 23 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s24', firstName: 'Miguel', lastName: 'López', email: 'estudiante24@demo.com', enrolledAt: new Date(baseDate.getTime() - 63 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 1 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s25', firstName: 'Isabel', lastName: 'Sánchez', email: 'estudiante25@demo.com', enrolledAt: new Date(baseDate.getTime() - 41 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 4 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s26', firstName: 'Pedro', lastName: 'Pérez', email: 'estudiante26@demo.com', enrolledAt: new Date(baseDate.getTime() - 59 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 3 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s27', firstName: 'Sofía', lastName: 'Gómez', email: 'estudiante27@demo.com', enrolledAt: new Date(baseDate.getTime() - 49 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 6 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s28', firstName: 'Diego', lastName: 'Fernández', email: 'estudiante28@demo.com', enrolledAt: new Date(baseDate.getTime() - 53 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 8 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s29', firstName: 'Elena', lastName: 'Torres', email: 'estudiante29@demo.com', enrolledAt: new Date(baseDate.getTime() - 67 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 2 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s30', firstName: 'Javier', lastName: 'Díaz', email: 'estudiante30@demo.com', enrolledAt: new Date(baseDate.getTime() - 43 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 5 * 60 * 60 * 1000).toISOString() },
+    // Recent students (1-7 days) - 40%
+    { id: 'demo-s31', firstName: 'Juan', lastName: 'García', email: 'estudiante31@demo.com', enrolledAt: new Date(baseDate.getTime() - 66 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s32', firstName: 'María', lastName: 'Rodríguez', email: 'estudiante32@demo.com', enrolledAt: new Date(baseDate.getTime() - 72 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s33', firstName: 'Carlos', lastName: 'Martínez', email: 'estudiante33@demo.com', enrolledAt: new Date(baseDate.getTime() - 61 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s34', firstName: 'Ana', lastName: 'López', email: 'estudiante34@demo.com', enrolledAt: new Date(baseDate.getTime() - 69 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s35', firstName: 'Luis', lastName: 'Sánchez', email: 'estudiante35@demo.com', enrolledAt: new Date(baseDate.getTime() - 74 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s36', firstName: 'Carmen', lastName: 'Pérez', email: 'estudiante36@demo.com', enrolledAt: new Date(baseDate.getTime() - 55 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s37', firstName: 'José', lastName: 'Gómez', email: 'estudiante37@demo.com', enrolledAt: new Date(baseDate.getTime() - 71 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s38', firstName: 'Laura', lastName: 'Fernández', email: 'estudiante38@demo.com', enrolledAt: new Date(baseDate.getTime() - 76 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s39', firstName: 'Miguel', lastName: 'Torres', email: 'estudiante39@demo.com', enrolledAt: new Date(baseDate.getTime() - 65 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s40', firstName: 'Isabel', lastName: 'Díaz', email: 'estudiante40@demo.com', enrolledAt: new Date(baseDate.getTime() - 73 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s41', firstName: 'Pedro', lastName: 'García', email: 'estudiante41@demo.com', enrolledAt: new Date(baseDate.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s42', firstName: 'Sofía', lastName: 'Rodríguez', email: 'estudiante42@demo.com', enrolledAt: new Date(baseDate.getTime() - 68 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s43', firstName: 'Diego', lastName: 'Martínez', email: 'estudiante43@demo.com', enrolledAt: new Date(baseDate.getTime() - 75 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s44', firstName: 'Elena', lastName: 'López', email: 'estudiante44@demo.com', enrolledAt: new Date(baseDate.getTime() - 62 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s45', firstName: 'Javier', lastName: 'Sánchez', email: 'estudiante45@demo.com', enrolledAt: new Date(baseDate.getTime() - 70 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s46', firstName: 'Juan', lastName: 'Pérez', email: 'estudiante46@demo.com', enrolledAt: new Date(baseDate.getTime() - 77 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s47', firstName: 'María', lastName: 'Gómez', email: 'estudiante47@demo.com', enrolledAt: new Date(baseDate.getTime() - 64 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s48', firstName: 'Carlos', lastName: 'Fernández', email: 'estudiante48@demo.com', enrolledAt: new Date(baseDate.getTime() - 71 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s49', firstName: 'Ana', lastName: 'Torres', email: 'estudiante49@demo.com', enrolledAt: new Date(baseDate.getTime() - 58 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s50', firstName: 'Luis', lastName: 'Díaz', email: 'estudiante50@demo.com', enrolledAt: new Date(baseDate.getTime() - 66 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s51', firstName: 'Carmen', lastName: 'García', email: 'estudiante51@demo.com', enrolledAt: new Date(baseDate.getTime() - 73 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s52', firstName: 'José', lastName: 'Rodríguez', email: 'estudiante52@demo.com', enrolledAt: new Date(baseDate.getTime() - 61 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s53', firstName: 'Laura', lastName: 'Martínez', email: 'estudiante53@demo.com', enrolledAt: new Date(baseDate.getTime() - 69 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s54', firstName: 'Miguel', lastName: 'López', email: 'estudiante54@demo.com', enrolledAt: new Date(baseDate.getTime() - 76 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s55', firstName: 'Isabel', lastName: 'Sánchez', email: 'estudiante55@demo.com', enrolledAt: new Date(baseDate.getTime() - 63 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s56', firstName: 'Pedro', lastName: 'Pérez', email: 'estudiante56@demo.com', enrolledAt: new Date(baseDate.getTime() - 71 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s57', firstName: 'Sofía', lastName: 'Gómez', email: 'estudiante57@demo.com', enrolledAt: new Date(baseDate.getTime() - 58 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s58', firstName: 'Diego', lastName: 'Fernández', email: 'estudiante58@demo.com', enrolledAt: new Date(baseDate.getTime() - 66 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s59', firstName: 'Elena', lastName: 'Torres', email: 'estudiante59@demo.com', enrolledAt: new Date(baseDate.getTime() - 74 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s60', firstName: 'Javier', lastName: 'Díaz', email: 'estudiante60@demo.com', enrolledAt: new Date(baseDate.getTime() - 62 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s61', firstName: 'Juan', lastName: 'García', email: 'estudiante61@demo.com', enrolledAt: new Date(baseDate.getTime() - 70 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s62', firstName: 'María', lastName: 'Rodríguez', email: 'estudiante62@demo.com', enrolledAt: new Date(baseDate.getTime() - 77 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s63', firstName: 'Carlos', lastName: 'Martínez', email: 'estudiante63@demo.com', enrolledAt: new Date(baseDate.getTime() - 64 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s64', firstName: 'Ana', lastName: 'López', email: 'estudiante64@demo.com', enrolledAt: new Date(baseDate.getTime() - 72 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s65', firstName: 'Luis', lastName: 'Sánchez', email: 'estudiante65@demo.com', enrolledAt: new Date(baseDate.getTime() - 59 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s66', firstName: 'Carmen', lastName: 'Pérez', email: 'estudiante66@demo.com', enrolledAt: new Date(baseDate.getTime() - 67 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s67', firstName: 'José', lastName: 'Gómez', email: 'estudiante67@demo.com', enrolledAt: new Date(baseDate.getTime() - 75 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s68', firstName: 'Laura', lastName: 'Fernández', email: 'estudiante68@demo.com', enrolledAt: new Date(baseDate.getTime() - 63 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s69', firstName: 'Miguel', lastName: 'Torres', email: 'estudiante69@demo.com', enrolledAt: new Date(baseDate.getTime() - 71 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s70', firstName: 'Isabel', lastName: 'Díaz', email: 'estudiante70@demo.com', enrolledAt: new Date(baseDate.getTime() - 78 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString() },
+    // Inactive students (7-30 days) - 20%
+    { id: 'demo-s71', firstName: 'Pedro', lastName: 'García', email: 'estudiante71@demo.com', enrolledAt: new Date(baseDate.getTime() - 65 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s72', firstName: 'Sofía', lastName: 'Rodríguez', email: 'estudiante72@demo.com', enrolledAt: new Date(baseDate.getTime() - 73 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s73', firstName: 'Diego', lastName: 'Martínez', email: 'estudiante73@demo.com', enrolledAt: new Date(baseDate.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s74', firstName: 'Elena', lastName: 'López', email: 'estudiante74@demo.com', enrolledAt: new Date(baseDate.getTime() - 68 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 20 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s75', firstName: 'Javier', lastName: 'Sánchez', email: 'estudiante75@demo.com', enrolledAt: new Date(baseDate.getTime() - 76 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s76', firstName: 'Juan', lastName: 'Pérez', email: 'estudiante76@demo.com', enrolledAt: new Date(baseDate.getTime() - 54 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 18 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s77', firstName: 'María', lastName: 'Gómez', email: 'estudiante77@demo.com', enrolledAt: new Date(baseDate.getTime() - 62 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s78', firstName: 'Carlos', lastName: 'Fernández', email: 'estudiante78@demo.com', enrolledAt: new Date(baseDate.getTime() - 70 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 22 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s79', firstName: 'Ana', lastName: 'Torres', email: 'estudiante79@demo.com', enrolledAt: new Date(baseDate.getTime() - 57 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 11 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s80', firstName: 'Luis', lastName: 'Díaz', email: 'estudiante80@demo.com', enrolledAt: new Date(baseDate.getTime() - 65 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 16 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s81', firstName: 'Carmen', lastName: 'García', email: 'estudiante81@demo.com', enrolledAt: new Date(baseDate.getTime() - 73 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 9 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s82', firstName: 'José', lastName: 'Rodríguez', email: 'estudiante82@demo.com', enrolledAt: new Date(baseDate.getTime() - 61 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 25 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s83', firstName: 'Laura', lastName: 'Martínez', email: 'estudiante83@demo.com', enrolledAt: new Date(baseDate.getTime() - 69 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 13 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s84', firstName: 'Miguel', lastName: 'López', email: 'estudiante84@demo.com', enrolledAt: new Date(baseDate.getTime() - 56 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 19 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s85', firstName: 'Isabel', lastName: 'Sánchez', email: 'estudiante85@demo.com', enrolledAt: new Date(baseDate.getTime() - 64 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 17 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s86', firstName: 'Pedro', lastName: 'Pérez', email: 'estudiante86@demo.com', enrolledAt: new Date(baseDate.getTime() - 72 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 21 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s87', firstName: 'Sofía', lastName: 'Gómez', email: 'estudiante87@demo.com', enrolledAt: new Date(baseDate.getTime() - 59 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: new Date(baseDate.getTime() - 28 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s88', firstName: 'Diego', lastName: 'Fernández', email: 'estudiante88@demo.com', enrolledAt: new Date(baseDate.getTime() - 67 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: new Date(baseDate.getTime() - 23 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s89', firstName: 'Elena', lastName: 'Torres', email: 'estudiante89@demo.com', enrolledAt: new Date(baseDate.getTime() - 75 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: new Date(baseDate.getTime() - 27 * 24 * 60 * 60 * 1000).toISOString() },
+    { id: 'demo-s90', firstName: 'Javier', lastName: 'Díaz', email: 'estudiante90@demo.com', enrolledAt: new Date(baseDate.getTime() - 63 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: new Date(baseDate.getTime() - 24 * 24 * 60 * 60 * 1000).toISOString() },
+    // Never logged in - 10%
+    { id: 'demo-s91', firstName: 'Juan', lastName: 'García', email: 'estudiante91@demo.com', enrolledAt: new Date(baseDate.getTime() - 50 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: null },
+    { id: 'demo-s92', firstName: 'María', lastName: 'Rodríguez', email: 'estudiante92@demo.com', enrolledAt: new Date(baseDate.getTime() - 55 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: null },
+    { id: 'demo-s93', firstName: 'Carlos', lastName: 'Martínez', email: 'estudiante93@demo.com', enrolledAt: new Date(baseDate.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: null },
+    { id: 'demo-s94', firstName: 'Ana', lastName: 'López', email: 'estudiante94@demo.com', enrolledAt: new Date(baseDate.getTime() - 65 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: null },
+    { id: 'demo-s95', firstName: 'Luis', lastName: 'Sánchez', email: 'estudiante95@demo.com', enrolledAt: new Date(baseDate.getTime() - 70 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: null },
+    { id: 'demo-s96', firstName: 'Carmen', lastName: 'Pérez', email: 'estudiante96@demo.com', enrolledAt: new Date(baseDate.getTime() - 75 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: null },
+    { id: 'demo-s97', firstName: 'José', lastName: 'Gómez', email: 'estudiante97@demo.com', enrolledAt: new Date(baseDate.getTime() - 52 * 24 * 60 * 60 * 1000).toISOString(), className: 'Programación Web', lastLoginAt: null },
+    { id: 'demo-s98', firstName: 'Laura', lastName: 'Fernández', email: 'estudiante98@demo.com', enrolledAt: new Date(baseDate.getTime() - 58 * 24 * 60 * 60 * 1000).toISOString(), className: 'Matemáticas Avanzadas', lastLoginAt: null },
+    { id: 'demo-s99', firstName: 'Miguel', lastName: 'Torres', email: 'estudiante99@demo.com', enrolledAt: new Date(baseDate.getTime() - 63 * 24 * 60 * 60 * 1000).toISOString(), className: 'Física Cuántica', lastLoginAt: null },
+    { id: 'demo-s100', firstName: 'Isabel', lastName: 'Díaz', email: 'estudiante100@demo.com', enrolledAt: new Date(baseDate.getTime() - 68 * 24 * 60 * 60 * 1000).toISOString(), className: 'Diseño Gráfico', lastLoginAt: null },
+  ];
+
+  return hardcodedStudents.slice(0, count);
 }
 
 export function generateDemoRatings(count: number = 250): DemoRating[] {
@@ -179,7 +256,7 @@ export function generateDemoStreams(): DemoStream[] {
       participantCount: 35,
       startedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
       endedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 75 * 60 * 1000).toISOString(),
-      status: 'ENDED',
+      status: 'ended',
       duration: 75,
       recordingId: DEMO_VIDEO_GUID,
       classId: 'demo-class1',
@@ -201,7 +278,7 @@ export function generateDemoStreams(): DemoStream[] {
       participantCount: 22,
       startedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
       endedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000).toISOString(),
-      status: 'ENDED',
+      status: 'ended',
       duration: 50,
       recordingId: DEMO_VIDEO_GUID,
       classId: 'demo-class2',
@@ -215,7 +292,7 @@ export function generateDemoStreams(): DemoStream[] {
       participantCount: 18,
       startedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
       endedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000).toISOString(),
-      status: 'ENDED',
+      status: 'ended',
       duration: 120,
       recordingId: DEMO_VIDEO_GUID,
       classId: 'demo-class3',
@@ -229,7 +306,7 @@ export function generateDemoStreams(): DemoStream[] {
       participantCount: 28,
       startedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       endedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 45 * 60 * 1000).toISOString(),
-      status: 'ENDED',
+      status: 'ended',
       duration: 45,
       recordingId: DEMO_VIDEO_GUID,
       classId: 'demo-class1',
@@ -243,7 +320,7 @@ export function generateDemoStreams(): DemoStream[] {
       participantCount: 31,
       startedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
       endedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 65 * 60 * 1000).toISOString(),
-      status: 'ENDED',
+      status: 'ended',
       duration: 65,
       recordingId: DEMO_VIDEO_GUID,
       classId: 'demo-class3',
