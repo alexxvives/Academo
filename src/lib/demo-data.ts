@@ -202,53 +202,6 @@ export function generateDemoStreams(): DemoStream[] {
     },
   ];
 }
-      className: 'Matemáticas Avanzadas',
-      teacherName: 'María García',
-      participantCount: 67,
-      startedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-      endedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000).toISOString(),
-      status: 'ENDED',
-      duration: 120,
-    },
-    {
-      id: 'demo-stream3',
-      title: 'Taller Práctico - Diseño UI/UX con Figma',
-      className: 'Diseño Gráfico',
-      teacherName: 'Ana Martínez',
-      participantCount: 38,
-      startedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      endedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 75 * 60 * 1000).toISOString(),
-      status: 'ENDED',
-      duration: 75,
-    },
-    {
-      id: 'demo-stream4',
-      title: 'Sesión de Dudas - Física Cuántica',
-      className: 'Física Cuántica',
-      teacherName: 'Luis López',
-      participantCount: 29,
-      startedAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-      endedAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(),
-      status: 'ENDED',
-      duration: 60,
-    },
-    {
-      id: 'demo-stream5',
-      title: 'Proyecto Final - Aplicación Web Completa',
-      className: 'Programación Web',
-      teacherName: 'Carlos Rodríguez',
-      participantCount: 52,
-      startedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      endedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 105 * 60 * 1000).toISOString(),
-      status: 'ENDED',
-      duration: 105,
-    },
-  ].map((stream, index) => ({
-    ...stream,
-    recordingId: `demo-recording-${index + 1}`,
-    lessonId: `demo-lesson-${index + 1}`,
-  }));
-}
 
 export function generateDemoClasses(): DemoClass[] {
   const now = new Date().toISOString();
