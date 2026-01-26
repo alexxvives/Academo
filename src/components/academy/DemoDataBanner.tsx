@@ -42,9 +42,27 @@ export function DemoDataBanner() {
 
   const handleConfirm = () => {
     setShowModal(false);
-    // Stripe Payment Link with success_url to redirect back to AKADEMO dashboard after payment
-    const successUrl = encodeURIComponent('https://akademo-edu.com/dashboard/academy?payment=success');
-    window.location.href = `https://buy.stripe.com/test_aFa14m20ndS212ReGr77O01?success_url=${successUrl}`;
+    
+    // Open Stripe in new tab
+    window.open('https://buy.stripe.com/test_aFa14m20ndS212ReGr77O01', '_blank');
+    
+    // Set up auto-refresh when user returns to this tab after payment
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // User returned to AKADEMO tab - refresh to check if payment completed
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
+    };
+    
+    // Add listener for when user switches back to this tab
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Clean up listener after 5 minutes (payment should be done by then)
+    setTimeout(() => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, 5 * 60 * 1000);
   };
 
   const handleCancel = () => {
