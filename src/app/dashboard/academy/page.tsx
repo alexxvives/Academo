@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { BarChart, DonutChart } from '@/components/Charts';
 import { apiClient } from '@/lib/api-client';
 import { useAnimatedNumber } from '@/hooks';
-import { generateDemoStudents, generateDemoStats, generateDemoStreams, generateDemoClasses } from '@/lib/demo-data';
+import { generateDemoStudents, generateDemoStats, generateDemoStreams, generateDemoClasses, generateDemoPendingPayments, generateDemoPaymentHistory } from '@/lib/demo-data';
 
 interface Class {
   id: string;
@@ -221,34 +221,32 @@ export default function AcademyDashboard() {
             minutes: totalMinutes % 60,
           });
           
-          // Add demo pending enrollments and rejected students (varies by class)
-          // Pending: Prog Web=5, Matemáticas=4, Diseño=8, Física=6 (Total: 23)
-          // Rejected: Prog Web=2, Matemáticas=3, Diseño=5, Física=1 (Total: 11)
-          const pendingByClass = [
-            { classId: 'demo-c1', className: 'Programación Web', count: 5 },
-            { classId: 'demo-c2', className: 'Matemáticas Avanzadas', count: 4 },
-            { classId: 'demo-c3', className: 'Diseño Gráfico', count: 8 },
-            { classId: 'demo-c4', className: 'Física Cuántica', count: 6 },
-          ];
+          // Get payment data for enrollment stats
+          const demoPendingPayments = generateDemoPendingPayments(); // 5 pending
+          const demoHistoryPayments = generateDemoPaymentHistory(); // 20 total: 18 paid, 2 rejected
           
-          const demoPending = pendingByClass.flatMap(cls => 
-            Array.from({ length: cls.count }, (_, i) => ({
-              id: `demo-pending-${cls.classId}-${i + 1}`,
-              student: {
-                id: `demo-student-pending-${cls.classId}-${i + 1}`,
-                firstName: ['Juan', 'María', 'Pedro', 'Ana', 'Luis', 'Carmen'][i % 6],
-                lastName: ['García', 'López', 'Martínez', 'Rodríguez', 'Sánchez'][i % 5],
-                email: `pendiente${cls.classId}${i + 1}@demo.com`,
-              },
-              class: {
-                id: cls.classId,
-                name: cls.className,
-              },
-              enrolledAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-            }))
-          );
+          // Map payments to enrollments (pending)
+          const demoPending = demoPendingPayments.map((payment, i) => ({
+            id: `demo-pending-${i + 1}`,
+            student: {
+              id: `demo-student-pending-${i + 1}`,
+              firstName: payment.studentFirstName,
+              lastName: payment.studentLastName,
+              email: payment.studentEmail,
+            },
+            class: {
+              id: payment.className === 'Programación Web' ? 'demo-c1' : 
+                 payment.className === 'Matemáticas Avanzadas' ? 'demo-c2' : 
+                 payment.className === 'Diseño Gráfico' ? 'demo-c3' : 'demo-c4',
+              name: payment.className,
+            },
+            enrolledAt: payment.createdAt,
+          }));
           setPendingEnrollments(demoPending);
-          setRejectedCount(11); // Total rejected across all classes
+          
+          // Count rejected from payment history
+          const rejectedCount = demoHistoryPayments.filter(p => p.paymentStatus === 'REJECTED').length;
+          setRejectedCount(rejectedCount); // 2 rejected
           setLoading(false);
           return;
         }
@@ -590,11 +588,11 @@ export default function AcademyDashboard() {
                 </div>
                 <div className="flex justify-between gap-4 pt-4 border-t border-gray-100">
                   <div className="flex-1 text-center group/accepted relative cursor-help">
-                    <AnimatedNumber value={filteredStudents.length} className="text-2xl font-bold text-green-600" />
+                    <AnimatedNumber value={Math.ceil(filteredStudents.length * 1.05)} className="text-2xl font-bold text-green-600" />
                     <div className="text-xs text-gray-500">aceptados</div>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 text-slate-200 text-xs rounded-lg shadow-xl border border-slate-700 opacity-0 invisible group-hover/accepted:opacity-100 group-hover/accepted:visible transition-all duration-200 whitespace-nowrap z-20">
                       <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-slate-800 border-b border-r border-slate-700 rotate-45"></div>
-                      Estudiantes aprobados
+                      Estudiantes aprobados (5% más que matriculados)
                     </div>
                   </div>
                   <div className="flex-1 text-center group/pending relative cursor-help">

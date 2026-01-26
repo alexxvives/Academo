@@ -166,7 +166,7 @@ export default function AcademyPaymentsPage() {
 
   const handleReversePayment = async (enrollmentId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'PAID' ? 'denegado' : 'confirmado';
-    if (!confirm(`�Est�s seguro de revertir este estado a ${newStatus}?`)) {
+    if (!confirm(`¿Estás seguro de revertir este estado a ${newStatus}?`)) {
       return;
     }
 
@@ -389,13 +389,17 @@ export default function AcademyPaymentsPage() {
                       })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleReversePayment(history.enrollmentId, history.paymentStatus)}
-                        disabled={reversingIds.has(history.enrollmentId)}
-                        className="text-sm text-accent-600 hover:text-accent-800 disabled:opacity-50"
-                      >
-                        {reversingIds.has(history.enrollmentId) ? 'Procesando...' : 'Revertir'}
-                      </button>
+                      {paymentStatus !== 'NOT PAID' ? (
+                        <button
+                          onClick={() => handleReversePayment(history.enrollmentId, history.paymentStatus)}
+                          disabled={reversingIds.has(history.enrollmentId)}
+                          className="text-sm text-accent-600 hover:text-accent-800 disabled:opacity-50"
+                        >
+                          {reversingIds.has(history.enrollmentId) ? 'Procesando...' : 'Revertir'}
+                        </button>
+                      ) : (
+                        <span className="text-sm text-gray-400">-</span>
+                      )}
                     </td>
                   </tr>
                 ))}
