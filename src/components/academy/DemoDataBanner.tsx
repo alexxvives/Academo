@@ -6,6 +6,7 @@ import { apiClient } from '@/lib/api-client';
 export function DemoDataBanner() {
   const [academyId, setAcademyId] = useState<string>('');
   const [userEmail, setUserEmail] = useState<string>('');
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     // Get academy ID and user email
@@ -35,41 +36,108 @@ export function DemoDataBanner() {
 
   const handleActivateClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    
-    const message = `⚠️ IMPORTANTE: Para activar tu academia, debes usar el correo registrado en Stripe:\n\n📧 ${userEmail}\n\n✅ Usa EXACTAMENTE este correo en el formulario de pago de Stripe.\n\n¿Continuar al pago?`;
-    
-    if (confirm(message)) {
-      window.location.href = 'https://buy.stripe.com/test_aFa14m20ndS212ReGr77O01';
-    }
+    setShowModal(true);
+  };
+
+  const handleConfirm = () => {
+    setShowModal(false);
+    window.location.href = 'https://buy.stripe.com/test_aFa14m20ndS212ReGr77O01';
+  };
+
+  const handleCancel = () => {
+    setShowModal(false);
   };
 
   return (
-    <div className="sticky top-0 z-50 bg-gradient-to-r from-red-600 to-red-700 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 py-2">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-3 text-center sm:text-left">
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-1.5 flex-shrink-0">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+    <>
+      <div className="sticky top-0 z-50 bg-gradient-to-r from-red-600 to-red-700 shadow-md">
+        <div className="max-w-7xl mx-auto px-4 py-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div className="flex items-center gap-3 text-center sm:text-left">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-1.5 flex-shrink-0">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">
+                  Modo de Demostración Activo
+                </p>
+                <p className="text-red-100 text-xs">
+                  Los datos mostrados son ejemplos ilustrativos. Active su academia para acceder a funcionalidad completa.
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-white font-semibold text-sm">
-                Modo de Demostración Activo
-              </p>
-              <p className="text-red-100 text-xs">
-                Los datos mostrados son ejemplos ilustrativos. Active su academia para acceder a funcionalidad completa.
-              </p>
-            </div>
+            <button
+              onClick={handleActivateClick}
+              className="flex-shrink-0 px-5 py-2 bg-white text-red-700 font-semibold rounded-md hover:bg-red-50 transition-colors shadow-sm text-sm whitespace-nowrap"
+            >
+              Activar Academia
+            </button>
           </div>
-          <button
-            onClick={handleActivateClick}
-            className="flex-shrink-0 px-5 py-2 bg-white text-red-700 font-semibold rounded-md hover:bg-red-50 transition-colors shadow-sm text-sm whitespace-nowrap"
-          >
-            Activar Academia
-          </button>
         </div>
       </div>
-    </div>
+
+      {/* Professional Email Confirmation Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-scale-in">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-white">Verificación Importante</h3>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-6 space-y-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm text-gray-700 font-medium mb-3">
+                  Para activar tu academia correctamente, debes usar el siguiente correo electrónico en el formulario de pago de Stripe:
+                </p>
+                <div className="bg-white border-2 border-amber-300 rounded-lg px-4 py-3 flex items-center gap-3">
+                  <svg className="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-base font-semibold text-gray-900 break-all">{userEmail}</span>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex gap-3">
+                  <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-sm text-gray-700">
+                    Si usas un correo diferente, el sistema no podrá vincular el pago con tu academia y deberás contactar soporte.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="bg-gray-50 px-6 py-4 flex gap-3 justify-end border-t border-gray-200">
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirm}
+                className="px-6 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all shadow-md hover:shadow-lg"
+              >
+                Continuar al Pago
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
