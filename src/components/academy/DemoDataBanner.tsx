@@ -5,27 +5,43 @@ import { apiClient } from '@/lib/api-client';
 
 export function DemoDataBanner() {
   const [academyId, setAcademyId] = useState<string>('');
+  const [userEmail, setUserEmail] = useState<string>('');
 
   useEffect(() => {
-    // Get academy ID for Stripe metadata
-    const fetchAcademyId = async () => {
+    // Get academy ID and user email
+    const fetchData = async () => {
       try {
-        const res = await apiClient('/academies');
-        const result = await res.json();
-        if (result.success && result.data?.[0]?.id) {
-          setAcademyId(result.data[0].id);
+        const [academyRes, userRes] = await Promise.all([
+          apiClient('/academies'),
+          apiClient('/auth/me')
+        ]);
+        
+        const academyResult = await academyRes.json();
+        const userResult = await userRes.json();
+        
+        if (academyResult.success && academyResult.data?.[0]?.id) {
+          setAcademyId(academyResult.data[0].id);
+        }
+        
+        if (userResult.success && userResult.data?.email) {
+          setUserEmail(userResult.data.email);
         }
       } catch (error) {
-        console.error('Error fetching academy:', error);
+        console.error('Error fetching data:', error);
       }
     };
-    fetchAcademyId();
+    fetchData();
   }, []);
 
-  // Build Stripe checkout URL with metadata
-  const stripeUrl = academyId 
-    ? `https://buy.stripe.com/test_aFa14m20ndS212ReGr77O01?client_reference_id=${academyId}&metadata[type]=academy_activation&metadata[academyId]=${academyId}`
-    : 'https://buy.stripe.com/test_aFa14m20ndS212ReGr77O01';
+  const handleActivateClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    const message = `⚠️ IMPORTANTE: Para activar tu academia, debes usar el correo registrado en Stripe:\n\n📧 ${userEmail}\n\n✅ Usa EXACTAMENTE este correo en el formulario de pago de Stripe.\n\n¿Continuar al pago?`;
+    
+    if (confirm(message)) {
+      window.location.href = 'https://buy.stripe.com/test_aFa14m20ndS212ReGr77O01';
+    }
+  };
 
   return (
     <div className="sticky top-0 z-50 bg-gradient-to-r from-red-600 to-red-700 shadow-md">
@@ -46,14 +62,12 @@ export function DemoDataBanner() {
               </p>
             </div>
           </div>
-          <a
-            href={stripeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={handleActivateClick}
             className="flex-shrink-0 px-5 py-2 bg-white text-red-700 font-semibold rounded-md hover:bg-red-50 transition-colors shadow-sm text-sm whitespace-nowrap"
           >
             Activar Academia
-          </a>
+          </button>
         </div>
       </div>
     </div>
