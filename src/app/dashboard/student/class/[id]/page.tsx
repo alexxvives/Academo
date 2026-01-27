@@ -399,13 +399,6 @@ export default function ClassPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-4 flex-wrap mb-2">
                   <h1 className="text-2xl font-semibold text-gray-900">{classData.name}</h1>
-                  {/* Stats badge inline with title */}
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-1.5">
-                      <span className="font-semibold text-blue-900">{lessons.length}</span>
-                      <span className="text-blue-700">Clases</span>
-                    </div>
-                  </div>
                 </div>
                 {classData.description && (
                   <p className="text-gray-600 text-lg max-w-3xl">{classData.description}</p>

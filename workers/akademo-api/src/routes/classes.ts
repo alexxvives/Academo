@@ -59,7 +59,7 @@ classes.get('/', async (c) => {
         JOIN Class c ON ce.classId = c.id
         JOIN Academy a ON c.academyId = a.id
         WHERE ce.userId = ?
-        ORDER BY ce.createdAt DESC
+        ORDER BY ce.enrolledAt DESC
       `;
       params = [session.id];
     } else if (session.role === 'TEACHER') {

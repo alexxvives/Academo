@@ -23,6 +23,7 @@ interface EnrolledClass {
   documentSigned: number;
   whatsappGroupLink?: string;
   paymentStatus?: string; // PENDING, CASH_PENDING, PAID
+  paymentMethod?: string; // 'cash', 'bizum', 'stripe'
   price?: number;
   currency?: string;
 }
@@ -373,15 +374,6 @@ export default function StudentClassesPage() {
                     </span>
                   </div>
                 </div>
-                
-                {/* Arrow Icon */}
-                <div className="ml-4 flex items-center">
-                  <div className="text-gray-400 group-hover:text-brand-600 group-hover:translate-x-1 transition-all">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
               </div>
             </div>
           );
@@ -397,6 +389,8 @@ export default function StudentClassesPage() {
         academyName={payingClass?.academyName || ''}
         price={payingClass?.price || 0}
         currency={payingClass?.currency || 'EUR'}
+        currentPaymentStatus={payingClass?.paymentStatus || 'PENDING'}
+        currentPaymentMethod={payingClass?.paymentMethod || ''}
         onPaymentComplete={() => {
           setPayingClass(null);
           loadData();

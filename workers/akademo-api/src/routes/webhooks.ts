@@ -343,9 +343,14 @@ webhooks.post('/stripe', async (c) => {
 
     console.log('[Stripe Webhook] Received:', event);
     console.log('[Stripe Webhook] Payment data:', data);
+    console.log('[Stripe Webhook] Metadata:', data.metadata);
 
     if (event === 'checkout.session.completed') {
       const { id: sessionId, metadata, payment_status, customer_details } = data;
+
+      console.log('[Stripe Webhook] Session ID:', sessionId);
+      console.log('[Stripe Webhook] Payment status:', payment_status);
+      console.log('[Stripe Webhook] Metadata received:', JSON.stringify(metadata));
 
       if (payment_status === 'paid') {
         // Check if this is an academy activation payment or enrollment payment
@@ -356,8 +361,7 @@ webhooks.post('/stripe', async (c) => {
           await c.env.DB
             .prepare(`
               UPDATE Academy 
-              SET paymentStatus = 'PAID',
-                  updatedAt = datetime('now')
+              SET paymentStatus = 'PAID'
               WHERE id = ?
             `)
             .bind(academyId)
@@ -368,17 +372,19 @@ webhooks.post('/stripe', async (c) => {
           // Enrollment payment
           const { enrollmentId } = metadata;
 
-          await c.env.DB
+          console.log('[Stripe Webhook] Processing enrollment payment for:', enrollmentId);
+
+          const result = await c.env.DB
             .prepare(`
               UPDATE ClassEnrollment 
               SET paymentStatus = 'PAID',
-                  paymentMethod = 'stripe',
-                  updatedAt = datetime('now')
+                  paymentMethod = 'stripe'
               WHERE id = ?
             `)
             .bind(enrollmentId)
             .run();
 
+          console.log('[Stripe Webhook] Update result:', JSON.stringify(result));
           console.log('[Stripe Webhook] Payment confirmed for enrollment:', enrollmentId);
         } else {
           // No metadata - assume academy activation, look up by customer email
@@ -402,8 +408,7 @@ webhooks.post('/stripe', async (c) => {
               await c.env.DB
                 .prepare(`
                   UPDATE Academy 
-                  SET paymentStatus = 'PAID',
-                      updatedAt = datetime('now')
+                  SET paymentStatus = 'PAID'
                   WHERE id = ?
                 `)
                 .bind(academy.id)

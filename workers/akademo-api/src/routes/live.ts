@@ -770,15 +770,14 @@ live.post('/create-lesson', async (c) => {
 
       // Create Video record linking Upload to Lesson
       await c.env.DB.prepare(`
-        INSERT INTO Video (id, title, lessonId, uploadId, durationSeconds, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO Video (id, title, lessonId, uploadId, durationSeconds, createdAt)
+        VALUES (?, ?, ?, ?, ?, ?)
       `).bind(
         videoId,
         `${lessonTitle}${partSuffix}`,
         lessonId,
         uploadId,
         videoStatus.duration,
-        now,
         now
       ).run();
 

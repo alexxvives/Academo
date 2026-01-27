@@ -16,6 +16,14 @@ interface ZoomAccount {
   }>;
 }
 
+interface StripeStatus {
+  connected: boolean;
+  charges_enabled: boolean;
+  details_submitted: boolean;
+  accountId?: string;
+  email?: string;
+}
+
 interface Academy {
   id: string;
   name: string;
@@ -52,6 +60,7 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const [academy, setAcademy] = useState<Academy | null>(null);
   const [zoomAccounts, setZoomAccounts] = useState<ZoomAccount[]>([]);
+  const [stripeStatus, setStripeStatus] = useState<StripeStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -71,13 +80,15 @@ export default function ProfilePage() {
 
   const loadData = async () => {
     try {
-      const [academyRes, zoomRes] = await Promise.all([
+      const [academyRes, zoomRes, stripeRes] = await Promise.all([
         apiClient('/academies'),
-        apiClient('/zoom-accounts')
+        apiClient('/zoom-accounts'),
+        apiClient('/payments/stripe-status')
       ]);
 
       const academyResult = await academyRes.json();
       const zoomResult = await zoomRes.json();
+      const stripeResult = await stripeRes.json();
 
       if (academyResult.success && academyResult.data.length > 0) {
         const academyData = academyResult.data[0];
@@ -95,6 +106,10 @@ export default function ProfilePage() {
 
       if (zoomResult.success) {
         setZoomAccounts(zoomResult.data || []);
+      }
+
+      if (stripeResult.success) {
+        setStripeStatus(stripeResult.data);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -128,6 +143,42 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Error disconnecting Zoom:', error);
       alert('Error al desconectar la cuenta de Zoom');
+    }
+  };
+
+  const handleConnectStripe = async () => {
+    try {
+      const response = await apiClient('/payments/stripe-connect', {
+        method: 'POST'
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.data?.url) {
+        // Open Stripe onboarding in new window
+        window.open(result.data.url, '_blank');
+        
+        // Set up polling to check status when user returns
+        const checkStatus = setInterval(async () => {
+          if (!document.hidden) {
+            const statusRes = await apiClient('/payments/stripe-status');
+            const statusResult = await statusRes.json();
+            
+            if (statusResult.success && statusResult.data?.charges_enabled) {
+              setStripeStatus(statusResult.data);
+              clearInterval(checkStatus);
+            }
+          }
+        }, 3000);
+
+        // Stop polling after 5 minutes
+        setTimeout(() => clearInterval(checkStatus), 300000);
+      } else {
+        alert('Error al conectar con Stripe: ' + (result.error || 'Error desconocido'));
+      }
+    } catch (error) {
+      console.error('Error connecting Stripe:', error);
+      alert('Error al conectar con Stripe');
     }
   };
 
@@ -505,10 +556,8 @@ export default function ProfilePage() {
                   </button>
                   
                   <div className="flex items-start gap-4 mb-4">
-                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
-                      <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 576 512">
-                        <path d="M0 128C0 92.7 28.7 64 64 64H320c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128zM559.1 99.8c10.4 5.6 16.9 16.4 16.9 28.2V384c0 11.8-6.5 22.6-16.9 28.2s-23 5-32.9-1.6l-96-64L416 337.1V320 192 174.9l14.2-9.5 96-64c9.8-6.5 22.4-7.2 32.9-1.6z"/>
-                      </svg>
+                    <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0 overflow-hidden p-2">
+                      <img src="/zoom_logo.png" alt="Zoom" className="w-full h-full object-contain" />
                     </div>
                     <div className="flex-1 min-w-0 flex items-center justify-between">
                       <div>
@@ -559,6 +608,129 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      {/* Stripe Connect */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-12">
+        <div className="px-8 py-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Cuenta de Stripe</h2>
+              <p className="text-indigo-100 mt-1">Recibe pagos de estudiantes directamente en tu cuenta bancaria</p>
+            </div>
+            {!stripeStatus?.connected && (
+              <StripeConnectButton onClick={handleConnectStripe} />
+            )}
+          </div>
+        </div>
+
+        <div className="px-8 py-6">
+          {!stripeStatus?.connected ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
+              <p className="text-gray-900 font-medium mb-2">Cuenta no conectada</p>
+              <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+                Conecta tu cuenta de Stripe para recibir pagos de estudiantes directamente en tu cuenta bancaria. Los estudiantes podrán pagar con tarjeta, transferencia bancaria o Bizum.
+              </p>
+              
+              {/* Setup Instructions */}
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 max-w-2xl mx-auto text-left">
+                <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Cómo crear una cuenta de Stripe
+                </h3>
+                <ol className="space-y-2 text-sm text-blue-900">
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold min-w-[20px]">1.</span>
+                    <span>Haz clic en "Conectar Stripe" arriba</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold min-w-[20px]">2.</span>
+                    <span>Si no tienes cuenta, selecciona "Crear una cuenta" en Stripe</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold min-w-[20px]">3.</span>
+                    <span>Completa la información de tu academia (nombre, dirección, datos bancarios)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold min-w-[20px]">4.</span>
+                    <span>Verifica tu identidad (DNI/NIE/CIF)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold min-w-[20px]">5.</span>
+                    <span>¡Listo! Tus estudiantes podrán pagar instantáneamente</span>
+                  </li>
+                </ol>
+              </div>
+            </div>
+          ) : stripeStatus.charges_enabled ? (
+            <>
+              <div className="bg-white border border-gray-200 rounded-xl p-6 hover:border-brand-500 hover:shadow-lg transition-all">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-14 h-14 bg-white border border-gray-200 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0 overflow-hidden">
+                    <img src="/Stripe_logo.svg" alt="Stripe" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0 flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-gray-900 truncate">{stripeStatus.email || 'Cuenta de Stripe'}</p>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Activa
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">ID: {stripeStatus.accountId}</p>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Conectado el {new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Platform fee notice - outside card */}
+              <div className="border-2 border-gray-900 rounded-lg p-4 mt-6">
+                <p className="text-sm text-gray-900">
+                  <strong>Comisión de plataforma:</strong> Stripe cobra una comisión del 5% sobre cada pago.
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-300 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-indigo-900 mb-2">Verificación en proceso</h3>
+                  <p className="text-indigo-700 text-sm mb-4">
+                    Tu cuenta de Stripe está siendo verificada. Este proceso puede tardar entre 24-48 horas. Recibirás un email de Stripe cuando esté lista.
+                  </p>
+                  
+                  <div className="bg-white/70 rounded-lg p-4 border border-indigo-200 mb-4">
+                    <p className="text-sm text-gray-700 mb-1"><span className="font-medium">ID de cuenta:</span> {stripeStatus.accountId}</p>
+                    <p className="text-xs text-gray-600 mt-2">
+                      ⏳ Estado: Esperando verificación de Stripe
+                    </p>
+                  </div>
+                  
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-xs text-blue-800">
+                      <strong>¿Qué sigue?</strong> Stripe está verificando tu información. Una vez aprobada, podrás recibir pagos automáticamente. No necesitas hacer nada más.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -576,6 +748,22 @@ function ZoomConnectButton({ onClick }: { onClick: () => void }) {
     >
       <CctvIcon ref={iconRef} size={20} />
       Conectar Zoom
+    </button>
+  );
+}
+
+// Stripe Connect Button Component
+function StripeConnectButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors shadow-sm border border-indigo-200"
+      onClick={onClick}
+    >
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+      </svg>
+      Conectar Stripe
     </button>
   );
 }

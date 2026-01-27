@@ -157,14 +157,13 @@ auth.post('/register', async (c) => {
       const monoacademyFlag = monoacademy ? 1 : 0;
       const now = new Date().toISOString();
       await c.env.DB
-        .prepare('INSERT INTO Academy (id, name, description, ownerId, monoacademy, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
+        .prepare('INSERT INTO Academy (id, name, description, ownerId, monoacademy, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
         .bind(
           newAcademyId,
           academyName,
           `Welcome to ${academyName}`,
           userId,
           monoacademyFlag,
-          now,
           now
         )
         .run();
@@ -177,15 +176,15 @@ auth.post('/register', async (c) => {
         
         // Create teacher User account (same password, role TEACHER)
         await c.env.DB
-          .prepare('INSERT INTO User (id, email, password, firstName, lastName, role, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-          .bind(teacherUserId, teacherEmail.toLowerCase(), hashedPassword, userFirstName, userLastName, 'TEACHER', now, now)
+          .prepare('INSERT INTO User (id, email, password, firstName, lastName, role, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
+          .bind(teacherUserId, teacherEmail.toLowerCase(), hashedPassword, userFirstName, userLastName, 'TEACHER', now)
           .run();
         
         // Create Teacher record linking to academy
         const teacherId = crypto.randomUUID();
         await c.env.DB
-          .prepare('INSERT INTO Teacher (id, userId, academyId, monoacademy, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)')
-          .bind(teacherId, teacherUserId, newAcademyId, monoacademyFlag, now, now)
+          .prepare('INSERT INTO Teacher (id, userId, academyId, monoacademy, createdAt) VALUES (?, ?, ?, ?, ?)')
+          .bind(teacherId, teacherUserId, newAcademyId, monoacademyFlag, now)
           .run();
       }
 
@@ -194,8 +193,8 @@ auth.post('/register', async (c) => {
       const teacherId = crypto.randomUUID();
       const now = new Date().toISOString();
       await c.env.DB
-        .prepare('INSERT INTO Teacher (id, userId, academyId, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)')
-        .bind(teacherId, userId, academyId, 'PENDING', now, now)
+        .prepare('INSERT INTO Teacher (id, userId, academyId, status, createdAt) VALUES (?, ?, ?, ?, ?)')
+        .bind(teacherId, userId, academyId, 'PENDING', now)
         .run();
 
       // Enroll teacher in selected classes with PENDING status (awaiting academy approval)
@@ -203,8 +202,8 @@ auth.post('/register', async (c) => {
         const enrollmentId = crypto.randomUUID();
         const now = new Date().toISOString();
         await c.env.DB
-          .prepare('INSERT INTO ClassEnrollment (id, classId, userId, status, enrolledAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
-          .bind(enrollmentId, cId, userId, 'PENDING', now, now, now)
+          .prepare('INSERT INTO ClassEnrollment (id, classId, userId, status, enrolledAt, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+          .bind(enrollmentId, cId, userId, 'PENDING', now, now)
           .run();
       }
 
@@ -215,8 +214,8 @@ auth.post('/register', async (c) => {
         const enrollmentId = crypto.randomUUID();
         const now = new Date().toISOString();
         await c.env.DB
-          .prepare('INSERT INTO ClassEnrollment (id, classId, userId, status, enrolledAt, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
-          .bind(enrollmentId, classId, userId, 'PENDING', now, now, now)
+          .prepare('INSERT INTO ClassEnrollment (id, classId, userId, status, enrolledAt, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+          .bind(enrollmentId, classId, userId, 'PENDING', now, now)
           .run();
       }
     }
@@ -655,15 +654,15 @@ auth.post('/switch-role', async (c) => {
           .first();
         
         await c.env.DB
-          .prepare('INSERT INTO User (id, email, password, firstName, lastName, role, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-          .bind(teacherUserId, session.email.toLowerCase(), academyUser.password, session.firstName, session.lastName, 'TEACHER', now, now)
+          .prepare('INSERT INTO User (id, email, password, firstName, lastName, role, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
+          .bind(teacherUserId, session.email.toLowerCase(), academyUser.password, session.firstName, session.lastName, 'TEACHER', now)
           .run();
         
         // Create Teacher record linking to academy
         const teacherId = crypto.randomUUID();
         await c.env.DB
-          .prepare('INSERT INTO Teacher (id, userId, academyId, status, monoacademy, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
-          .bind(teacherId, teacherUserId, academyInfo.id, 'APPROVED', 1, now, now)
+          .prepare('INSERT INTO Teacher (id, userId, academyId, status, monoacademy, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+          .bind(teacherId, teacherUserId, academyInfo.id, 'APPROVED', 1, now)
           .run();
         
         // Fetch the newly created teacher user

@@ -58,8 +58,8 @@ approvals.post('/academy', async (c) => {
     // Verify ownership
     const enrollment = await c.env.DB
       .prepare(`
-        SELECT ce.id, ce.classId, ce.userId, ce.status, ce.enrolledAt, ce.approvedAt, ce.createdAt, 
-               ce.documentSigned, ce.documentSignedAt, ce.paymentStatus, ce.paymentMethod, ce.paymentAmount, 
+        SELECT ce.id, ce.classId, ce.userId, ce.status, ce.enrolledAt, ce.approvedAt, 
+               ce.documentSigned, ce.paymentStatus, ce.paymentMethod, ce.paymentAmount, 
                ce.approvedBy, a.ownerId
         FROM ClassEnrollment ce
         JOIN Class c ON ce.classId = c.id
@@ -141,8 +141,8 @@ approvals.post('/teacher', async (c) => {
     // Verify ownership
     const enrollment = await c.env.DB
       .prepare(`
-        SELECT ce.id, ce.classId, ce.userId, ce.status, ce.enrolledAt, ce.approvedAt, ce.createdAt, 
-               ce.documentSigned, ce.documentSignedAt, ce.paymentStatus, ce.paymentMethod, ce.paymentAmount, 
+        SELECT ce.id, ce.classId, ce.userId, ce.status, ce.enrolledAt, ce.approvedAt, 
+               ce.documentSigned, ce.paymentStatus, ce.paymentMethod, ce.paymentAmount, 
                ce.approvedBy, c.teacherId
         FROM ClassEnrollment ce
         JOIN Class c ON ce.classId = c.id

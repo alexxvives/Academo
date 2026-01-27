@@ -11,6 +11,8 @@ interface PaymentModalProps {
   academyName: string;
   price: number;
   currency: string;
+  currentPaymentStatus?: string;
+  currentPaymentMethod?: string;
   onPaymentComplete: () => void;
 }
 
@@ -22,11 +24,14 @@ export default function PaymentModal({
   academyName,
   price,
   currency,
+  currentPaymentStatus,
+  currentPaymentMethod,
   onPaymentComplete,
 }: PaymentModalProps) {
   const [selectedMethod, setSelectedMethod] = useState<'cash' | 'stripe' | 'bizum' | null>(null);
   const [processing, setProcessing] = useState(false);
   const [confirmingCash, setConfirmingCash] = useState(false);
+  const [confirmingBizum, setConfirmingBizum] = useState(false);
 
   if (!isOpen) return null;
 
@@ -71,8 +76,7 @@ export default function PaymentModal({
       console.log('[PaymentModal] Initiating Stripe payment for classId:', classId);
       
       const res = await apiPost('/payments/stripe-session', { 
-        classId,
-        method: 'bank_transfer'
+        classId
       });
 
       console.log('[PaymentModal] Stripe response status:', res.status);
@@ -103,15 +107,31 @@ export default function PaymentModal({
     }
   };
 
-  const handleBizumPayment = async () => {
+  const handleBizumPayment = () => {
+    setConfirmingBizum(true);
+  };
+
+  const handleConfirmBizum = async () => {
     setProcessing(true);
     try {
-      // Bizum is available through Stripe in Spain
-      alert('Bizum aún no está configurado. Por favor, paga en efectivo.');
+      // Bizum works like cash - requires academy confirmation
+      const res = await apiPost('/payments/initiate', {
+        classId,
+        paymentMethod: 'bizum',
+      });
+
+      const result = await res.json();
+      
+      if (result.success) {
+        onPaymentComplete();
+      } else {
+        throw new Error(result.error || 'Error al registrar pago por Bizum');
+      }
     } catch (error: any) {
       alert('Error: ' + error.message);
     } finally {
       setProcessing(false);
+      setConfirmingBizum(false);
     }
   };
 
@@ -160,6 +180,44 @@ export default function PaymentModal({
     );
   }
 
+  // Bizum confirmation dialog
+  if (confirmingBizum) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm p-4">
+        <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl">
+          <div className="p-8 border-b border-gray-200">
+            <h3 className="text-2xl font-semibold text-gray-900">Confirmar Pago por Bizum</h3>
+          </div>
+          
+          <div className="p-8">
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <p className="text-gray-700 leading-relaxed text-center">
+                Tu solicitud quedará pendiente hasta que la academia confirme haber recibido el pago. No tendrás acceso a la clase hasta la aprobación.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-8 border-t border-gray-200 flex gap-4">
+            <button
+              onClick={() => setConfirmingBizum(false)}
+              disabled={processing}
+              className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg text-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleConfirmBizum}
+              disabled={processing}
+              className="flex-1 px-6 py-3 bg-gray-900 text-white rounded-lg text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {processing ? 'Procesando...' : 'Confirmar Pago'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl w-full max-w-4xl shadow-xl">
@@ -196,28 +254,7 @@ export default function PaymentModal({
 
             {/* Right Side - Payment Options */}
             <div className="lg:col-span-3 space-y-3">
-              {/* Cash Payment */}
-              <button
-                onClick={() => {
-                  setSelectedMethod('cash');
-                  handleCashPayment();
-                }}
-                className="w-full p-4 border-2 border-gray-300 rounded-xl text-left transition-all hover:border-gray-400 hover:shadow-md"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Efectivo</h3>
-                    <p className="text-gray-600 mb-3">
-                      Paga directamente a la academia en persona
-                    </p>
-                    <span className="inline-block text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
-                      Requiere aprobación manual
-                    </span>
-                  </div>
-                </div>
-              </button>
-
-              {/* Bank Transfer (Stripe) */}
+              {/* Stripe Payment (Card) - FIRST */}
               <button
                 onClick={() => {
                   setSelectedMethod('stripe');
@@ -227,9 +264,9 @@ export default function PaymentModal({
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Transferencia Bancaria</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Tarjeta de Crédito/Débito</h3>
                     <p className="text-gray-600 mb-3">
-                      Pago seguro con tarjeta de crédito o cuenta bancaria
+                      Pago seguro con Stripe (Visa, Mastercard, etc.)
                     </p>
                     <span className="inline-block text-xs text-white bg-gray-900 px-3 py-1.5 rounded-full">
                       Acceso inmediato
@@ -238,7 +275,7 @@ export default function PaymentModal({
                 </div>
               </button>
 
-              {/* Bizum */}
+              {/* Bizum - SECOND */}
               <button
                 onClick={() => {
                   setSelectedMethod('bizum');
@@ -252,9 +289,66 @@ export default function PaymentModal({
                     <p className="text-gray-600 mb-3">
                       Pago instantáneo con tu banco español
                     </p>
-                    <span className="inline-block text-xs text-white bg-gray-900 px-3 py-1.5 rounded-full">
-                      Acceso inmediato
-                    </span>
+                    {currentPaymentStatus === 'CASH_PENDING' && currentPaymentMethod === 'bizum' ? (
+                      <div className="bg-green-50 border-2 border-green-500 rounded-lg p-3">
+                        <div className="flex items-start gap-2">
+                          <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-semibold text-green-800">
+                              Esperando la aprobación de la academia
+                            </p>
+                            <p className="text-xs text-green-700 mt-1">
+                              Tu solicitud está pendiente de confirmación. La academia revisará tu pago y te dará acceso una vez confirmado.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="inline-block text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+                        Requiere aprobación manual
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+
+              {/* Cash Payment - THIRD */}
+              <button
+                onClick={() => {
+                  setSelectedMethod('cash');
+                  handleCashPayment();
+                }}
+                className="w-full p-4 border-2 border-gray-300 rounded-xl text-left transition-all hover:border-gray-400 hover:shadow-md"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Efectivo</h3>
+                    <p className="text-gray-600 mb-3">
+                      Paga directamente a la academia en persona
+                    </p>
+                    {currentPaymentStatus === 'CASH_PENDING' && currentPaymentMethod === 'cash' ? (
+                      <div className="bg-green-50 border-2 border-green-500 rounded-lg p-3">
+                        <div className="flex items-start gap-2">
+                          <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-semibold text-green-800">
+                              Esperando la aprobación de la academia
+                            </p>
+                            <p className="text-xs text-green-700 mt-1">
+                              Tu solicitud está pendiente de confirmación. La academia revisará tu pago y te dará acceso una vez confirmado.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="inline-block text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+                        Requiere aprobación manual
+                      </span>
+                    )}
                   </div>
                 </div>
               </button>

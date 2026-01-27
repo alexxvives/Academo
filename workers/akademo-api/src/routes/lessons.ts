@@ -545,7 +545,7 @@ lessons.put('/:id/move', async (c) => {
 
     // Update lesson's topicId
     await c.env.DB
-      .prepare('UPDATE Lesson SET topicId = ?, updatedAt = datetime("now") WHERE id = ?')
+      .prepare('UPDATE Lesson SET topicId = ? WHERE id = ?')
       .bind(topicId || null, lessonId)
       .run();
 

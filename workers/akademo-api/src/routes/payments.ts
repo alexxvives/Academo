@@ -67,9 +67,28 @@ payments.post('/initiate', async (c) => {
       }));
     }
 
-    // For Stripe/Bizum, create Payment record and return session URL
+    // Handle Bizum payment - same as cash, requires manual confirmation
+    if (paymentMethod === 'bizum') {
+      await c.env.DB
+        .prepare(`
+          UPDATE ClassEnrollment 
+          SET paymentStatus = 'CASH_PENDING', 
+              paymentMethod = 'bizum',
+              paymentAmount = ?
+          WHERE id = ?
+        `)
+        .bind(classData.price, enrollment.id)
+        .run();
+
+      return c.json(successResponse({
+        message: 'Bizum payment registered. Waiting for academy approval.',
+        status: 'CASH_PENDING',
+      }));
+    }
+
+    // For Stripe (card payment), continue to Stripe checkout
     // Note: Actual Stripe Connect integration requires STRIPE_SECRET_KEY
-    return c.json(errorResponse('Stripe/Bizum integration not yet configured. Please use cash payment.'), 501);
+    return c.json(errorResponse('Stripe integration not yet configured. Please use cash or bizum payment.'), 501);
   } catch (error: any) {
     console.error('[Payment Initiate] Error:', error);
     return c.json(errorResponse(error.message || 'Internal server error'), 500);
@@ -230,8 +249,8 @@ payments.post('/stripe-session', async (c) => {
     const session = await requireAuth(c);
     console.log('[Stripe Session] User authenticated:', session.id);
     
-    const { classId, method } = await c.req.json();
-    console.log('[Stripe Session] Request data:', { classId, method });
+    const { classId } = await c.req.json();
+    console.log('[Stripe Session] Request data:', { classId });
 
     if (!classId) {
       return c.json(errorResponse('classId is required'), 400);
@@ -270,15 +289,24 @@ payments.post('/stripe-session', async (c) => {
     // Calculate platform fee (5%)
     const platformFeeAmount = Math.round(classData.price * 100 * 0.05);
     
-    const paymentMethods = method === 'bizum' 
-      ? ['card', 'link'] // Bizum through Stripe Link
-      : ['card', 'link', 'bank_transfer'];
+    // Stripe doesn't support Bizum directly - redirect to card payment
+    const paymentMethods = ['card', 'link'];
+
+    // Get enrollment ID for webhook
+    const enrollment: any = await c.env.DB
+      .prepare('SELECT id FROM ClassEnrollment WHERE userId = ? AND classId = ?')
+      .bind(session.id, classId)
+      .first();
+
+    if (!enrollment) {
+      return c.json(errorResponse('Enrollment not found'), 404);
+    }
 
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: paymentMethods,
       line_items: [{
         price_data: {
-          currency: classData.currency || 'eur',
+          currency: 'eur', // Only EUR
           product_data: { 
             name: `${classData.name} - Acceso completo`,
             description: 'Acceso al contenido de la clase',
@@ -289,8 +317,9 @@ payments.post('/stripe-session', async (c) => {
       }],
       mode: 'payment',
       success_url: `${c.env.FRONTEND_URL || 'https://akademo-edu.com'}/dashboard/student/classes?payment=success&classId=${classId}`,
-      cancel_url: `${c.env.FRONTEND_URL || 'https://akademo-edu.com'}/dashboard/student/payment?classId=${classId}&payment=cancel`,
+      cancel_url: `${c.env.FRONTEND_URL || 'https://akademo-edu.com'}/dashboard/student/classes?payment=cancel`,
       metadata: {
+        enrollmentId: enrollment.id,
         classId,
         userId: session.id,
         academyId: classData.academyId,
@@ -303,15 +332,15 @@ payments.post('/stripe-session', async (c) => {
       },
     });
 
-    // Save pending payment record
+    // Save pending payment record (webhook will update to PAID when confirmed)
     await c.env.DB
       .prepare(`
         UPDATE ClassEnrollment 
         SET paymentStatus = 'PENDING',
-            paymentMethod = ?
+            paymentMethod = 'stripe'
         WHERE userId = ? AND classId = ?
       `)
-      .bind(method, session.id, classId)
+      .bind(session.id, classId)
       .run();
 
     return c.json(successResponse({ url: checkoutSession.url }));
@@ -505,6 +534,117 @@ payments.post('/academy-activation', async (c) => {
     }));
   } catch (error: any) {
     console.error('[Academy Activation Payment] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
+// POST /payments/stripe-connect - Create Stripe Connect account onboarding link
+payments.post('/stripe-connect', async (c) => {
+  try {
+    const session = await requireAuth(c);
+    await requireRole(c, ['ACADEMY']);
+
+    if (!c.env.STRIPE_SECRET_KEY) {
+      return c.json(errorResponse('Stripe is not configured on this server'), 500);
+    }
+
+    // Get academy
+    const academy: any = await c.env.DB
+      .prepare('SELECT id, name, stripeAccountId, ownerId FROM Academy WHERE ownerId = ?')
+      .bind(session.id)
+      .first();
+
+    if (!academy) {
+      return c.json(errorResponse('Academy not found'), 404);
+    }
+
+    const stripe = require('stripe')(c.env.STRIPE_SECRET_KEY);
+    let accountId = academy.stripeAccountId;
+
+    // If academy doesn't have a Stripe account, create one
+    if (!accountId) {
+      const account = await stripe.accounts.create({
+        type: 'express',
+        country: 'ES',
+        email: session.email,
+        capabilities: {
+          card_payments: { requested: true },
+          transfers: { requested: true },
+        },
+        business_type: 'company',
+        business_profile: {
+          name: academy.name,
+        },
+      });
+
+      accountId = account.id;
+
+      // Save to database
+      await c.env.DB
+        .prepare('UPDATE Academy SET stripeAccountId = ? WHERE id = ?')
+        .bind(accountId, academy.id)
+        .run();
+    }
+
+    // Create account link for onboarding
+    const accountLink = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: `${c.env.FRONTEND_URL || 'https://akademo-edu.com'}/dashboard/academy/profile?stripe=refresh`,
+      return_url: `${c.env.FRONTEND_URL || 'https://akademo-edu.com'}/dashboard/academy/profile?stripe=complete`,
+      type: 'account_onboarding',
+    });
+
+    return c.json(successResponse({ 
+      url: accountLink.url,
+      accountId 
+    }));
+
+  } catch (error: any) {
+    console.error('[Stripe Connect] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
+// GET /payments/stripe-status - Check if academy's Stripe account is fully onboarded
+payments.get('/stripe-status', async (c) => {
+  try {
+    const session = await requireAuth(c);
+    await requireRole(c, ['ACADEMY']);
+
+    const academy: any = await c.env.DB
+      .prepare('SELECT id, name, stripeAccountId FROM Academy WHERE ownerId = ?')
+      .bind(session.id)
+      .first();
+
+    if (!academy) {
+      return c.json(errorResponse('Academy not found'), 404);
+    }
+
+    if (!academy.stripeAccountId) {
+      return c.json(successResponse({ 
+        connected: false,
+        charges_enabled: false,
+        details_submitted: false
+      }));
+    }
+
+    if (!c.env.STRIPE_SECRET_KEY) {
+      return c.json(errorResponse('Stripe is not configured on this server'), 500);
+    }
+
+    const stripe = require('stripe')(c.env.STRIPE_SECRET_KEY);
+    const account = await stripe.accounts.retrieve(academy.stripeAccountId);
+
+    return c.json(successResponse({
+      connected: true,
+      accountId: academy.stripeAccountId,
+      charges_enabled: account.charges_enabled,
+      details_submitted: account.details_submitted,
+      email: account.email,
+    }));
+
+  } catch (error: any) {
+    console.error('[Stripe Status] Error:', error);
     return c.json(errorResponse(error.message || 'Internal server error'), 500);
   }
 });

@@ -221,7 +221,6 @@ admin.patch('/academy/:id', async (c) => {
       return c.json(errorResponse('No fields to update'), 400);
     }
     
-    updates.push("updatedAt = datetime('now')");
     params.push(academyId);
     
     const query = `UPDATE Academy SET ${updates.join(', ')} WHERE id = ?`;
@@ -379,7 +378,7 @@ admin.patch('/classes/:id/assign-zoom', async (c) => {
 
     // Update class with new Zoom account
     await c.env.DB.prepare(
-      'UPDATE Class SET zoomAccountId = ?, updatedAt = datetime("now") WHERE id = ?'
+      'UPDATE Class SET zoomAccountId = ? WHERE id = ?'
     ).bind(zoomAccountId || null, classId).run();
 
     console.log('[Admin] Assigned Zoom account', zoomAccountId, 'to class', classId);

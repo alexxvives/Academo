@@ -292,8 +292,8 @@ enrollments.put('/pending', async (c) => {
     // Get enrollment details including class owner
     const enrollment = await c.env.DB
       .prepare(`
-        SELECT e.id, e.classId, e.userId, e.status, e.enrolledAt, e.approvedAt, e.createdAt, 
-               e.documentSigned, e.documentSignedAt, e.paymentStatus, e.paymentMethod, e.paymentAmount, 
+        SELECT e.id, e.classId, e.userId, e.status, e.enrolledAt, e.approvedAt, 
+               e.documentSigned, e.paymentStatus, e.paymentMethod, e.paymentAmount, 
                e.approvedBy, c.teacherId, a.ownerId
         FROM ClassEnrollment e
         JOIN Class c ON e.classId = c.id
@@ -327,13 +327,13 @@ enrollments.put('/pending', async (c) => {
 
     if (action === 'APPROVE') {
       await c.env.DB
-        .prepare("UPDATE ClassEnrollment SET status = 'APPROVED', approvedBy = ?, approvedByName = ?, updatedAt = datetime('now') WHERE id = ?")
+        .prepare("UPDATE ClassEnrollment SET status = 'APPROVED', approvedBy = ?, approvedByName = ? WHERE id = ?")
         .bind(session.id, approverName, enrollmentId)
         .run();
     } else {
        // REJECT
        await c.env.DB
-        .prepare("UPDATE ClassEnrollment SET status = 'REJECTED', approvedBy = ?, approvedByName = ?, updatedAt = datetime('now') WHERE id = ?")
+        .prepare("UPDATE ClassEnrollment SET status = 'REJECTED', approvedBy = ?, approvedByName = ? WHERE id = ?")
         .bind(session.id, approverName, enrollmentId)
         .run();
     }
@@ -449,8 +449,8 @@ enrollments.put('/history/:id/reverse', async (c) => {
     // Get enrollment details including class owner
     const enrollment = await c.env.DB
       .prepare(`
-        SELECT e.id, e.classId, e.userId, e.status, e.enrolledAt, e.approvedAt, e.createdAt, 
-               e.documentSigned, e.documentSignedAt, e.paymentStatus, e.paymentMethod, e.paymentAmount, 
+        SELECT e.id, e.classId, e.userId, e.status, e.enrolledAt, e.approvedAt, 
+               e.documentSigned, e.paymentStatus, e.paymentMethod, e.paymentAmount, 
                e.approvedBy, c.teacherId, a.ownerId
         FROM ClassEnrollment e
         JOIN Class c ON e.classId = c.id
@@ -486,7 +486,7 @@ enrollments.put('/history/:id/reverse', async (c) => {
       : `Profesor: ${session.firstName} ${session.lastName}`;
 
     await c.env.DB
-      .prepare("UPDATE ClassEnrollment SET status = ?, approvedBy = ?, approvedByName = ?, updatedAt = datetime('now') WHERE id = ?")
+      .prepare("UPDATE ClassEnrollment SET status = ?, approvedBy = ?, approvedByName = ? WHERE id = ?")
       .bind(newStatus, session.id, approverName, enrollmentId)
       .run();
 

@@ -11,6 +11,10 @@
         "/^git add \\.$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^npm run build$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

@@ -521,7 +521,6 @@ academies.patch('/:id', async (c) => {
       return c.json(errorResponse('No fields to update'), 400);
     }
 
-    updates.push('updatedAt = datetime(\'now\')');
     values.push(academyId);
 
     await c.env.DB
