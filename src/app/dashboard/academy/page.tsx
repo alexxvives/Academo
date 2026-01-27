@@ -658,14 +658,25 @@ export default function AcademyDashboard() {
                 );
               }
               
+              // Calculate actual distribution from lesson ratings
+              const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+              filteredLessons.forEach(lesson => {
+                // Estimate distribution based on average rating
+                // This is an approximation since we don't have individual rating breakdown per lesson
+                const avgRating = Math.round(lesson.averageRating);
+                if (avgRating >= 1 && avgRating <= 5) {
+                  ratingCounts[avgRating as 1|2|3|4|5] += lesson.ratingCount;
+                }
+              });
+              
               return (
                 <BarChart
                   data={[
-                    { label: '1★', value: Math.round(totalRatings * 0.05), color: '#ef4444' },
-                    { label: '2★', value: Math.round(totalRatings * 0.20), color: '#f97316' },
-                    { label: '3★', value: Math.round(totalRatings * 0.10), color: '#a3e635' },
-                    { label: '4★', value: Math.round(totalRatings * 0.30), color: '#84cc16' },
-                    { label: '5★', value: Math.round(totalRatings * 0.35), color: '#22c55e' },
+                    { label: '1★', value: ratingCounts[1], color: '#ef4444' },
+                    { label: '2★', value: ratingCounts[2], color: '#f97316' },
+                    { label: '3★', value: ratingCounts[3], color: '#a3e635' },
+                    { label: '4★', value: ratingCounts[4], color: '#84cc16' },
+                    { label: '5★', value: ratingCounts[5], color: '#22c55e' },
                   ]}
                 />
               );

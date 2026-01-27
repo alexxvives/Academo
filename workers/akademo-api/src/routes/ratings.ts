@@ -69,7 +69,7 @@ ratings.get('/teacher', async (c) => {
 
     for (const r of rawRatings) {
       const classId = r.classId as string;
-      const topicId = (r.topicId as string) || 'no-topic';
+      const topicId = (r.topicId as string) || `${classId}-no-topic`;
       const lessonId = r.lessonId as string;
 
       // Initialize class
