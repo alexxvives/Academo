@@ -663,9 +663,11 @@ export default function AcademyDashboard() {
               filteredLessons.forEach(lesson => {
                 // Estimate distribution based on average rating
                 // This is an approximation since we don't have individual rating breakdown per lesson
-                const avgRating = Math.round(lesson.averageRating);
-                if (avgRating >= 1 && avgRating <= 5) {
-                  ratingCounts[avgRating as 1|2|3|4|5] += lesson.ratingCount;
+                if (lesson.averageRating !== null && lesson.averageRating !== undefined) {
+                  const avgRating = Math.round(lesson.averageRating);
+                  if (avgRating >= 1 && avgRating <= 5) {
+                    ratingCounts[avgRating as 1|2|3|4|5] += lesson.ratingCount;
+                  }
                 }
               });
               
