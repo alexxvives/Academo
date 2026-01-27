@@ -25,7 +25,7 @@ students.get('/progress', async (c) => {
           u.firstName,
           u.lastName,
           u.email,
-          u.lastLoginAt as lastActive,
+          COALESCE(u.lastLoginAt, u.createdAt) as lastActive,
           c.name as className,
           c.id as classId,
           COUNT(DISTINCT CASE 
@@ -58,7 +58,7 @@ students.get('/progress', async (c) => {
           u.firstName,
           u.lastName,
           u.email,
-          u.lastLoginAt as lastActive,
+          COALESCE(u.lastLoginAt, u.createdAt) as lastActive,
           c.name as className,
           c.id as classId,
           ut.firstName || ' ' || ut.lastName as teacherName,

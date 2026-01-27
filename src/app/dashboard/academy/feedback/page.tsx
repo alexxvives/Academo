@@ -144,6 +144,7 @@ export default function AcademyFeedbackPage() {
           return {
             id: c.id,
             name: c.name,
+            academyName: academyName || 'Academy One',
             teacherName: c.teacherName,
             totalRatings: totalRatings,
             averageRating: avgRating,
