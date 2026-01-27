@@ -630,35 +630,49 @@ export default function AcademyDashboard() {
           {/* Star Ratings Distribution - BOTTOM LEFT (Bar Chart) */}
           <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm h-full">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Valoraciones</h3>
-            {ratingsData && ratingsData.overall.totalRatings > 0 && ratingsData.lessons ? (
-              <>
+            {(() => {
+              if (!ratingsData || !ratingsData.lessons) {
+                return (
+                  <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+                    <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                    <p className="text-sm font-medium">Sin valoraciones</p>
+                    <p className="text-xs text-gray-400 mt-1">Las valoraciones de los estudiantes aparecerán aquí</p>
+                  </div>
+                );
+              }
+              
+              const filteredLessons = ratingsData.lessons.filter(l => selectedClass === 'all' || l.classId === selectedClass);
+              const totalRatings = filteredLessons.reduce((sum, l) => sum + l.ratingCount, 0);
+              
+              if (totalRatings === 0) {
+                return (
+                  <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+                    <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                    <p className="text-sm font-medium">Sin valoraciones</p>
+                    <p className="text-xs text-gray-400 mt-1">Las valoraciones de los estudiantes aparecerán aquí</p>
+                  </div>
+                );
+              }
+              
+              return (
                 <BarChart
-                  data={(() => {
-                    const filteredLessons = ratingsData.lessons.filter(l => selectedClass === 'all' || l.classId === selectedClass);
-                    const totalRatings = filteredLessons.reduce((sum, l) => sum + l.ratingCount, 0);
-                    // Distribution: 35% 5-star, 30% 4-star, 20% 2-star, 10% 3-star, 5% 1-star
-                    return [
-                      { label: '1★', value: Math.round(totalRatings * 0.05), color: '#ef4444' },
-                      { label: '2★', value: Math.round(totalRatings * 0.20), color: '#f97316' },
-                      { label: '3★', value: Math.round(totalRatings * 0.10), color: '#a3e635' },
-                      { label: '4★', value: Math.round(totalRatings * 0.30), color: '#84cc16' },
-                      { label: '5★', value: Math.round(totalRatings * 0.35), color: '#22c55e' },
-                    ];
-                  })()}
+                  data={[
+                    { label: '1★', value: Math.round(totalRatings * 0.05), color: '#ef4444' },
+                    { label: '2★', value: Math.round(totalRatings * 0.20), color: '#f97316' },
+                    { label: '3★', value: Math.round(totalRatings * 0.10), color: '#a3e635' },
+                    { label: '4★', value: Math.round(totalRatings * 0.30), color: '#84cc16' },
+                    { label: '5★', value: Math.round(totalRatings * 0.35), color: '#22c55e' },
+                  ]}
                 />
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-40 text-gray-400">
-                <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                </svg>
-                <p className="text-sm font-medium">Sin valoraciones</p>
-                <p className="text-xs text-gray-400 mt-1">Las valoraciones de los estudiantes aparecerán aquí</p>
-              </div>
-            )}
+              );
+            })()}
           </div>
 
-          {/* Student Status - BOTTOM RIGHT (Pie Chart) */}
+          {/* Activity Pie Chart - BOTTOM RIGHT */}
           <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm h-full flex flex-col">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Actividad</h3>
             {filteredStudents.length > 0 ? (
