@@ -15,6 +15,7 @@ interface Teacher {
 
 export default function AcademyTeachers() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
   const [academyName, setAcademyName] = useState<string>('');
   const [paymentStatus, setPaymentStatus] = useState<string>('NOT PAID');
   const [loading, setLoading] = useState(true);
@@ -22,10 +23,11 @@ export default function AcademyTeachers() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({ email: '', fullName: '', password: '' });
+  const [formData, setFormData] = useState({ email: '', fullName: '', password: '', classId: '' });
 
   useEffect(() => {
     loadTeachers();
+    loadClasses();
   }, []);
 
   const loadTeachers = async () => {
@@ -67,7 +69,17 @@ export default function AcademyTeachers() {
       setLoading(false);
     }
   };
-
+  const loadClasses = async () => {
+    try {
+      const res = await apiClient('/academies/classes');
+      const result = await res.json();
+      if (result.success && Array.isArray(result.data)) {
+        setClasses(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading classes:', error);
+    }
+  };
   const handleCreateTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.email || !formData.fullName || !formData.password) {
@@ -77,16 +89,27 @@ export default function AcademyTeachers() {
     
     setCreating(true);
     try {
+      const requestBody: any = {
+        email: formData.email,
+        fullName: formData.fullName,
+        password: formData.password,
+      };
+      
+      // Add classId if selected
+      if (formData.classId) {
+        requestBody.classId = formData.classId;
+      }
+      
       const res = await apiClient('/academies/teachers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(requestBody)
       });
       
       const result = await res.json();
       if (result.success) {
         setShowCreateModal(false);
-        setFormData({ email: '', fullName: '', password: '' });
+        setFormData({ email: '', fullName: '', password: '', classId: '' });
         loadTeachers();
       } else {
         alert(result.error || 'Error al crear profesor');
@@ -283,7 +306,7 @@ export default function AcademyTeachers() {
                   type="button"
                   onClick={() => {
                     setShowCreateModal(false);
-                    setFormData({ email: '', fullName: '', password: '' });
+                    setFormData({ email: '', fullName: '', password: '', classId: '' });
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                   disabled={creating}

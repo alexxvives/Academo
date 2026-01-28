@@ -92,7 +92,7 @@ users.post('/create-teacher', async (c) => {
       return c.json(errorResponse('Not authorized'), 403);
     }
 
-    const { email, password, firstName, lastName, academyId } = await c.req.json();
+    const { email, password, firstName, lastName, academyId, classId } = await c.req.json();
 
     if (!email || !password || !firstName || !lastName) {
       return c.json(errorResponse('All fields required'), 400);
@@ -133,10 +133,19 @@ users.post('/create-teacher', async (c) => {
       }
 
       const teacherId = crypto.randomUUID();
+      const now = new Date().toISOString();
       await c.env.DB
-        .prepare('INSERT INTO Teacher (id, userId, academyId) VALUES (?, ?, ?)')
-        .bind(teacherId, userId, academyId)
+        .prepare('INSERT INTO Teacher (id, userId, academyId, createdAt) VALUES (?, ?, ?, ?)')
+        .bind(teacherId, userId, academyId, now)
         .run();
+      
+      // If classId provided, assign teacher to class
+      if (classId) {
+        await c.env.DB
+          .prepare('UPDATE Class SET teacherId = ? WHERE id = ? AND academyId = ?')
+          .bind(userId, classId, academyId)
+          .run();
+      }
     }
 
     const user = await c.env.DB

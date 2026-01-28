@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { BarChart, DonutChart } from '@/components/Charts';
 import { apiClient } from '@/lib/api-client';
 import { useAnimatedNumber } from '@/hooks';
 import { generateDemoStudents, generateDemoStats, generateDemoStreams, generateDemoClasses, generateDemoPendingPayments, generateDemoPaymentHistory } from '@/lib/demo-data';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 interface Class {
   id: string;
@@ -497,11 +498,19 @@ export default function AcademyDashboard() {
     return classWatchTime;  // Use state value for real data
   }, [selectedClass, classWatchTime, paymentStatus]);
 
+  const loaderRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (loading && loaderRef.current) {
+      loaderRef.current.startAnimation();
+    }
+  }, [loading]);
+
   if (loading) {
     return (
       <>
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="w-6 h-6 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+          <LoaderPinwheelIcon ref={loaderRef} size={64} className="text-brand-600" />
         </div>
       </>
     );
