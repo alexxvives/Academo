@@ -514,6 +514,10 @@ academies.patch('/:id', async (c) => {
       updates.push('defaultMaxWatchTimeMultiplier = ?');
       values.push(body.defaultMaxWatchTimeMultiplier);
     }
+    if (body.logoUrl !== undefined) {
+      updates.push('logoUrl = ?');
+      values.push(body.logoUrl || null);
+    }
 
     if (updates.length === 0) {
       return c.json(errorResponse('No fields to update'), 400);

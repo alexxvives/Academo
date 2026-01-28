@@ -18,6 +18,7 @@ import {
 import { UsersIcon } from '@/components/ui/UsersIcon';
 import { BotMessageSquareIcon } from '@/components/ui/BotMessageSquareIcon';
 import { HandCoinsIcon } from '@/components/ui/HandCoinsIcon';
+import { useAcademyLogo } from '@/hooks/useAcademyLogo';
 
 interface MenuItem {
   label: string;
@@ -63,6 +64,7 @@ export function Sidebar({
   const iconRefs = useRef<{ [key: string]: any }>({});
   const logoutIconRef = useRef<any>(null);
   const linkIconRef = useRef<any>(null);
+  const { logoUrl } = useAcademyLogo();
 
   const renderIcon = (item: MenuItem) => {
     const iconType = (item as any).iconType;
@@ -105,14 +107,24 @@ export function Sidebar({
       {/* Logo */}
       <div className="flex-shrink-0 h-20 flex items-center justify-center px-4 gap-2">
         <Link href={`/dashboard/${role.toLowerCase()}`} className="flex items-center gap-2">
-          <img
-            src="/logo/AKADEMO_logo_OTHER2.svg"
-            alt="Akademo"
-            className="h-8 w-auto object-contain"
-          />
-          <span className="text-lg font-bold text-gray-400 font-[family-name:var(--font-montserrat)]">
-            AKADEMO
-          </span>
+          {logoUrl ? (
+            <img
+              src={`/api/storage/serve/${logoUrl}`}
+              alt="Academy Logo"
+              className="h-10 w-auto object-contain"
+            />
+          ) : (
+            <>
+              <img
+                src="/logo/AKADEMO_logo_OTHER2.svg"
+                alt="Akademo"
+                className="h-8 w-auto object-contain"
+              />
+              <span className="text-lg font-bold text-gray-400 font-[family-name:var(--font-montserrat)]">
+                AKADEMO
+              </span>
+            </>
+          )}
         </Link>
       </div>
 
