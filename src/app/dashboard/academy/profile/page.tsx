@@ -286,11 +286,12 @@ export default function ProfilePage() {
         throw new Error(uploadResult.error || 'Upload failed');
       }
 
-      // Update academy with logoUrl
+      // Update academy with logoUrl (use path from upload response)
+      const logoPath = uploadResult.data.path;
       const updateRes = await apiClient(`/academies/${academy.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ logoUrl: uploadResult.data.path })
+        body: JSON.stringify({ logoUrl: logoPath })
       });
 
       const updateResult = await updateRes.json();
@@ -421,10 +422,7 @@ export default function ProfilePage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Logo de la academia (SVG)
                 </label>
-                <p className="text-xs text-gray-500 mb-3">
-                  Este logo aparecerá en el menú lateral para tus profesores y estudiantes
-                </p>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 mt-3">
                   {academy.logoUrl ? (
                     <div className="w-16 h-16 bg-gray-50 border border-gray-200 rounded-lg p-2 flex items-center justify-center flex-shrink-0">
                       <img src={`/api/storage/serve/${academy.logoUrl}`} alt="Logo" className="w-full h-full object-contain" />

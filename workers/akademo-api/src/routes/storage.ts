@@ -5,6 +5,47 @@ import { successResponse, errorResponse } from '../lib/utils';
 
 const storage = new Hono<{ Bindings: Bindings }>();
 
+// POST /storage/upload - Simple file upload (for small files like logos)
+storage.post('/upload', async (c) => {
+  try {
+    const session = await requireAuth(c);
+
+    if (!['ADMIN', 'TEACHER', 'ACADEMY'].includes(session.role)) {
+      return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    const formData = await c.req.formData();
+    const file = formData.get('file') as File;
+    const path = formData.get('path') as string;
+
+    if (!file || !path) {
+      return c.json(errorResponse('file and path required'), 400);
+    }
+
+    // Read file as ArrayBuffer
+    const fileData = await file.arrayBuffer();
+
+    // Upload to R2
+    await c.env.STORAGE.put(path, fileData, {
+      httpMetadata: {
+        contentType: file.type,
+      },
+      customMetadata: {
+        originalName: file.name,
+        uploadedAt: new Date().toISOString(),
+      },
+    });
+
+    return c.json(successResponse({
+      path,
+      message: 'File uploaded successfully',
+    }));
+  } catch (error: any) {
+    console.error('[Simple Upload] Error:', error);
+    return c.json(errorResponse(error.message || 'Failed to upload file'), 500);
+  }
+});
+
 // POST /storage/multipart/init - Initialize multipart upload
 storage.post('/multipart/init', async (c) => {
   try {
