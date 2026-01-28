@@ -48,6 +48,8 @@ export default function AdminStreamsPage() {
   const [selectedAcademy, setSelectedAcademy] = useState('all');
   const [selectedClass, setSelectedClass] = useState('all');
   const [deletingStreamId, setDeletingStreamId] = useState<string | null>(null);
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
+  const [editingTitleValue, setEditingTitleValue] = useState('');
 
   useEffect(() => {
     loadData();
@@ -106,6 +108,40 @@ export default function AdminStreamsPage() {
       alert('Error al eliminar stream');
     } finally {
       setDeletingStreamId(null);
+    }
+  };
+
+  const handleEditTitle = (streamId: string, currentTitle: string) => {
+    setEditingTitleId(streamId);
+    setEditingTitleValue(currentTitle);
+  };
+
+  const handleSaveTitle = async (streamId: string) => {
+    if (!editingTitleValue.trim()) {
+      setEditingTitleId(null);
+      return;
+    }
+
+    setEditingTitleId(null);
+
+    try {
+      const response = await apiClient(`/live/${streamId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: editingTitleValue.trim() }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setStreams(streams.map(s => 
+          s.id === streamId ? { ...s, title: editingTitleValue.trim() } : s
+        ));
+      } else {
+        alert(`Error al actualizar el título: ${result.error || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      console.error('Error updating title:', error);
+      alert(`Error al actualizar el título: ${error}`);
     }
   };
 
@@ -264,7 +300,37 @@ export default function AdminStreamsPage() {
                         {stream.status === 'active' && (
                           <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                         )}
-                        <span className="font-medium text-gray-900">{stream.title}</span>
+                        {editingTitleId === stream.id ? (
+                          <input
+                            type="text"
+                            value={editingTitleValue}
+                            onChange={(e) => setEditingTitleValue(e.target.value)}
+                            onBlur={() => handleSaveTitle(stream.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleSaveTitle(stream.id);
+                              } else if (e.key === 'Escape') {
+                                setEditingTitleId(null);
+                                setEditingTitleValue('');
+                              }
+                            }}
+                            autoFocus
+                            className="px-2 py-1 border border-blue-500 rounded text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-900">{stream.title}</span>
+                            <button
+                              onClick={() => handleEditTitle(stream.id, stream.title)}
+                              className="text-gray-400 hover:text-gray-600 transition-colors"
+                              title="Editar título"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="py-4 px-4">

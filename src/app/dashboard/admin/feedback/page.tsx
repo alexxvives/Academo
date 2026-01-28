@@ -139,10 +139,7 @@ export default function AdminFeedbackPage() {
         </div>
       </div>
 
-      {/* Feedback View - removed old filters section */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-        <FeedbackView classes={filteredClasses} loading={loading} showClassFilter={false} />
-      </div>
+      <FeedbackView classes={filteredClasses} loading={loading} showClassFilter={false} />
     </div>
   );
 }
