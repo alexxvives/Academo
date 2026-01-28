@@ -1542,18 +1542,23 @@ export default function TeacherClassPage() {
                           return;
                         }
 
-                        // Copy message to clipboard, then open WhatsApp group
+                        // Send message via WhatsApp Web with pre-filled text
                         const message = `*Clase en vivo iniciando!*\n\n*${liveClasses[0].title}*\n\nUnete ahora: ${liveClasses[0].zoomLink}`;
                         
+                        // Extract group ID from invite link (https://chat.whatsapp.com/GROUP_ID)
+                        const groupId = classData.whatsappGroupLink.split('/').pop();
+                        
+                        // Use WhatsApp Web API with group chat and pre-filled text
+                        const whatsappWebUrl = `https://web.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+                        
+                        // Open in new window
+                        window.open(whatsappWebUrl, '_blank');
+                        
+                        // Also copy to clipboard as backup
                         try {
                           await navigator.clipboard.writeText(message);
-                          // Open WhatsApp group link
-                          window.open(classData.whatsappGroupLink, '_blank');
-                          // Show confirmation
-                          alert('Mensaje copiado al portapapeles. Ahora pégalo en el grupo de WhatsApp que se acaba de abrir.');
                         } catch (err) {
-                          console.error('Failed to copy message:', err);
-                          alert('No se pudo copiar el mensaje automáticamente. Copia este mensaje manualmente:\n\n' + message);
+                          console.error('Failed to copy to clipboard:', err);
                         }
                       }}
                       className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors flex items-center gap-2"
