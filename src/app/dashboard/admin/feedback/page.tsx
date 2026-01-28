@@ -205,7 +205,7 @@ export default function AdminFeedbackPage() {
       </div>
 
       {/* Feedback View */}
-      <FeedbackView classes={filteredClasses} />
+      <FeedbackView classes={filteredClasses} loading={loading} />
     </div>
   );
 }
