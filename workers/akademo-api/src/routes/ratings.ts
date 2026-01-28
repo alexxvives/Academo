@@ -10,7 +10,7 @@ ratings.get('/teacher', async (c) => {
   try {
     const session = await requireAuth(c);
 
-    if (session.role !== 'TEACHER' && session.role !== 'ACADEMY') {
+    if (session.role !== 'TEACHER' && session.role !== 'ACADEMY' && session.role !== 'ADMIN') {
       return c.json(errorResponse('Not authorized'), 403);
     }
 
@@ -37,7 +37,7 @@ ratings.get('/teacher', async (c) => {
         ORDER BY c.name, t.name, l.title, r.createdAt DESC
       `;
       params = [session.id];
-    } else {
+    } else if (session.role === 'ACADEMY') {
       // Academy owner - see all ratings for their academy's classes
       query = `
         SELECT 
@@ -59,6 +59,27 @@ ratings.get('/teacher', async (c) => {
         ORDER BY c.name, t.name, l.title, r.createdAt DESC
       `;
       params = [session.id];
+    } else {
+      // Admin - see all ratings across platform
+      query = `
+        SELECT 
+          r.id, r.rating, r.comment, r.createdAt,
+          l.id as lessonId, l.title as lessonTitle,
+          t.id as topicId, t.name as topicName,
+          c.id as classId, c.name as className,
+          a.name as academyName,
+          u.firstName as studentFirstName, u.lastName as studentLastName,
+          tu.firstName as teacherFirstName, tu.lastName as teacherLastName
+        FROM LessonRating r
+        JOIN Lesson l ON r.lessonId = l.id
+        LEFT JOIN Topic t ON l.topicId = t.id
+        JOIN Class c ON l.classId = c.id
+        JOIN Academy a ON c.academyId = a.id
+        JOIN User u ON r.studentId = u.id
+        LEFT JOIN User tu ON c.teacherId = tu.id
+        ORDER BY c.name, t.name, l.title, r.createdAt DESC
+      `;
+      params = [];
     }
 
     const result = await c.env.DB.prepare(query).bind(...params).all();
