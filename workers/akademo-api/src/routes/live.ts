@@ -24,7 +24,12 @@ live.get('/', async (c) => {
                u.firstName, u.lastName
         FROM LiveStream ls
         JOIN User u ON ls.teacherId = u.id
-        WHERE ls.classId = ? AND ls.status IN ('scheduled', 'active')
+        WHERE ls.classId = ? 
+          AND (ls.status IN ('scheduled', 'active'))
+          AND (
+            ls.status = 'active' 
+            OR (ls.status = 'scheduled' AND ls.createdAt > datetime('now', '-24 hours'))
+          )
         ORDER BY ls.createdAt DESC
       `)
       .bind(classId)
