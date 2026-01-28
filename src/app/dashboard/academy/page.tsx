@@ -343,7 +343,7 @@ export default function AcademyDashboard() {
         if (progressResult.success && Array.isArray(progressResult.data)) {
           // Load ALL enrollments in parallel
           const enrollmentResponses = await Promise.all(
-            classList.map(cls => apiClient(`/enrollments?classId=${cls.id}`).then(r => r.json()))
+            classList.map((cls: Class) => apiClient(`/enrollments?classId=${cls.id}`).then(r => r.json()))
           );
           
           // Create student map with progress data
@@ -373,7 +373,7 @@ export default function AcademyDashboard() {
         } else {
           // Fallback: Parallelize enrollment loading
           const enrollmentResponses = await Promise.all(
-            classList.map(cls => apiClient(`/enrollments?classId=${cls.id}`).then(r => r.json()))
+            classList.map((cls: Class) => apiClient(`/enrollments?classId=${cls.id}`).then(r => r.json()))
           );
           
           const allStudents: EnrolledStudent[] = [];
