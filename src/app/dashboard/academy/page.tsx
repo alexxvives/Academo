@@ -425,9 +425,19 @@ export default function AcademyDashboard() {
     if (filtered.length === 0) return { avgParticipants: 0, total: 0, totalHours: 0, totalMinutes: 0 };
     
     const totalParticipants = filtered.reduce((sum, s) => sum + (s.participantCount || 0), 0);
-    const totalDuration = filtered.reduce((sum, s) => sum + (s.duration || 0), 0);
-    const totalHours = Math.floor(totalDuration / 60);
-    const totalMinutes = totalDuration % 60;
+    
+    // Calculate duration from startedAt and endedAt timestamps
+    const totalDurationMs = filtered.reduce((sum, s) => {
+      if (s.startedAt && s.endedAt) {
+        const start = new Date(s.startedAt).getTime();
+        const end = new Date(s.endedAt).getTime();
+        return sum + (end - start);
+      }
+      return sum;
+    }, 0);
+    const totalDurationMinutes = Math.floor(totalDurationMs / (1000 * 60));
+    const totalHours = Math.floor(totalDurationMinutes / 60);
+    const totalMinutes = totalDurationMinutes % 60;
     
     return {
       avgParticipants: Math.round(totalParticipants / filtered.length),

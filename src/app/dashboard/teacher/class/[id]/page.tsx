@@ -1542,16 +1542,19 @@ export default function TeacherClassPage() {
                           return;
                         }
 
-                        // Open WhatsApp group with pre-filled message (no emojis to avoid encoding issues)
+                        // Copy message to clipboard, then open WhatsApp group
                         const message = `*Clase en vivo iniciando!*\n\n*${liveClasses[0].title}*\n\nUnete ahora: ${liveClasses[0].zoomLink}`;
-                        // Extract group ID from invite link (format: https://chat.whatsapp.com/GROUPID)
-                        const groupId = classData.whatsappGroupLink.split('/').pop();
-                        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-                        // If it's a group link, open it directly; otherwise send as message
-                        const targetUrl = classData.whatsappGroupLink.includes('chat.whatsapp.com') 
-                          ? `${classData.whatsappGroupLink}?text=${encodeURIComponent(message)}`
-                          : whatsappUrl;
-                        window.open(targetUrl, '_blank');
+                        
+                        try {
+                          await navigator.clipboard.writeText(message);
+                          // Open WhatsApp group link
+                          window.open(classData.whatsappGroupLink, '_blank');
+                          // Show confirmation
+                          alert('Mensaje copiado al portapapeles. Ahora pégalo en el grupo de WhatsApp que se acaba de abrir.');
+                        } catch (err) {
+                          console.error('Failed to copy message:', err);
+                          alert('No se pudo copiar el mensaje automáticamente. Copia este mensaje manualmente:\n\n' + message);
+                        }
                       }}
                       className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors flex items-center gap-2"
                       title="Notificar por WhatsApp"
