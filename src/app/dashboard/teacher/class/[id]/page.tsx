@@ -1570,68 +1570,32 @@ export default function TeacherClassPage() {
                       </svg>
                       <span className="text-sm font-medium">Notificar</span>
                     </button>
-                    {liveClasses[0].status === 'scheduled' ? (
-                      /* DELETE button for streams that were never started */
+                    {liveClasses[0].status === 'scheduled' && (
+                      /* Only show X button for SCHEDULED streams (before meeting starts)
+                         Once meeting becomes active, hide button to prevent accidental deletion
+                         Webhook will handle ending it automatically */
                       <button
                         onClick={async () => {
-                          if (!confirm('¿Eliminar este stream programado? El enlace de Zoom será cancelado.')) return;
+                          if (!confirm('¿Cancelar este stream? El enlace de Zoom será eliminado.')) return;
                           try {
                             const res = await apiClient(`/live/${liveClasses[0].id}`, {
                               method: 'DELETE',
                             });
                             const result = await res.json();
-                            console.log('[Delete Scheduled Stream] Response:', result);
+                            console.log('[Cancel Scheduled Stream] Response:', result);
                             if (result.success) {
                               setLiveClasses([]); // Remove from UI immediately
-                              alert('Stream eliminado exitosamente');
                             } else {
-                              console.error('[Delete Scheduled Stream] Failed:', result.error);
-                              alert(`Error: ${result.error || 'No se pudo eliminar el stream'}`);
+                              console.error('[Cancel Scheduled Stream] Failed:', result.error);
+                              alert(`Error: ${result.error || 'No se pudo cancelar el stream'}`);
                             }
                           } catch (error) {
-                            console.error('[Delete Scheduled Stream] Exception:', error);
-                            alert('Error de conexión al eliminar el stream');
+                            console.error('[Cancel Scheduled Stream] Exception:', error);
+                            alert('Error de conexión al cancelar el stream');
                           }
                         }}
-                        className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
-                        title="Eliminar stream programado"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    ) : (
-                      /* TERMINATE button for active streams */
-                      <button
-                        onClick={async () => {
-                          if (!confirm('¿Terminar este stream? Los estudiantes ya no podrán unirse.')) return;
-                          try {
-                            console.log('[Terminate Stream] Sending PATCH to end stream:', liveClasses[0].id);
-                            const res = await apiClient(`/live/${liveClasses[0].id}`, {
-                              method: 'PATCH',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ 
-                                status: 'ended'
-                              }),
-                            });
-                            const result = await res.json();
-                            console.log('[Terminate Stream] Response:', { status: res.status, ok: res.ok, result });
-                            
-                            if (res.ok && result.success) {
-                              console.log('[Terminate Stream] ✅ Successfully ended');
-                              setLiveClasses([]); // Remove from UI immediately
-                              alert('Stream terminado exitosamente');
-                            } else {
-                              console.error('[Terminate Stream] ❌ Failed:', result.error);
-                              alert(`Error: ${result.error || 'No se pudo terminar el stream'}`);
-                            }
-                          } catch (error) {
-                            console.error('[Terminate Stream] Exception:', error);
-                            alert('Error de conexión al terminar el stream');
-                          }
-                        }}
-                        className="p-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors"
-                        title="Terminar stream"
+                        className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                        title="Cancelar stream"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

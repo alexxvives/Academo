@@ -252,8 +252,8 @@ export default function AcademyDashboard() {
           setAllStreams(demoStreams);
           
           // Calculate stream stats from demo data
-          const streamsWithParticipants = demoStreams.filter((s: any) => s.participantCount && s.participantCount > 0);
-          const totalParticipants = streamsWithParticipants.reduce((sum: number, s: any) => sum + s.participantCount, 0);
+          const streamsWithParticipants = demoStreams.filter((s: any) => s.participantCount !== null && s.participantCount !== undefined);
+          const totalParticipants = streamsWithParticipants.reduce((sum: number, s: any) => sum + (s.participantCount || 0), 0);
           
           const totalDurationMs = demoStreams.reduce((sum: number, s: any) => {
             if (s.startedAt && s.endedAt) {
@@ -291,9 +291,9 @@ export default function AcademyDashboard() {
         const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const thisMonthStreams = streams.filter((s: any) => new Date(s.createdAt) >= thisMonthStart);
         
-        // Exclude streams with 0 or null participants from attendance calculation
-        const streamsWithParticipants = streams.filter((s: any) => s.participantCount && s.participantCount > 0);
-        const totalParticipants = streamsWithParticipants.reduce((sum: number, s: any) => sum + s.participantCount, 0);
+        // Only count streams that have participant data (not null)
+        const streamsWithParticipants = streams.filter((s: any) => s.participantCount !== null && s.participantCount !== undefined);
+        const totalParticipants = streamsWithParticipants.reduce((sum: number, s: any) => sum + (s.participantCount || 0), 0);
         
         // Calculate duration from startedAt and endedAt timestamps
         const totalDurationMs = streams.reduce((sum: number, s: any) => {
