@@ -350,7 +350,7 @@ export default function AcademyDashboard() {
           const allStudents: EnrolledStudent[] = [];
           progressResult.data.forEach((student: any) => {
             // Find which classes this student is in
-            classList.forEach((cls, idx) => {
+            classList.forEach((cls: Class, idx: number) => {
               const enrollData = enrollmentResponses[idx];
               if (enrollData.success && Array.isArray(enrollData.data)) {
                 const studentInClass = enrollData.data.find((e: any) => e.student.id === student.id);
@@ -377,7 +377,7 @@ export default function AcademyDashboard() {
           );
           
           const allStudents: EnrolledStudent[] = [];
-          classList.forEach((cls, idx) => {
+          classList.forEach((cls: Class, idx: number) => {
             const enrollData = enrollmentResponses[idx];
             if (enrollData.success && Array.isArray(enrollData.data)) {
               const studentsInClass = enrollData.data.map((e: any) => ({
