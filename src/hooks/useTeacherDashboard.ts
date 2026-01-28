@@ -122,14 +122,16 @@ export function useTeacherDashboard() {
         const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const thisMonthStreams = streams.filter((s: any) => new Date(s.createdAt) >= thisMonthStart);
         
-        const totalParticipants = streams.reduce((sum: number, s: any) => sum + (s.participantCount || 0), 0);
+        // Exclude streams with 0 or null participants from attendance calculation
+        const streamsWithParticipants = streams.filter((s: any) => s.participantCount && s.participantCount > 0);
+        const totalParticipants = streamsWithParticipants.reduce((sum: number, s: any) => sum + s.participantCount, 0);
         const totalDuration = streams.reduce((sum: number, s: any) => sum + (s.durationMinutes || 0), 0);
         const totalHours = Math.floor(totalDuration / 60);
         const totalMinutes = totalDuration % 60;
         
         setStreamStats({
           total: streams.length,
-          avgParticipants: streams.length > 0 ? Math.round(totalParticipants / streams.length) : 0,
+          avgParticipants: streamsWithParticipants.length > 0 ? Math.round(totalParticipants / streamsWithParticipants.length) : 0,
           thisMonth: thisMonthStreams.length,
           totalHours: totalHours,
           totalMinutes: totalMinutes,
