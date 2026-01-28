@@ -1542,23 +1542,24 @@ export default function TeacherClassPage() {
                           return;
                         }
 
-                        // Send message via WhatsApp Web with pre-filled text
+                        // Create message
                         const message = `*Clase en vivo iniciando!*\n\n*${liveClasses[0].title}*\n\nUnete ahora: ${liveClasses[0].zoomLink}`;
                         
-                        // Extract group ID from invite link (https://chat.whatsapp.com/GROUP_ID)
-                        const groupId = classData.whatsappGroupLink.split('/').pop();
-                        
-                        // Use WhatsApp Web API with group chat and pre-filled text
-                        const whatsappWebUrl = `https://web.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-                        
-                        // Open in new window
-                        window.open(whatsappWebUrl, '_blank');
-                        
-                        // Also copy to clipboard as backup
+                        // Copy to clipboard first
                         try {
                           await navigator.clipboard.writeText(message);
+                          // Open WhatsApp group
+                          window.open(classData.whatsappGroupLink, '_blank');
+                          // Show simple confirmation toast
+                          const toast = document.createElement('div');
+                          toast.textContent = '✓ Mensaje copiado - Pégalo en el grupo';
+                          toast.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#25D366;color:white;padding:12px 24px;border-radius:8px;font-weight:500;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
+                          document.body.appendChild(toast);
+                          setTimeout(() => toast.remove(), 3000);
                         } catch (err) {
-                          console.error('Failed to copy to clipboard:', err);
+                          console.error('Failed to copy:', err);
+                          alert('Copia este mensaje y envíalo al grupo:\n\n' + message);
+                          window.open(classData.whatsappGroupLink, '_blank');
                         }
                       }}
                       className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors flex items-center gap-2"
