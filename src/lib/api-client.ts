@@ -35,7 +35,8 @@ export async function apiClient(
     ...fetchOptions,
     credentials: skipCredentials ? 'omit' : 'include', // Include cookies for auth
     headers: {
-      'Content-Type': 'application/json',
+      // Don't set Content-Type for FormData (it sets its own with boundary)
+      ...(fetchOptions.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...fetchOptions.headers,
     },
