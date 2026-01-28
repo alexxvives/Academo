@@ -177,105 +177,53 @@ export default function AdminStreamsPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Streams</h1>
-        <p className="text-gray-600">Gestiona todos los streams de la plataforma</p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Total Streams</p>
-              <p className="text-3xl font-bold text-gray-900">{streamStats.total}</p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-            </div>
-          </div>
+    <div className="space-y-6">
+      {/* Header with inline filters */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Historial de Streams</h1>
+          <p className="text-gray-600 text-sm mt-1">Todas las academias</p>
         </div>
-
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Participantes Promedio</p>
-              <p className="text-3xl font-bold text-gray-900">{streamStats.avgParticipants}</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Academias Activas</p>
-              <p className="text-3xl font-bold text-gray-900">{academies.length}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-xl border-2 border-gray-200 p-6 mb-6 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Academia</label>
-            <select
-              value={selectedAcademy}
-              onChange={(e) => {
-                setSelectedAcademy(e.target.value);
-                setSelectedClass('all');
-              }}
-              className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-            >
-              <option value="all">Todas las academias</option>
-              {academies.map(academy => (
-                <option key={academy.id} value={academy.id}>{academy.name}</option>
-              ))}
-            </select>
-          </div>
+        
+        <div className="flex gap-3">
+          <select
+            value={selectedAcademy}
+            onChange={(e) => {
+              setSelectedAcademy(e.target.value);
+              setSelectedClass('all');
+            }}
+            className="appearance-none w-56 pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          >
+            <option value="all">Todas las academias</option>
+            {academies.map(academy => (
+              <option key={academy.id} value={academy.id}>{academy.name}</option>
+            ))}
+          </select>
           
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Clase</label>
-            <select
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-              disabled={selectedAcademy === 'all' && classes.length === 0}
-            >
-              <option value="all">Todas las clases</option>
-              {filteredClasses.map(cls => (
-                <option key={cls.id} value={cls.id}>{cls.name}</option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+            className="appearance-none w-56 pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          >
+            <option value="all">Todas las clases</option>
+            {filteredClasses.map(cls => (
+              <option key={cls.id} value={cls.id}>{cls.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Streams Table */}
-      <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
+      {/* Removed stats cards - directly to table */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <div className="overflow-x-auto max-h-[750px] overflow-y-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b-2 border-gray-200">
+            <thead className="bg-gray-50/50 border-b border-gray-200">
               <tr>
-                <th className="py-4 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Título</th>
-                <th className="py-4 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Academia</th>
-                <th className="py-4 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Clase</th>
-                <th className="py-4 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Profesor</th>
-                <th className="py-4 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
+                <th className="text-left py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Título</th>
+                <th className="text-left py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Academia</th>
+                <th className="text-left py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Clase</th>
+                <th className="text-left py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Profesor</th>
+                <th className="text-left py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
                 <th className="py-4 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Participantes</th>
                 <th className="py-4 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Fecha</th>
                 <th className="py-4 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Duración</th>
