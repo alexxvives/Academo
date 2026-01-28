@@ -57,35 +57,44 @@ admin.get('/payments', async (c) => {
       return c.json(errorResponse('Forbidden'), 403);
     }
 
-    const type = c.req.query('type'); // 'STUDENT_TO_ACADEMY' or 'ACADEMY_TO_PLATFORM'
+    const type = c.req.query('type'); // Filter by type (not used for enrollments)
     
-    let query = `
+    // Query ClassEnrollment for payment data
+    const query = `
       SELECT 
-        p.*,
+        ce.id,
+        'STUDENT_TO_ACADEMY' as type,
+        ce.userId as payerId,
+        'STUDENT' as payerType,
+        u.firstName || ' ' || u.lastName as payerName,
+        u.email as payerEmail,
+        a.id as receiverId,
+        a.name as receiverName,
+        a.name as academyName,
+        c.name as className,
+        ce.paymentAmount as amount,
+        'EUR' as currency,
         CASE 
-          WHEN p.type = 'STUDENT_TO_ACADEMY' THEN a.name
-          ELSE NULL
-        END as academyName,
-        CASE 
-          WHEN p.type = 'STUDENT_TO_ACADEMY' THEN c.name
-          ELSE NULL
-        END as className
-      FROM Payment p
-      LEFT JOIN Academy a ON p.receiverId = a.id AND p.type = 'STUDENT_TO_ACADEMY'
-      LEFT JOIN Class c ON p.classId = c.id
+          WHEN ce.paymentStatus = 'PAID' THEN 'COMPLETED'
+          WHEN ce.paymentStatus = 'BIZUM_PENDING' OR ce.paymentStatus = 'CASH_PENDING' THEN 'PENDING'
+          ELSE 'PENDING'
+        END as status,
+        NULL as stripePaymentId,
+        ce.paymentMethod as paymentMethod,
+        'Pago de matrícula para ' || c.name as description,
+        ce.enrolledAt as createdAt,
+        ce.approvedAt as completedAt
+      FROM ClassEnrollment ce
+      JOIN User u ON ce.userId = u.id
+      JOIN Class c ON ce.classId = c.id
+      JOIN Academy a ON c.academyId = a.id
+      WHERE ce.paymentAmount > 0
+      ORDER BY ce.enrolledAt DESC
     `;
     
-    if (type) {
-      query += ` WHERE p.type = ?`;
-    }
+    const result = await c.env.DB.prepare(query).all();
     
-    query += ` ORDER BY p.createdAt DESC`;
-    
-    const result = type 
-      ? await c.env.DB.prepare(query).bind(type).all()
-      : await c.env.DB.prepare(query).all();
-    
-    console.log('[Admin Payments] Found', result.results?.length || 0, 'payments');
+    console.log('[Admin Payments] Found', result.results?.length || 0, 'payments from enrollments');
     
     return c.json(successResponse(result.results || []));
   } catch (error: any) {
