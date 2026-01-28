@@ -24,7 +24,7 @@ ratings.get('/teacher', async (c) => {
           r.id, r.rating, r.comment, r.createdAt,
           l.id as lessonId, l.title as lessonTitle,
           t.id as topicId, t.name as topicName,
-          c.id as classId, c.name as className,
+          c.id as classId, c.name as className, c.academyId,
           a.name as academyName,
           u.firstName as studentFirstName, u.lastName as studentLastName
         FROM LessonRating r
@@ -44,7 +44,7 @@ ratings.get('/teacher', async (c) => {
           r.id, r.rating, r.comment, r.createdAt,
           l.id as lessonId, l.title as lessonTitle,
           t.id as topicId, t.name as topicName,
-          c.id as classId, c.name as className,
+          c.id as classId, c.name as className, c.academyId,
           a.name as academyName,
           u.firstName as studentFirstName, u.lastName as studentLastName,
           tu.firstName as teacherFirstName, tu.lastName as teacherLastName
@@ -66,7 +66,7 @@ ratings.get('/teacher', async (c) => {
           r.id, r.rating, r.comment, r.createdAt,
           l.id as lessonId, l.title as lessonTitle,
           t.id as topicId, t.name as topicName,
-          c.id as classId, c.name as className,
+          c.id as classId, c.name as className, c.academyId,
           a.name as academyName,
           u.firstName as studentFirstName, u.lastName as studentLastName,
           tu.firstName as teacherFirstName, tu.lastName as teacherLastName
@@ -98,6 +98,7 @@ ratings.get('/teacher', async (c) => {
         classesMap[classId] = {
           id: classId,
           name: r.className,
+          academyId: r.academyId,
           academyName: r.academyName,
           teacherName: r.teacherFirstName && r.teacherLastName 
             ? `${r.teacherFirstName} ${r.teacherLastName}`
