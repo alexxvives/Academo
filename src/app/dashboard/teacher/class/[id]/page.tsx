@@ -173,7 +173,10 @@ export default function TeacherClassPage() {
       }
     };
 
-    // Poll every 10 seconds
+    // Call immediately on mount/classData change
+    pollLiveStreams();
+    
+    // Then poll every 10 seconds
     const interval = setInterval(pollLiveStreams, 10000);
     return () => clearInterval(interval);
   }, [classData?.id]);
