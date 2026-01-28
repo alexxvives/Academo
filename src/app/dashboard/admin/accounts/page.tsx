@@ -156,8 +156,7 @@ export default function AccountsPage() {
       const result = await res.json();
 
       if (result.success) {
-        alert(`Cuenta de ${user.firstName} ${user.lastName} eliminada exitosamente.`);
-        // Reload users
+        // Reload users silently without alert
         await loadUsers();
       } else {
         alert(`Error: ${result.error || 'Error desconocido'}`);
