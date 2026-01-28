@@ -92,7 +92,7 @@ export function useTeacherDashboard() {
 
   const loadData = useCallback(async () => {
     try {
-      const [membershipsRes, academiesRes, classesRes, pendingRes, ratingsRes, rejectedRes, streamsRes] = await Promise.all([
+      const [membershipsRes, academiesRes, classesRes, pendingRes, ratingsRes, rejectedRes, streamsRes, progressRes] = await Promise.all([
         apiClient('/requests/teacher'),
         apiClient('/explore/academies'),
         apiClient('/classes'),
@@ -100,9 +100,10 @@ export function useTeacherDashboard() {
         apiClient('/ratings'),
         apiClient('/enrollments/rejected'),
         apiClient('/live/history'),
+        apiClient('/students/progress'), // Load student progress in parallel
       ]);
 
-      const [membershipsResult, academiesResult, classesResult, pendingResult, ratingsResult, rejectedResult, streamsResult] = await Promise.all([
+      const [membershipsResult, academiesResult, classesResult, pendingResult, ratingsResult, rejectedResult, streamsResult, progressResult] = await Promise.all([
         membershipsRes.json(),
         academiesRes.json(),
         classesRes.json(),
@@ -110,6 +111,7 @@ export function useTeacherDashboard() {
         ratingsRes.json(),
         rejectedRes.json(),
         streamsRes.json(),
+        progressRes.json(),
       ]);
 
       if (rejectedResult.success && rejectedResult.data) {
@@ -148,10 +150,7 @@ export function useTeacherDashboard() {
         });
       }
 
-      // Calculate total class watch time
-      // Need to fetch student progress data
-      const progressRes = await apiClient('/students/progress');
-      const progressResult = await progressRes.json();
+      // Calculate total class watch time from progress data (already fetched in parallel)
       if (progressResult.success && Array.isArray(progressResult.data)) {
         const totalSeconds = progressResult.data.reduce((sum: number, student: any) => sum + (student.totalWatchTime || 0), 0);
         const totalMinutes = Math.floor(totalSeconds / 60);
