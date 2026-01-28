@@ -88,19 +88,11 @@ export default function AdminFacturas() {
     );
   };
 
-  const getTypeBadge = (type: string) => {
+  const getTypeLabel = (type: string) => {
     if (type === 'STUDENT_TO_ACADEMY') {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          Estudiante → Academia
-        </span>
-      );
+      return 'ESTUDIANTE → ACADEMIA';
     }
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-        Academia → AKADEMO
-      </span>
-    );
+    return 'ACADEMIA → AKADEMO';
   };
 
   if (loading) {
@@ -110,29 +102,6 @@ export default function AdminFacturas() {
       </div>
     );
   }
-
-  const handleFilterChange = (newFilter: typeof filter) => {
-    setFilter(newFilter);
-  };
-
-  const isFilterActive = (filterValue: typeof filter) => filter === filterValue;
-
-  const getFilterButtonClass = (filterValue: typeof filter) => {
-    const baseClass = 'px-4 py-2 rounded-lg text-sm font-medium transition-colors';
-    if (filterValue === 'ALL') {
-      return isFilterActive(filterValue) 
-        ? `${baseClass} bg-gray-900 text-white`
-        : `${baseClass} bg-gray-100 text-gray-700 hover:bg-gray-200`;
-    } else if (filterValue === 'STUDENT_TO_ACADEMY') {
-      return isFilterActive(filterValue)
-        ? `${baseClass} bg-blue-600 text-white`
-        : `${baseClass} bg-blue-100 text-blue-700 hover:bg-blue-200`;
-    } else {
-      return isFilterActive(filterValue)
-        ? `${baseClass} bg-purple-600 text-white`
-        : `${baseClass} bg-purple-100 text-purple-700 hover:bg-purple-200`;
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -145,24 +114,22 @@ export default function AdminFacturas() {
         
         {/* Filters in top-right */}
         <div className="flex gap-3">
-          <button
-            onClick={() => handleFilterChange('ALL')}
-            className={getFilterButtonClass('ALL')}
-          >
-            Todos ({payments.length})
-          </button>
-          <button
-            onClick={() => handleFilterChange('STUDENT_TO_ACADEMY')}
-            className={getFilterButtonClass('STUDENT_TO_ACADEMY')}
-          >
-            Estudiante → Academia
-          </button>
-          <button
-            onClick={() => handleFilterChange('ACADEMY_TO_PLATFORM')}
-            className={getFilterButtonClass('ACADEMY_TO_PLATFORM')}
-          >
-            Academia → AKADEMO
-          </button>
+          <div className="relative">
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as typeof filter)}
+              className="appearance-none w-64 pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              <option value="ALL">Todos ({payments.length})</option>
+              <option value="STUDENT_TO_ACADEMY">Estudiante → Academia</option>
+              <option value="ACADEMY_TO_PLATFORM">Academia → AKADEMO</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -210,7 +177,9 @@ export default function AdminFacturas() {
                 {payments.map((payment) => (
                   <tr key={payment.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getTypeBadge(payment.type)}
+                      <span className="text-sm font-medium text-gray-900">
+                        {getTypeLabel(payment.type)}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <div>

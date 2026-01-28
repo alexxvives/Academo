@@ -120,9 +120,10 @@ export default function AdminClassesPage() {
       ) : (
         <div className="space-y-4">
           {filteredClasses.map((cls) => (
-            <div
+            <Link
               key={cls.id}
-              className="block bg-white rounded-xl border-2 border-gray-200 hover:border-brand-400 hover:shadow-xl transition-all p-6 group"
+              href={`/dashboard/admin/class/${cls.id}`}
+              className="block bg-white rounded-xl border-2 border-gray-200 hover:border-brand-400 hover:shadow-xl transition-all p-6 group cursor-pointer"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -192,7 +193,7 @@ export default function AdminClassesPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
