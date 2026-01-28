@@ -247,6 +247,34 @@ export default function AcademyDashboard() {
           // Count rejected from payment history
           const rejectedCount = demoHistoryPayments.filter(p => p.paymentStatus === 'REJECTED').length;
           setRejectedCount(rejectedCount); // 2 rejected
+          
+          // Set demo streams data
+          setAllStreams(demoStreams);
+          
+          // Calculate stream stats from demo data
+          const streamsWithParticipants = demoStreams.filter((s: any) => s.participantCount && s.participantCount > 0);
+          const totalParticipants = streamsWithParticipants.reduce((sum: number, s: any) => sum + s.participantCount, 0);
+          
+          const totalDurationMs = demoStreams.reduce((sum: number, s: any) => {
+            if (s.startedAt && s.endedAt) {
+              const start = new Date(s.startedAt).getTime();
+              const end = new Date(s.endedAt).getTime();
+              return sum + (end - start);
+            }
+            return sum;
+          }, 0);
+          const totalDuration = Math.floor(totalDurationMs / (1000 * 60));
+          const totalHours = Math.floor(totalDuration / 60);
+          const totalMinutes = totalDuration % 60;
+          
+          setStreamStats({
+            total: demoStreams.length,
+            avgParticipants: streamsWithParticipants.length > 0 ? Math.round(totalParticipants / streamsWithParticipants.length) : 0,
+            thisMonth: demoStreams.length, // All demo streams count as "this month"
+            totalHours,
+            totalMinutes,
+          });
+          
           setLoading(false);
           return;
         }
