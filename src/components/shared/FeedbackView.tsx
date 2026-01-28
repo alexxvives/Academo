@@ -31,6 +31,7 @@ export interface Topic {
 export interface ClassFeedback {
   id: string;
   name: string;
+  academyId?: string;
   academyName?: string;
   teacherName?: string;
   totalRatings: number;
