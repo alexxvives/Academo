@@ -233,6 +233,8 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
           <div className="relative">
             <input
               type="text"
+              id="student-search"
+              name="studentSearch"
               placeholder="Buscar estudiante..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -246,6 +248,8 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
           {(role !== 'ADMIN' || selectedAcademy !== 'all') && (
             <div className="relative">
               <select
+                id="class-filter"
+                name="classFilter"
                 value={selectedClass}
                 onChange={(e) => setSelectedClass(e.target.value)}
                 className="appearance-none w-48 pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
@@ -266,6 +270,8 @@ export function StudentsProgressPage({ role }: StudentsProgressPageProps) {
           {role === 'ADMIN' && academies.length > 0 && (
             <div className="relative">
               <select
+                id="academy-filter"
+                name="academyFilter"
                 value={selectedAcademy}
                 onChange={(e) => setSelectedAcademy(e.target.value)}
                 className="appearance-none w-56 pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"

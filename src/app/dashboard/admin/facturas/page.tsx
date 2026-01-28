@@ -111,79 +111,55 @@ export default function AdminFacturas() {
     );
   }
 
+  const handleFilterChange = (newFilter: typeof filter) => {
+    setFilter(newFilter);
+  };
+
+  const isFilterActive = (filterValue: typeof filter) => filter === filterValue;
+
+  const getFilterButtonClass = (filterValue: typeof filter) => {
+    const baseClass = 'px-4 py-2 rounded-lg text-sm font-medium transition-colors';
+    if (filterValue === 'ALL') {
+      return isFilterActive(filterValue) 
+        ? `${baseClass} bg-gray-900 text-white`
+        : `${baseClass} bg-gray-100 text-gray-700 hover:bg-gray-200`;
+    } else if (filterValue === 'STUDENT_TO_ACADEMY') {
+      return isFilterActive(filterValue)
+        ? `${baseClass} bg-blue-600 text-white`
+        : `${baseClass} bg-blue-100 text-blue-700 hover:bg-blue-200`;
+    } else {
+      return isFilterActive(filterValue)
+        ? `${baseClass} bg-purple-600 text-white`
+        : `${baseClass} bg-purple-100 text-purple-700 hover:bg-purple-200`;
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header with Filters */}
+      <div className="flex items-center justify-between gap-4 border-b border-gray-100">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Facturas y Pagos</h1>
-          <p className="text-sm text-gray-500 mt-1">AKADEMO PLATFORM</p>
+          <p className="text-sm text-gray-500 mt-1">Historial de pagos y transacciones</p>
         </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-600">Total Recaudado</span>
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div className="text-3xl font-bold text-gray-900">{formatAmount(totalAmount)}</div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-600">De Estudiantes</span>
-            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-          </div>
-          <div className="text-3xl font-bold text-gray-900">{formatAmount(studentPaymentsTotal)}</div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-600">De Academias</span>
-            <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
-          <div className="text-3xl font-bold text-gray-900">{formatAmount(academyPaymentsTotal)}</div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex gap-2">
+        
+        {/* Filters in top-right */}
+        <div className="flex gap-3">
           <button
-            onClick={() => setFilter('ALL')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'ALL'
-                ? 'bg-gray-900 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            onClick={() => handleFilterChange('ALL')}
+            className={getFilterButtonClass('ALL')}
           >
             Todos ({payments.length})
           </button>
           <button
-            onClick={() => setFilter('STUDENT_TO_ACADEMY')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'STUDENT_TO_ACADEMY'
-                ? 'bg-blue-600 text-white'
-                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-            }`}
+            onClick={() => handleFilterChange('STUDENT_TO_ACADEMY')}
+            className={getFilterButtonClass('STUDENT_TO_ACADEMY')}
           >
             Estudiante → Academia
           </button>
           <button
-            onClick={() => setFilter('ACADEMY_TO_PLATFORM')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              filter === 'ACADEMY_TO_PLATFORM'
-                ? 'bg-purple-600 text-white'
-                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-            }`}
+            onClick={() => handleFilterChange('ACADEMY_TO_PLATFORM')}
+            className={getFilterButtonClass('ACADEMY_TO_PLATFORM')}
           >
             Academia → AKADEMO
           </button>
