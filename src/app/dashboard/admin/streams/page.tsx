@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { StreamsHeader } from '@/app/dashboard/teacher/streams/components/StreamsHeader';
 import { StreamsTable } from '@/app/dashboard/teacher/streams/components/StreamsTable';
