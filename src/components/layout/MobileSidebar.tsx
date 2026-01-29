@@ -122,7 +122,7 @@ export function MobileSidebar({
                   <span className="ml-auto w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
                 )}
                 {!hasLiveStream && item.badge !== undefined && item.badge > 0 && (
-                  <span className={`ml-auto ${item.badgeColor || 'bg-green-500'} text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm`}>
+                  <span className={`ml-auto ${item.badgeColor || 'bg-[#b2e788]'} text-[#1a1c29] text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm`}>
                     {item.badge}
                   </span>
                 )}

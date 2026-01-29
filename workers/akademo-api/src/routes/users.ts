@@ -218,6 +218,72 @@ users.delete('/teacher/:id', async (c) => {
   }
 });
 
+// PATCH /users/teacher/:id - Update teacher info (Academy only)
+users.patch('/teacher/:id', async (c) => {
+  try {
+    const session = await requireAuth(c);
+    
+    if (session.role !== 'ACADEMY') {
+      return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    const teacherId = c.req.param('id');
+    const { fullName, email, classId } = await c.req.json();
+
+    // Verify teacher belongs to this academy
+    const teacher: any = await c.env.DB
+      .prepare(`
+        SELECT t.id, t.userId, t.academyId, a.ownerId
+        FROM Teacher t
+        JOIN Academy a ON t.academyId = a.id
+        WHERE t.userId = ?
+      `)
+      .bind(teacherId)
+      .first();
+
+    if (!teacher) {
+      return c.json(errorResponse('Teacher not found'), 404);
+    }
+
+    if (teacher.ownerId !== session.id) {
+      return c.json(errorResponse('Not authorized to update this teacher'), 403);
+    }
+
+    // Split fullName into firstName and lastName
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || nameParts[0];
+
+    // Update user info
+    await c.env.DB
+      .prepare('UPDATE User SET firstName = ?, lastName = ?, email = ? WHERE id = ?')
+      .bind(firstName, lastName, email.toLowerCase(), teacherId)
+      .run();
+
+    // Update class assignment if provided
+    if (classId) {
+      // First, unassign from all classes
+      await c.env.DB
+        .prepare('UPDATE Class SET teacherId = NULL WHERE teacherId = ? AND academyId = ?')
+        .bind(teacherId, teacher.academyId)
+        .run();
+      
+      // Then assign to new class
+      await c.env.DB
+        .prepare('UPDATE Class SET teacherId = ? WHERE id = ? AND academyId = ?')
+        .bind(teacherId, classId, teacher.academyId)
+        .run();
+    }
+
+    console.log(`[Update Teacher] Successfully updated teacher ${teacherId} by academy owner ${session.id}`);
+
+    return c.json(successResponse({ message: 'Teacher updated successfully' }));
+  } catch (error: any) {
+    console.error('[Update Teacher] Error:', error);
+    return c.json(errorResponse(error.message || 'Failed to update teacher'), 500);
+  }
+});
+
 // DELETE /users/delete-account - Delete user account
 users.delete('/delete-account', async (c) => {
   try {

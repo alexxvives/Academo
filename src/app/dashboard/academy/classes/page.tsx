@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { generateDemoClasses, generateDemoTeachers } from '@/lib/demo-data';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 interface Teacher {
   id: string;
@@ -49,6 +50,13 @@ export default function AcademyClassesPage() {
   const [formData, setFormData] = useState({ name: '', description: '', teacherId: '', price: '', zoomAccountId: '', whatsappGroupLink: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const loaderRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
 
   useEffect(() => {
     loadData();
@@ -261,9 +269,8 @@ export default function AcademyClassesPage() {
 
 
         {loading ? (
-          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
-            <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando clases...</p>
+          <div className="flex items-center justify-center min-h-[400px]">
+            <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
           </div>
         ) : classes.length === 0 ? (
           <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
