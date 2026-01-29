@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense, useRef } from 'react';
-import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
+import { SkeletonForm } from '@/components/ui/SkeletonLoader';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
@@ -16,13 +16,6 @@ function VerifyEmailContent() {
   const [error, setError] = useState<string | null>(null);
   const [registrationData, setRegistrationData] = useState<any>(null);
   const [returnUrl, setReturnUrl] = useState<string | null>(null);
-  const loaderRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (loading) {
-      loaderRef.current?.startAnimation();
-    }
-  }, [loading]);
 
   // Extract teacherId from returnUrl (e.g., /join/teacher1 -> teacher1)
   const getJoinUrl = () => {

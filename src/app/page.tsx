@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense, useRef } from 'react';
 import AuthModal from '@/components/AuthModal';
-import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
+import { SkeletonForm } from '@/components/ui/SkeletonLoader';
 import { Navbar } from '@/components/landing/Navbar';
 import { Hero } from '@/components/landing/Hero';
 import { WhySection } from '@/components/landing/WhySection';
@@ -89,15 +89,9 @@ function HomePageContent() {
 }
 
 function LoadingFallback() {
-  const loaderRef = useRef<any>(null);
-
-  useEffect(() => {
-    loaderRef.current?.startAnimation();
-  }, []);
-
   return (
     <div className="min-h-screen bg-white flex items-center justify-center">
-      <LoaderPinwheelIcon ref={loaderRef} size={24} className="text-blue-600" />
+      <SkeletonForm />
     </div>
   );
 }

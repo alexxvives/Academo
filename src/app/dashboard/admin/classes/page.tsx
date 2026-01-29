@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
-import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
+import { SkeletonList } from '@/components/ui/SkeletonLoader';
 
 interface Class {
   id: string;
@@ -35,13 +35,6 @@ export default function AdminClassesPage() {
   const [academies, setAcademies] = useState<Academy[]>([]);
   const [selectedAcademy, setSelectedAcademy] = useState<string>('all');
   const [loading, setLoading] = useState(true);
-  const loaderRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (loading) {
-      loaderRef.current?.startAnimation();
-    }
-  }, [loading]);
 
   useEffect(() => {
     loadData();
@@ -109,10 +102,7 @@ export default function AdminClassesPage() {
       </div>
 
       {loading ? (
-        <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
-          <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black mx-auto mb-4" />
-          <p className="text-gray-600">Cargando clases...</p>
-        </div>
+        <SkeletonList />
       ) : filteredClasses.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
           <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

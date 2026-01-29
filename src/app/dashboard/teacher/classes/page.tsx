@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
-import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
+import { SkeletonClasses } from '@/components/ui/SkeletonLoader';
 
 interface Class {
   id: string;
@@ -28,22 +28,14 @@ interface LessonFeedback {
 }
 
 export default function TeacherClasses() {
-  const loaderRef = useRef<any>(null);
   const feedbackLoaderRef = useRef<any>(null);
 
   const [classes, setClasses] = useState<Class[]>([]);
-  const [academyName, setAcademyName] = useState<string>('');
-  const [loading, setLoading] = useState(true);
+  const [academyName, setAcademyName] = useState<string>('');  const [loading, setLoading] = useState(true);
   const [openFeedbackDropdown, setOpenFeedbackDropdown] = useState<string | null>(null);
   const [feedbackComments, setFeedbackComments] = useState<Array<{ id: string; rating: number; comment: string; lessonTitle: string; topicName: string; createdAt: string }>>([]);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
   const [ratingsData, setRatingsData] = useState<{ overall: any, lessons: any[] } | null>(null);
-
-  useEffect(() => {
-    if (loading) {
-      loaderRef.current?.startAnimation();
-    }
-  }, [loading]);
 
   useEffect(() => {
     if (loadingFeedback) {
@@ -123,13 +115,7 @@ export default function TeacherClasses() {
   };
 
   if (loading) {
-    return (
-      <>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
-        </div>
-      </>
-    );
+    return <SkeletonClasses />;
   }
 
   return (

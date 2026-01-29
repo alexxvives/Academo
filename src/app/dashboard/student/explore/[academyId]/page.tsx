@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
-import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
+import { SkeletonClasses } from '@/components/ui/SkeletonLoader';
 
 interface Academy {
   id: string;
@@ -29,18 +29,11 @@ export default function AcademyClassesPage() {
   const params = useParams();
   const router = useRouter();
   const academyId = params.academyId as string;
-  const loaderRef = useRef<any>(null);
   
   const [academy, setAcademy] = useState<Academy | null>(null);
   const [classes, setClasses] = useState<AcademyClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (loading) {
-      loaderRef.current?.startAnimation();
-    }
-  }, [loading]);
 
   useEffect(() => {
     loadData();
@@ -98,11 +91,7 @@ export default function AcademyClassesPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
-      </div>
-    );
+    return <SkeletonClasses />;
   }
 
   if (!academy) {

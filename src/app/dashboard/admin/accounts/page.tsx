@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { apiClient } from '@/lib/api-client';
-import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
+import { SkeletonList } from '@/components/ui/SkeletonLoader';
 
 interface User {
   id: string;
@@ -21,13 +21,6 @@ export default function AccountsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const loaderRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (loading) {
-      loaderRef.current?.startAnimation();
-    }
-  }, [loading]);
 
   useEffect(() => {
     loadUsers();
@@ -196,13 +189,7 @@ export default function AccountsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="p-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
-        </div>
-      </div>
-    );
+    return <SkeletonList />;
   }
 
   return (

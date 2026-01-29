@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/hooks/useAuth';
 import { CctvIcon, CctvIconHandle } from '@/components/icons/CctvIcon';
-import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
+import { SkeletonProfile } from '@/components/ui/SkeletonLoader';
 
 interface ZoomAccount {
   id: string;
@@ -76,7 +76,6 @@ export default function ProfilePage() {
     defaultWatermarkIntervalMins: 5,
     defaultMaxWatchTimeMultiplier: 2.0
   });
-  const loaderRef = useRef<any>(null);
 
   useEffect(() => {
     if (loading) {
@@ -319,11 +318,7 @@ export default function ProfilePage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
-      </div>
-    );
+    return <SkeletonProfile />;
   }
 
   return (

@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { BarChart, DonutChart } from '@/components/Charts';
 import { apiClient } from '@/lib/api-client';
 import { useAnimatedNumber } from '@/hooks';
 import { generateDemoStudents, generateDemoStats, generateDemoStreams, generateDemoClasses, generateDemoPendingPayments, generateDemoPaymentHistory } from '@/lib/demo-data';
-import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
+import { SkeletonDashboard } from '@/components/ui/SkeletonLoader';
 
 interface Class {
   id: string;
@@ -498,22 +498,8 @@ export default function AcademyDashboard() {
     return classWatchTime;  // Use state value for real data
   }, [selectedClass, classWatchTime, paymentStatus]);
 
-  const loaderRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (loading && loaderRef.current) {
-      loaderRef.current.startAnimation();
-    }
-  }, [loading]);
-
   if (loading) {
-    return (
-      <>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <LoaderPinwheelIcon ref={loaderRef} size={64} className="text-brand-600" />
-        </div>
-      </>
-    );
+    return <SkeletonDashboard />;
   }
 
   return (

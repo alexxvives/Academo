@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { apiClient } from '@/lib/api-client';
-import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
+import { SkeletonList } from '@/components/ui/SkeletonLoader';
 
 interface Academy {
   id: string;
@@ -20,13 +20,6 @@ interface Academy {
 export default function AdminAcademies() {
   const [academies, setAcademies] = useState<Academy[]>([]);
   const [loading, setLoading] = useState(true);
-  const loaderRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (loading) {
-      loaderRef.current?.startAnimation();
-    }
-  }, [loading]);
 
   useEffect(() => {
     loadAcademies();
@@ -47,11 +40,7 @@ export default function AdminAcademies() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
-      </div>
-    );
+    return <SkeletonList />;
   }
 
   return (

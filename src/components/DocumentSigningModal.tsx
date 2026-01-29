@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
+import { SkeletonForm } from '@/components/ui/SkeletonLoader';
 
 interface DocumentSigningModalProps {
   isOpen: boolean;
@@ -25,14 +25,6 @@ export default function DocumentSigningModal({
   const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const loaderRef = useRef<any>(null);
-
-  // Trigger loader animation when not loaded
-  useEffect(() => {
-    if (!pdfLoaded) {
-      loaderRef.current?.startAnimation();
-    }
-  }, [pdfLoaded]);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -151,7 +143,7 @@ export default function DocumentSigningModal({
           {!pdfLoaded && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
               <div className="text-center">
-                <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black mx-auto mb-4" />
+                <div className="w-12 h-12 border-4 border-gray-300 border-t-black rounded-full animate-spin mx-auto mb-4"></div>
                 <p className="text-gray-600 font-medium">Cargando documento...</p>
                 <p className="text-sm text-gray-500 mt-1">Por favor espera</p>
               </div>

@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { BarChart, DonutChart } from '@/components/Charts';
 import { apiClient } from '@/lib/api-client';
 import { useAnimatedNumber } from '@/hooks';
-import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
+import { SkeletonDashboard } from '@/components/ui/SkeletonLoader';
 
 interface Academy {
   id: string;
@@ -96,13 +96,6 @@ export default function AdminDashboard() {
   const [selectedAcademy, setSelectedAcademy] = useState('all');
   const [selectedClass, setSelectedClass] = useState('all');
   const [academyClasses, setAcademyClasses] = useState<Class[]>([]);
-  const loaderRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (loading) {
-      loaderRef.current?.startAnimation();
-    }
-  }, [loading]);
 
   useEffect(() => {
     loadData();
@@ -321,13 +314,7 @@ export default function AdminDashboard() {
   }, [selectedAcademy, selectedClass, classWatchTime]);
 
   if (loading) {
-    return (
-      <>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
-        </div>
-      </>
-    );
+    return <SkeletonDashboard />;
   }
 
   return (

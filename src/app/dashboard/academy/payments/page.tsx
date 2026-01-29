@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { generateDemoPendingPayments, generateDemoPaymentHistory } from '@/lib/demo-data';
-import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
+import { SkeletonTable } from '@/components/ui/SkeletonLoader';
 
 interface PendingPayment {
   enrollmentId: string;
@@ -47,13 +47,6 @@ export default function AcademyPaymentsPage() {
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
   const [reversingIds, setReversingIds] = useState<Set<string>>(new Set());
   const [paymentStatus, setPaymentStatus] = useState<string>('PAID');
-  const loaderRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (loading) {
-      loaderRef.current?.startAnimation();
-    }
-  }, [loading]);
 
   useEffect(() => {
     loadData();
@@ -214,11 +207,7 @@ export default function AcademyPaymentsPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
-      </div>
-    );
+    return <SkeletonTable />;
   }
 
   return (

@@ -128,3 +128,178 @@ export function SkeletonFeedback() {
     </div>
   );
 }
+
+export function SkeletonDashboard() {
+  return (
+    <div className="space-y-6">
+      {/* Stats Grid */}
+      <SkeletonStats />
+      
+      {/* Charts Row */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <SkeletonBox className="h-6 w-32" />
+          <SkeletonBox className="h-64 w-full" />
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <SkeletonBox className="h-6 w-32" />
+          <SkeletonBox className="h-64 w-full" />
+        </div>
+      </div>
+      
+      {/* List Section */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <SkeletonBox className="h-6 w-48" />
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex items-center justify-between py-3 border-b last:border-b-0">
+            <div className="flex items-center gap-4">
+              <SkeletonBox className="h-12 w-12 rounded-full" />
+              <div className="space-y-2">
+                <SkeletonBox className="h-4 w-48" />
+                <SkeletonBox className="h-3 w-32" />
+              </div>
+            </div>
+            <SkeletonBox className="h-8 w-20" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function SkeletonList({ rows = 8 }: { rows?: number }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {/* Header */}
+      <div className="border-b border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <SkeletonBox className="h-8 w-64" />
+          <SkeletonBox className="h-10 w-32" />
+        </div>
+        <div className="flex items-center gap-3">
+          <SkeletonBox className="h-10 w-64" />
+          <SkeletonBox className="h-10 w-40" />
+        </div>
+      </div>
+      
+      {/* List Items */}
+      <div className="divide-y divide-gray-200">
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4 flex-1">
+                <SkeletonBox className="h-12 w-12 rounded-lg" />
+                <div className="space-y-2 flex-1">
+                  <SkeletonBox className="h-5 w-3/4" />
+                  <SkeletonBox className="h-4 w-1/2" />
+                </div>
+              </div>
+              <SkeletonBox className="h-8 w-24" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function SkeletonProfile() {
+  return (
+    <div className="max-w-4xl space-y-6">
+      {/* Profile Header */}
+      <div className="bg-white rounded-xl border border-gray-200 p-8">
+        <div className="flex items-center gap-6 mb-6">
+          <SkeletonBox className="h-24 w-24 rounded-full" />
+          <div className="space-y-3 flex-1">
+            <SkeletonBox className="h-8 w-64" />
+            <SkeletonBox className="h-5 w-48" />
+          </div>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-2">
+            <SkeletonBox className="h-4 w-24" />
+            <SkeletonBox className="h-10 w-full" />
+          </div>
+          <div className="space-y-2">
+            <SkeletonBox className="h-4 w-24" />
+            <SkeletonBox className="h-10 w-full" />
+          </div>
+          <div className="space-y-2">
+            <SkeletonBox className="h-4 w-24" />
+            <SkeletonBox className="h-10 w-full" />
+          </div>
+          <div className="space-y-2">
+            <SkeletonBox className="h-4 w-24" />
+            <SkeletonBox className="h-10 w-full" />
+          </div>
+        </div>
+      </div>
+      
+      {/* Additional Sections */}
+      <div className="bg-white rounded-xl border border-gray-200 p-8 space-y-4">
+        <SkeletonBox className="h-6 w-48" />
+        <div className="space-y-3">
+          <SkeletonBox className="h-10 w-full" />
+          <SkeletonBox className="h-10 w-full" />
+          <SkeletonBox className="h-10 w-full" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function SkeletonForm() {
+  return (
+    <div className="max-w-2xl mx-auto bg-white rounded-xl border border-gray-200 p-8 space-y-6">
+      <div className="space-y-2">
+        <SkeletonBox className="h-8 w-64" />
+        <SkeletonBox className="h-5 w-96" />
+      </div>
+      
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="space-y-2">
+          <SkeletonBox className="h-4 w-32" />
+          <SkeletonBox className="h-12 w-full" />
+        </div>
+      ))}
+      
+      <div className="flex justify-end gap-3 pt-4">
+        <SkeletonBox className="h-11 w-24" />
+        <SkeletonBox className="h-11 w-32" />
+      </div>
+    </div>
+  );
+}
+
+export function SkeletonClasses() {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <SkeletonBox className="h-10 w-48" />
+        <SkeletonBox className="h-11 w-36" />
+      </div>
+      
+      {/* Class Cards */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <SkeletonBox className="h-40 w-full" />
+            <div className="p-6 space-y-4">
+              <div className="space-y-2">
+                <SkeletonBox className="h-6 w-full" />
+                <SkeletonBox className="h-4 w-3/4" />
+              </div>
+              <div className="flex items-center gap-4">
+                <SkeletonBox className="h-4 w-20" />
+                <SkeletonBox className="h-4 w-20" />
+              </div>
+              <SkeletonBox className="h-10 w-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
