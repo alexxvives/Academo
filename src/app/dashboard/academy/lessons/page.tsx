@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 interface Lesson {
   id: string;
@@ -24,6 +25,13 @@ export default function AcademyLessonsPage() {
   const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterClass, setFilterClass] = useState<string>('all');
+  const loaderRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
 
   useEffect(() => {
     loadClasses();
@@ -126,9 +134,8 @@ export default function AcademyLessonsPage() {
         </div>
 
         {loading ? (
-          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
-            <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando Asignaturas...</p>
+          <div className="flex items-center justify-center min-h-[400px]">
+            <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
           </div>
         ) : filteredLessons.length === 0 ? (
           <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">

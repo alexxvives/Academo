@@ -1,6 +1,7 @@
 'use client';
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 
@@ -51,10 +52,16 @@ function CallbackContent() {
     handleCallback();
   }, [searchParams, router]);
 
+  const loaderRef = useRef<any>(null);
+  
+  useEffect(() => {
+    loaderRef.current?.startAnimation();
+  }, []);
+  
   return (
     <div className="flex items-center justify-center h-screen">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto mb-4"></div>
+        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black mx-auto mb-4" />
         <p className="text-gray-600">Conectando tu cuenta de Zoom...</p>
       </div>
     </div>
@@ -62,11 +69,17 @@ function CallbackContent() {
 }
 
 export default function ZoomOAuthCallback() {
+  const fallbackLoaderRef = useRef<any>(null);
+  
+  useEffect(() => {
+    fallbackLoaderRef.current?.startAnimation();
+  }, []);
+  
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto mb-4"></div>
+          <LoaderPinwheelIcon ref={fallbackLoaderRef} size={32} className="text-black mx-auto mb-4" />
           <p className="text-gray-600">Conectando tu cuenta de Zoom...</p>
         </div>
       </div>

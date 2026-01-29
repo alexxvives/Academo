@@ -1,8 +1,9 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import AuthModal from '@/components/AuthModal';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 import { Navbar } from '@/components/landing/Navbar';
 import { Hero } from '@/components/landing/Hero';
 import { WhySection } from '@/components/landing/WhySection';
@@ -87,13 +88,23 @@ function HomePageContent() {
   );
 }
 
+function LoadingFallback() {
+  const loaderRef = useRef<any>(null);
+
+  useEffect(() => {
+    loaderRef.current?.startAnimation();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <LoaderPinwheelIcon ref={loaderRef} size={24} className="text-blue-600" />
+    </div>
+  );
+}
+
 export default function HomePage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    }>
+    <Suspense fallback={<LoadingFallback />}>
       <HomePageContent />
     </Suspense>
   );

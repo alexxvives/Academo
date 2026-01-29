@@ -1,5 +1,6 @@
 import { Stream } from '@/hooks/useStreamsData';
 import { StreamRow } from './StreamRow';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 interface StreamsTableProps {
   streams: Stream[];
@@ -13,7 +14,7 @@ export function StreamsTable({ streams, loading, deletingStreamId, onDelete, onU
   if (loading) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-12 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+        <LoaderPinwheelIcon size={32} className="text-brand-500" />
       </div>
     );
   }

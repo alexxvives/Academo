@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 interface User {
   id: string;
@@ -20,6 +21,13 @@ export default function AccountsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const loaderRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
 
   useEffect(() => {
     loadUsers();
@@ -191,7 +199,7 @@ export default function AccountsPage() {
     return (
       <div className="p-8">
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
         </div>
       </div>
     );

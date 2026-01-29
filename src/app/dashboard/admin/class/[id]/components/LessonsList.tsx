@@ -1,4 +1,5 @@
 import { getBunnyThumbnailUrl } from '@/lib/bunny-stream';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 interface Lesson {
   id: string;
@@ -184,7 +185,7 @@ export default function LessonsList({
                         {/* Transcoding/Uploading Overlay */}
                         {(lesson.isUploading || lesson.isTranscoding) && (
                           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60">
-                            <div className="w-8 h-8 border-3 border-purple-400/30 border-t-purple-400 rounded-full animate-spin mb-2" />
+                            <LoaderPinwheelIcon size={32} className="text-purple-400 mb-2" />
                             <span className="text-sm font-medium text-white">
                               {lesson.isUploading ? 'Subiendo...' : 'Transcodificando...'}
                             </span>
@@ -300,7 +301,7 @@ export default function LessonsList({
                       <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
                         <div className="flex items-center justify-between text-sm text-blue-700 mb-2">
                           <span className="font-medium flex items-center gap-2">
-                            <span className="w-4 h-4 border-2 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
+                            <LoaderPinwheelIcon size={16} className="text-blue-600" />
                             Subiendo archivos...
                           </span>
                           <span className="font-bold">{Math.round(lesson.uploadProgress || 0)}%</span>

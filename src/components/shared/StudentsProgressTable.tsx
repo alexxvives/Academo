@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 export interface StudentProgress {
   id: string;
@@ -39,6 +40,14 @@ export function StudentsProgressTable({
   showClassFilter = true,
   showTeacherColumn = false,
 }: StudentsProgressTableProps) {
+  const loaderRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
+
   const formatTime = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -107,7 +116,7 @@ export function StudentsProgressTable({
   if (loading) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-        <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
+        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
         <p className="text-gray-600">Cargando progreso...</p>
       </div>
     );

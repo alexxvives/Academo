@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 export interface Rating {
   id: string;
@@ -54,7 +55,14 @@ export function FeedbackView({
   onClassFilterChange,
   showClassFilter = true,
 }: FeedbackViewProps) {
+  const loaderRef = useRef<any>(null);
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
 
   const toggleTopic = (topicId: string) => {
     setExpandedTopics(prev => {
@@ -92,7 +100,7 @@ export function FeedbackView({
   if (loading) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-        <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
+        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
         <p className="text-gray-600">Cargando retroalimentación...</p>
       </div>
     );

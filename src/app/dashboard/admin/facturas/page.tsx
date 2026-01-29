@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 interface Payment {
   id: string;
@@ -28,6 +29,13 @@ export default function AdminFacturas() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'ALL' | 'STUDENT_TO_ACADEMY' | 'ACADEMY_TO_PLATFORM'>('ALL');
+  const loaderRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
 
   useEffect(() => {
     loadPayments();
@@ -98,7 +106,7 @@ export default function AdminFacturas() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
       </div>
     );
   }

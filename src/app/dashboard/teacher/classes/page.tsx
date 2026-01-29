@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 interface Class {
   id: string;
@@ -27,6 +28,9 @@ interface LessonFeedback {
 }
 
 export default function TeacherClasses() {
+  const loaderRef = useRef<any>(null);
+  const feedbackLoaderRef = useRef<any>(null);
+
   const [classes, setClasses] = useState<Class[]>([]);
   const [academyName, setAcademyName] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -34,6 +38,18 @@ export default function TeacherClasses() {
   const [feedbackComments, setFeedbackComments] = useState<Array<{ id: string; rating: number; comment: string; lessonTitle: string; topicName: string; createdAt: string }>>([]);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
   const [ratingsData, setRatingsData] = useState<{ overall: any, lessons: any[] } | null>(null);
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    if (loadingFeedback) {
+      feedbackLoaderRef.current?.startAnimation();
+    }
+  }, [loadingFeedback]);
 
   useEffect(() => {
     loadClasses();
@@ -110,7 +126,7 @@ export default function TeacherClasses() {
     return (
       <>
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
         </div>
       </>
     );
@@ -242,7 +258,7 @@ export default function TeacherClasses() {
                   <div className="max-h-96 overflow-y-auto p-4">
                     {loadingFeedback ? (
                       <div className="flex items-center justify-center py-8">
-                        <div className="w-6 h-6 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <LoaderPinwheelIcon ref={feedbackLoaderRef} size={32} className="text-black" />
                       </div>
                     ) : feedbackComments.length > 0 ? (
                       <div className="space-y-3">

@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
@@ -15,6 +16,13 @@ function VerifyEmailContent() {
   const [error, setError] = useState<string | null>(null);
   const [registrationData, setRegistrationData] = useState<any>(null);
   const [returnUrl, setReturnUrl] = useState<string | null>(null);
+  const loaderRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
 
   // Extract teacherId from returnUrl (e.g., /join/teacher1 -> teacher1)
   const getJoinUrl = () => {
@@ -241,10 +249,16 @@ function VerifyEmailContent() {
 }
 
 export default function VerifyEmailPage() {
+  const fallbackLoaderRef = useRef<any>(null);
+  
+  useEffect(() => {
+    fallbackLoaderRef.current?.startAnimation();
+  }, []);
+  
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        <LoaderPinwheelIcon ref={fallbackLoaderRef} size={32} className="text-black" />
       </div>
     }>
       <VerifyEmailContent />

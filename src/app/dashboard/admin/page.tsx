@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { BarChart, DonutChart } from '@/components/Charts';
 import { apiClient } from '@/lib/api-client';
 import { useAnimatedNumber } from '@/hooks';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 interface Academy {
   id: string;
@@ -95,6 +96,13 @@ export default function AdminDashboard() {
   const [selectedAcademy, setSelectedAcademy] = useState('all');
   const [selectedClass, setSelectedClass] = useState('all');
   const [academyClasses, setAcademyClasses] = useState<Class[]>([]);
+  const loaderRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
 
   useEffect(() => {
     loadData();
@@ -316,7 +324,7 @@ export default function AdminDashboard() {
     return (
       <>
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="w-6 h-6 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+          <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
         </div>
       </>
     );

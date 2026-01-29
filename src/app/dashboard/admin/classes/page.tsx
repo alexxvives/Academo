@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 interface Class {
   id: string;
@@ -34,6 +35,13 @@ export default function AdminClassesPage() {
   const [academies, setAcademies] = useState<Academy[]>([]);
   const [selectedAcademy, setSelectedAcademy] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const loaderRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
 
   useEffect(() => {
     loadData();
@@ -102,7 +110,7 @@ export default function AdminClassesPage() {
 
       {loading ? (
         <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
-          <div className="w-8 h-8 border-4 border-gray-300 border-t-gray-900 rounded-full animate-spin mx-auto mb-4"></div>
+          <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black mx-auto mb-4" />
           <p className="text-gray-600">Cargando clases...</p>
         </div>
       ) : filteredClasses.length === 0 ? (

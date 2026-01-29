@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
 import { TeacherDashboardHeader } from './components/TeacherDashboardHeader';
 import { JoinAcademyPrompt } from './components/JoinAcademyPrompt';
@@ -9,6 +10,8 @@ import { BrowseAcademies } from './components/BrowseAcademies';
 import { DashboardChartsGrid } from './components/DashboardChartsGrid';
 
 export default function TeacherDashboard() {
+  const loaderRef = useRef<any>(null);
+
   const {
     memberships,
     availableAcademies,
@@ -26,6 +29,12 @@ export default function TeacherDashboard() {
 
   const [showBrowse, setShowBrowse] = useState(false);
   const [selectedClass, setSelectedClass] = useState('all');
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
 
   const handleRequestMembership = async (academyId: string) => {
     try {
@@ -62,7 +71,7 @@ export default function TeacherDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-6 h-6 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
       </div>
     );
   }

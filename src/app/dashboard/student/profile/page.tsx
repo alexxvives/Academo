@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { PasswordInput } from '@/components/ui';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 interface User {
   id: string;
@@ -16,12 +17,19 @@ interface User {
 
 export default function StudentProfile() {
   const router = useRouter();
+  const loaderRef = useRef<any>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '' });
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
 
   useEffect(() => {
     loadProfile();
@@ -69,7 +77,7 @@ export default function StudentProfile() {
     return (
       <>
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
         </div>
       </>
     );

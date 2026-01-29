@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 import { useParams, useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { PasswordInput } from '@/components/ui';
@@ -28,6 +29,13 @@ export default function JoinPage() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const loaderRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
   
   // Auth state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -305,7 +313,7 @@ export default function JoinPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
       </div>
     );
   }

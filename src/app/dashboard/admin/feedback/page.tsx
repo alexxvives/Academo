@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 import { apiClient } from '@/lib/api-client';
 import { FeedbackView, type ClassFeedback } from '@/components/shared';
 
@@ -22,6 +23,13 @@ export default function AdminFeedbackPage() {
   const [allClasses, setAllClasses] = useState<Class[]>([]);
   const [selectedAcademy, setSelectedAcademy] = useState('all');
   const [selectedClass, setSelectedClass] = useState('all');
+  const loaderRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
 
   useEffect(() => {
     loadData();
@@ -96,7 +104,7 @@ export default function AdminFeedbackPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-16 h-16 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
+        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
       </div>
     );
   }
