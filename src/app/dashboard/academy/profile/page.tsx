@@ -38,6 +38,7 @@ interface Academy {
   defaultMaxWatchTimeMultiplier?: number;
   logoUrl?: string;
   allowedPaymentMethods?: string;
+  allowMultipleTeachers?: number;
 }
 
 const WATERMARK_OPTIONS = [
@@ -76,7 +77,8 @@ export default function ProfilePage() {
     feedbackAnonymous: false,
     defaultWatermarkIntervalMins: 5,
     defaultMaxWatchTimeMultiplier: 2.0,
-    allowedPaymentMethods: ['stripe', 'cash', 'bizum']
+    allowedPaymentMethods: ['stripe', 'cash', 'bizum'],
+    allowMultipleTeachers: false
   });
 
   useEffect(() => {
@@ -117,7 +119,8 @@ export default function ProfilePage() {
           feedbackAnonymous: academyData.feedbackAnonymous === 1,
           defaultWatermarkIntervalMins: academyData.defaultWatermarkIntervalMins || 5,
           defaultMaxWatchTimeMultiplier: academyData.defaultMaxWatchTimeMultiplier || 2.0,
-          allowedPaymentMethods: allowedMethods
+          allowedPaymentMethods: allowedMethods,
+          allowMultipleTeachers: academyData.allowMultipleTeachers === 1
         });
       }
 
@@ -218,7 +221,8 @@ export default function ProfilePage() {
           email: newFormData.email,
           feedbackAnonymous: field === 'feedbackAnonymous' ? value : (newFormData.feedbackAnonymous ? 1 : 0),
           defaultWatermarkIntervalMins: newFormData.defaultWatermarkIntervalMins,
-          defaultMaxWatchTimeMultiplier: newFormData.defaultMaxWatchTimeMultiplier
+          defaultMaxWatchTimeMultiplier: newFormData.defaultMaxWatchTimeMultiplier,
+          allowMultipleTeachers: field === 'allowMultipleTeachers' ? value : (newFormData.allowMultipleTeachers ? 1 : 0)
         })
       });
       
@@ -249,7 +253,8 @@ export default function ProfilePage() {
           feedbackAnonymous: formData.feedbackAnonymous ? 1 : 0,
           defaultWatermarkIntervalMins: formData.defaultWatermarkIntervalMins,
           defaultMaxWatchTimeMultiplier: formData.defaultMaxWatchTimeMultiplier,
-          allowedPaymentMethods: JSON.stringify(formData.allowedPaymentMethods)
+          allowedPaymentMethods: JSON.stringify(formData.allowedPaymentMethods),
+          allowMultipleTeachers: formData.allowMultipleTeachers ? 1 : 0
         })
       });
 
@@ -381,7 +386,8 @@ export default function ProfilePage() {
                                 return ['stripe', 'cash', 'bizum'];
                               }
                             })()
-                          : ['stripe', 'cash', 'bizum']
+                          : ['stripe', 'cash', 'bizum'],
+                        allowMultipleTeachers: academy.allowMultipleTeachers === 1
                       });
                     }}
                     disabled={saving}
@@ -604,6 +610,31 @@ export default function ProfilePage() {
                 </button>
                 <span className="text-sm text-gray-700 font-medium">
                   {formData.feedbackAnonymous ? 'Activado' : 'Desactivado'}
+                </span>
+              </div>
+            </div>
+
+            {/* Allow Multiple Teachers Per Class */}
+            <div className="lg:col-span-1">
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Múltiples profesores por clase
+              </label>
+              <p className="text-xs text-gray-500 mb-3">Permite asignar varios profesores a una misma clase</p>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handleSettingChange('allowMultipleTeachers', formData.allowMultipleTeachers ? 0 : 1)}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors cursor-pointer ${
+                    formData.allowMultipleTeachers ? 'bg-brand-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${
+                      formData.allowMultipleTeachers ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className="text-sm text-gray-700 font-medium">
+                  {formData.allowMultipleTeachers ? 'Activado' : 'Desactivado'}
                 </span>
               </div>
             </div>

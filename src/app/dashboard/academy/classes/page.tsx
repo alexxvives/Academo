@@ -491,9 +491,18 @@ export default function AcademyClassesPage() {
               {/* Pricing Options - Redesigned */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-gray-900">
-                    Opciones de pago *
-                  </label>
+                  <div className="flex items-center gap-2 group relative">
+                    <label className="block text-sm font-medium text-gray-900">
+                      Opciones de pago *
+                    </label>
+                    <svg className="w-4 h-4 text-gray-400 cursor-help" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
+                    <div className="absolute left-0 top-6 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                      <p className="font-medium mb-1">💡 Consejo:</p>
+                      <p>Si seleccionas ambas opciones, los estudiantes podrán elegir entre pago mensual o pago único al inscribirse.</p>
+                    </div>
+                  </div>
                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Selecciona al menos una</span>
                 </div>
 
@@ -523,9 +532,6 @@ export default function AcademyClassesPage() {
                           Pago Mensual
                         </span>
                       </div>
-                      <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
                     </div>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">$</span>
@@ -578,9 +584,6 @@ export default function AcademyClassesPage() {
                           Pago Único
                         </span>
                       </div>
-                      <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
                     </div>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">$</span>
@@ -747,66 +750,137 @@ export default function AcademyClassesPage() {
                 </div>
               </div>
 
-              {/* Pricing Options */}
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-gray-700">
-                  Opciones de pago *
-                </label>
-                
-                {/* Monthly Price */}
-                <div className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg">
-                  <input
-                    type="checkbox"
-                    id="allowMonthlyEdit"
-                    checked={formData.allowMonthly}
-                    onChange={(e) => setFormData({ ...formData, allowMonthly: e.target.checked })}
-                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <div className="flex-1">
-                    <label htmlFor="allowMonthlyEdit" className="block text-sm font-medium text-gray-900 cursor-pointer mb-1">
-                      Pago mensual
+              {/* Pricing Options - Redesigned */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 group relative">
+                    <label className="block text-sm font-medium text-gray-900">
+                      Opciones de pago *
                     </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.monthlyPrice}
-                      onChange={(e) => setFormData({ ...formData, monthlyPrice: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                      placeholder="10.00"
-                      disabled={!formData.allowMonthly}
-                    />
+                    <svg className="w-4 h-4 text-gray-400 cursor-help" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
+                    <div className="absolute left-0 top-6 w-64 bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                      <p className="font-medium mb-1">💡 Consejo:</p>
+                      <p>Si seleccionas ambas opciones, los estudiantes podrán elegir entre pago mensual o pago único al inscribirse.</p>
+                    </div>
                   </div>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Selecciona al menos una</span>
                 </div>
 
-                {/* One-Time Price */}
-                <div className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg">
-                  <input
-                    type="checkbox"
-                    id="allowOneTimeEdit"
-                    checked={formData.allowOneTime}
-                    onChange={(e) => setFormData({ ...formData, allowOneTime: e.target.checked })}
-                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <div className="flex-1">
-                    <label htmlFor="allowOneTimeEdit" className="block text-sm font-medium text-gray-900 cursor-pointer mb-1">
-                      Pago único
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.oneTimePrice}
-                      onChange={(e) => setFormData({ ...formData, oneTimePrice: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                      placeholder="100.00"
-                      disabled={!formData.allowOneTime}
-                    />
-                  </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Monthly Price Card */}
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, allowMonthly: !formData.allowMonthly })}
+                    className={`relative p-4 border-2 rounded-xl transition-all duration-200 text-left ${
+                      formData.allowMonthly
+                        ? 'border-blue-500 bg-blue-50 shadow-md'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                          formData.allowMonthly ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                        }`}>
+                          {formData.allowMonthly && (
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className={`text-sm font-semibold ${formData.allowMonthly ? 'text-blue-900' : 'text-gray-700'}`}>
+                          Pago Mensual
+                        </span>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.monthlyPrice}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setFormData({ ...formData, monthlyPrice: e.target.value, allowMonthly: true });
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className={`w-full pl-7 pr-3 py-2 border rounded-lg text-sm font-medium transition-all ${
+                          formData.allowMonthly
+                            ? 'border-blue-300 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                            : 'border-gray-200 bg-gray-50'
+                        }`}
+                        placeholder="10.00"
+                        disabled={!formData.allowMonthly}
+                      />
+                    </div>
+                    <p className={`text-xs mt-2 ${formData.allowMonthly ? 'text-blue-700' : 'text-gray-500'}`}>
+                      Cobro recurrente mensual
+                    </p>
+                  </button>
+
+                  {/* One-Time Price Card */}
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, allowOneTime: !formData.allowOneTime })}
+                    className={`relative p-4 border-2 rounded-xl transition-all duration-200 text-left ${
+                      formData.allowOneTime
+                        ? 'border-green-500 bg-green-50 shadow-md'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                          formData.allowOneTime ? 'border-green-500 bg-green-500' : 'border-gray-300'
+                        }`}>
+                          {formData.allowOneTime && (
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className={`text-sm font-semibold ${formData.allowOneTime ? 'text-green-900' : 'text-gray-700'}`}>
+                          Pago Único
+                        </span>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.oneTimePrice}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setFormData({ ...formData, oneTimePrice: e.target.value, allowOneTime: true });
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className={`w-full pl-7 pr-3 py-2 border rounded-lg text-sm font-medium transition-all ${
+                          formData.allowOneTime
+                            ? 'border-green-300 bg-white focus:ring-2 focus:ring-green-500 focus:border-green-500'
+                            : 'border-gray-200 bg-gray-50'
+                        }`}
+                        placeholder="100.00"
+                        disabled={!formData.allowOneTime}
+                      />
+                    </div>
+                    <p className={`text-xs mt-2 ${formData.allowOneTime ? 'text-green-700' : 'text-gray-500'}`}>
+                      Pago único, acceso vitalicio
+                    </p>
+                  </button>
                 </div>
 
                 {!formData.allowMonthly && !formData.allowOneTime && (
-                  <p className="text-xs text-red-600">⚠️ Debes seleccionar al menos una opción de pago</p>
+                  <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <svg className="w-5 h-5 text-amber-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-sm text-amber-800 font-medium">Selecciona al menos una opción de pago para continuar</p>
+                  </div>
                 )}
               </div>
 
