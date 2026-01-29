@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 import { SkeletonFeedback } from '@/components/ui/SkeletonLoader';
 
 export interface Rating {
@@ -56,14 +55,7 @@ export function FeedbackView({
   onClassFilterChange,
   showClassFilter = true,
 }: FeedbackViewProps) {
-  const loaderRef = useRef<any>(null);
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (loading) {
-      loaderRef.current?.startAnimation();
-    }
-  }, [loading]);
 
   const toggleTopic = (topicId: string) => {
     setExpandedTopics(prev => {
