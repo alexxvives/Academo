@@ -11,6 +11,7 @@ interface MenuItem {
   icon?: JSX.Element;
   iconType?: string;
   badge?: number;
+  badgeColor?: string;
   matchPaths?: string[];
 }
 
