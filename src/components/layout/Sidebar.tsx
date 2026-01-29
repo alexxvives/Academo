@@ -47,6 +47,7 @@ interface SidebarProps {
     email: string;
     monoacademy?: boolean;
   } | null;
+  academyPaymentStatus?: string;
 }
 
 export function Sidebar({
@@ -60,6 +61,7 @@ export function Sidebar({
   onSwitchRole,
   onLogout,
   user,
+  academyPaymentStatus,
 }: SidebarProps) {
   const pathname = usePathname();
   const iconRefs = useRef<{ [key: string]: any }>({});
@@ -219,7 +221,13 @@ export function Sidebar({
           <div className="px-3 py-2 border-t border-gray-800/50">
             <button
               onClick={onSwitchRole}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-all"
+              disabled={role === 'ACADEMY' && academyPaymentStatus === 'NOT PAID'}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
+                role === 'ACADEMY' && academyPaymentStatus === 'NOT PAID'
+                  ? 'bg-gray-500/10 text-gray-500 cursor-not-allowed opacity-50'
+                  : 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20'
+              }`}
+              title={role === 'ACADEMY' && academyPaymentStatus === 'NOT PAID' ? 'Debes pagar la suscripción para cambiar a profesor' : ''}
             >
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />

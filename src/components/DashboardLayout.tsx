@@ -409,6 +409,7 @@ export default function DashboardLayout({
         onSwitchRole={handleSwitchRole}
         onLogout={handleLogout}
         user={user}
+        academyPaymentStatus={academyPaymentStatus}
       />
 
       <MobileSidebar
@@ -422,6 +423,7 @@ export default function DashboardLayout({
         onSwitchRole={handleSwitchRole}
         onLogout={handleLogout}
         user={user}
+        academyPaymentStatus={academyPaymentStatus}
       />
 
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">

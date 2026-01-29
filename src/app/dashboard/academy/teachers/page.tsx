@@ -23,8 +23,7 @@ export default function AcademyTeachers() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({ email: '', fullName: '', password: '', classId: '' });
+  const [formData, setFormData] = useState({ email: '', fullName: '', classId: '' });
   const [deleting, setDeleting] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
@@ -149,19 +148,31 @@ export default function AcademyTeachers() {
       setUpdating(false);
     }
   };
+  const generateRandomPassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
   const handleCreateTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.fullName || !formData.password) {
-      alert('Todos los campos son requeridos');
+    if (!formData.email || !formData.fullName) {
+      alert('Email y nombre completo son requeridos');
       return;
     }
     
     setCreating(true);
     try {
+      // Generate random password (8 characters)
+      const randomPassword = generateRandomPassword();
+      
       const requestBody: any = {
         email: formData.email,
         fullName: formData.fullName,
-        password: formData.password,
+        password: randomPassword,
       };
       
       // Add classId if selected
@@ -178,8 +189,9 @@ export default function AcademyTeachers() {
       const result = await res.json();
       if (result.success) {
         setShowCreateModal(false);
-        setFormData({ email: '', fullName: '', password: '', classId: '' });
+        setFormData({ email: '', fullName: '', classId: '' });
         loadTeachers();
+        alert(`Profesor creado exitosamente. Se ha enviado un email a ${formData.email} con las credenciales de acceso.`);
       } else {
         alert(result.error || 'Error al crear profesor');
       }
@@ -259,7 +271,7 @@ export default function AcademyTeachers() {
                 {teachers.map((teacher) => (
                   <tr key={teacher.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <button
                           onClick={() => handleDeleteTeacher(teacher.id, teacher.name)}
                           disabled={deleting === teacher.id || paymentStatus === 'NOT PAID'}
@@ -274,14 +286,14 @@ export default function AcademyTeachers() {
                             </svg>
                           )}
                         </button>
-                        <div className="flex-1">
+                        <div>
                           <div className="text-sm font-medium text-gray-900">{teacher.name}</div>
                           <div className="text-sm text-gray-500">{teacher.email}</div>
                         </div>
                         <button
                           onClick={() => openEditModal(teacher)}
                           disabled={paymentStatus === 'NOT PAID'}
-                          className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                          className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 ml-1"
                           title="Editar profesor"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -362,35 +374,7 @@ export default function AcademyTeachers() {
                   placeholder="Ej: David Garcia"
                   required
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-                    required
-                    minLength={6}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                      </svg>
-                    ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
+                <p className="mt-1 text-xs text-gray-500">Se enviará un email con las credenciales de acceso</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Asignatura (Opcional)</label>

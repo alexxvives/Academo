@@ -37,6 +37,7 @@ interface Academy {
   defaultWatermarkIntervalMins?: number;
   defaultMaxWatchTimeMultiplier?: number;
   logoUrl?: string;
+  allowedPaymentMethods?: string;
 }
 
 const WATERMARK_OPTIONS = [
@@ -74,7 +75,8 @@ export default function ProfilePage() {
     email: '',
     feedbackAnonymous: false,
     defaultWatermarkIntervalMins: 5,
-    defaultMaxWatchTimeMultiplier: 2.0
+    defaultMaxWatchTimeMultiplier: 2.0,
+    allowedPaymentMethods: ['stripe', 'cash', 'bizum']
   });
 
   useEffect(() => {
@@ -96,6 +98,17 @@ export default function ProfilePage() {
       if (academyResult.success && academyResult.data.length > 0) {
         const academyData = academyResult.data[0];
         setAcademy(academyData);
+        
+        // Parse allowed payment methods from JSON string
+        let allowedMethods = ['stripe', 'cash', 'bizum']; // default
+        if (academyData.allowedPaymentMethods) {
+          try {
+            allowedMethods = JSON.parse(academyData.allowedPaymentMethods);
+          } catch (e) {
+            console.error('Failed to parse allowedPaymentMethods:', e);
+          }
+        }
+        
         setFormData({
           name: academyData.name || '',
           address: academyData.address || '',
@@ -103,7 +116,8 @@ export default function ProfilePage() {
           email: academyData.email || user?.email || '',
           feedbackAnonymous: academyData.feedbackAnonymous === 1,
           defaultWatermarkIntervalMins: academyData.defaultWatermarkIntervalMins || 5,
-          defaultMaxWatchTimeMultiplier: academyData.defaultMaxWatchTimeMultiplier || 2.0
+          defaultMaxWatchTimeMultiplier: academyData.defaultMaxWatchTimeMultiplier || 2.0,
+          allowedPaymentMethods: allowedMethods
         });
       }
 
@@ -234,7 +248,8 @@ export default function ProfilePage() {
           email: formData.email,
           feedbackAnonymous: formData.feedbackAnonymous ? 1 : 0,
           defaultWatermarkIntervalMins: formData.defaultWatermarkIntervalMins,
-          defaultMaxWatchTimeMultiplier: formData.defaultMaxWatchTimeMultiplier
+          defaultMaxWatchTimeMultiplier: formData.defaultMaxWatchTimeMultiplier,
+          allowedPaymentMethods: JSON.stringify(formData.allowedPaymentMethods)
         })
       });
 
@@ -357,7 +372,16 @@ export default function ProfilePage() {
                         email: academy.email || user?.email || '',
                         feedbackAnonymous: academy.feedbackAnonymous === 1,
                         defaultWatermarkIntervalMins: academy.defaultWatermarkIntervalMins || 5,
-                        defaultMaxWatchTimeMultiplier: academy.defaultMaxWatchTimeMultiplier || 2.0
+                        defaultMaxWatchTimeMultiplier: academy.defaultMaxWatchTimeMultiplier || 2.0,
+                        allowedPaymentMethods: academy.allowedPaymentMethods 
+                          ? (() => {
+                              try {
+                                return JSON.parse(academy.allowedPaymentMethods);
+                              } catch {
+                                return ['stripe', 'cash', 'bizum'];
+                              }
+                            })()
+                          : ['stripe', 'cash', 'bizum']
                       });
                     }}
                     disabled={saving}
@@ -618,6 +642,94 @@ export default function ProfilePage() {
               </select>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Payment Methods */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-8 py-5 bg-gray-50 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Métodos de Pago Permitidos</h3>
+              <p className="text-sm text-gray-600">Selecciona los métodos de pago que aceptará tu academia</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-8 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Stripe */}
+            <div className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg hover:border-brand-500 transition-colors">
+              <input
+                type="checkbox"
+                id="payment-stripe"
+                checked={formData.allowedPaymentMethods.includes('stripe')}
+                onChange={(e) => {
+                  const updated = e.target.checked
+                    ? [...formData.allowedPaymentMethods, 'stripe']
+                    : formData.allowedPaymentMethods.filter(m => m !== 'stripe');
+                  setFormData({ ...formData, allowedPaymentMethods: updated });
+                }}
+                className="mt-1 h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded"
+              />
+              <div className="flex-1">
+                <label htmlFor="payment-stripe" className="block text-sm font-medium text-gray-900 cursor-pointer">
+                  Stripe
+                </label>
+                <p className="text-xs text-gray-500 mt-1">Tarjetas de crédito/débito</p>
+              </div>
+            </div>
+
+            {/* Cash */}
+            <div className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg hover:border-brand-500 transition-colors">
+              <input
+                type="checkbox"
+                id="payment-cash"
+                checked={formData.allowedPaymentMethods.includes('cash')}
+                onChange={(e) => {
+                  const updated = e.target.checked
+                    ? [...formData.allowedPaymentMethods, 'cash']
+                    : formData.allowedPaymentMethods.filter(m => m !== 'cash');
+                  setFormData({ ...formData, allowedPaymentMethods: updated });
+                }}
+                className="mt-1 h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded"
+              />
+              <div className="flex-1">
+                <label htmlFor="payment-cash" className="block text-sm font-medium text-gray-900 cursor-pointer">
+                  Efectivo
+                </label>
+                <p className="text-xs text-gray-500 mt-1">Pago en persona</p>
+              </div>
+            </div>
+
+            {/* Bizum */}
+            <div className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg hover:border-brand-500 transition-colors">
+              <input
+                type="checkbox"
+                id="payment-bizum"
+                checked={formData.allowedPaymentMethods.includes('bizum')}
+                onChange={(e) => {
+                  const updated = e.target.checked
+                    ? [...formData.allowedPaymentMethods, 'bizum']
+                    : formData.allowedPaymentMethods.filter(m => m !== 'bizum');
+                  setFormData({ ...formData, allowedPaymentMethods: updated });
+                }}
+                className="mt-1 h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded"
+              />
+              <div className="flex-1">
+                <label htmlFor="payment-bizum" className="block text-sm font-medium text-gray-900 cursor-pointer">
+                  Bizum
+                </label>
+                <p className="text-xs text-gray-500 mt-1">Transferencia instantánea</p>
+              </div>
+            </div>
+          </div>
+
+          {formData.allowedPaymentMethods.length === 0 && (
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">⚠️ Debes seleccionar al menos un método de pago</p>
+            </div>
+          )}
         </div>
       </div>
 
