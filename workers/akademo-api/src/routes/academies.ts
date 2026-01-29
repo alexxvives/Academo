@@ -626,6 +626,10 @@ academies.patch('/:id', async (c) => {
       updates.push('allowedPaymentMethods = ?');
       values.push(body.allowedPaymentMethods);
     }
+    if (body.allowMultipleTeachers !== undefined) {
+      updates.push('allowMultipleTeachers = ?');
+      values.push(body.allowMultipleTeachers);
+    }
 
     if (updates.length === 0) {
       return c.json(errorResponse('No fields to update'), 400);
