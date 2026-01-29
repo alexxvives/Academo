@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
+import { SkeletonFeedback } from '@/components/ui/SkeletonLoader';
 
 export interface Rating {
   id: string;
@@ -98,12 +99,7 @@ export function FeedbackView({
     : classes.filter(c => c.id === selectedClass);
 
   if (loading) {
-    return (
-      <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
-        <p className="text-gray-600">Cargando retroalimentación...</p>
-      </div>
-    );
+    return <SkeletonFeedback />;
   }
 
   if (classes.length === 0) {

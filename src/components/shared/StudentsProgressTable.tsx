@@ -114,12 +114,7 @@ export function StudentsProgressTable({
   }, [filteredStudents]);
 
   if (loading) {
-    return (
-      <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
-        <p className="text-gray-600">Cargando progreso...</p>
-      </div>
-    );
+    return <SkeletonTable rows={10} cols={5} />;
   }
 
   return (
