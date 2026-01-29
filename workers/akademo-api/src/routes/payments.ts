@@ -407,6 +407,8 @@ payments.get('/history', async (c) => {
       query = `
         SELECT 
           e.id as enrollmentId,
+          e.userId as studentId,
+          e.classId,
           e.paymentStatus,
           e.paymentAmount,
           c.currency,
