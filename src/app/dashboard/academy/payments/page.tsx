@@ -82,7 +82,22 @@ export default function AcademyPaymentsPage() {
         return;
       }
       
-      const result = await res.json();
+      // Check if response has content before parsing
+      const text = await res.text();
+      if (!text || text.trim() === '') {
+        console.error('Empty response from API');
+        setSelectedStudent({
+          studentId,
+          name: studentName,
+          email: studentEmail,
+          className,
+          enrollmentDate,
+          paymentData: null,
+        });
+        return;
+      }
+      
+      const result = JSON.parse(text);
       
       if (result.success && result.data) {
         setSelectedStudent({
