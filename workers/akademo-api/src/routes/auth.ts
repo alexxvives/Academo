@@ -612,98 +612,71 @@ auth.post('/switch-role', async (c) => {
       return c.json(errorResponse('Role switching not available for your account'), 403);
     }
 
-    let linkedUserId = null;
+    let newRole: string;
 
     if (session.role === 'ACADEMY') {
       // Check if academy has monoacademy flag
       const academy = await c.env.DB
-        .prepare('SELECT monoacademy FROM Academy WHERE ownerId = ?')
+        .prepare('SELECT id, monoacademy FROM Academy WHERE ownerId = ?')
         .bind(session.id)
         .first();
       
-      if (academy?.monoacademy !== 1) {
+      if (!academy || academy.monoacademy !== 1) {
         return c.json(errorResponse('Role switching not enabled for your academy'), 403);
       }
 
-      // Find linked teacher user (same email, different role)
-      let teacherUser = await c.env.DB
-        .prepare('SELECT id FROM User WHERE email = ? AND role = ?')
-        .bind(session.email, 'TEACHER')
-        .first();
-      
-      // If teacher user doesn't exist, create it now (for existing monoacademies)
-      if (!teacherUser) {
-        console.log('[Switch Role] Creating missing teacher account for monoacademy:', session.email);
-        
-        const teacherUserId = crypto.randomUUID();
-        const now = new Date().toISOString();
-        
-        // Get academy info for the Teacher record
-        const academyInfo = await c.env.DB
-          .prepare('SELECT id FROM Academy WHERE ownerId = ?')
-          .bind(session.id)
-          .first();
-        
-        if (!academyInfo) {
-          return c.json(errorResponse('Academy not found'), 404);
-        }
-        
-        // Create teacher User account (same password hash as academy)
-        const academyUser = await c.env.DB
-          .prepare('SELECT password FROM User WHERE id = ?')
-          .bind(session.id)
-          .first();
-        
-        await c.env.DB
-          .prepare('INSERT INTO User (id, email, password, firstName, lastName, role, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
-          .bind(teacherUserId, session.email.toLowerCase(), academyUser.password, session.firstName, session.lastName, 'TEACHER', now)
-          .run();
-        
-        // Create Teacher record linking to academy
-        const teacherId = crypto.randomUUID();
-        await c.env.DB
-          .prepare('INSERT INTO Teacher (id, userId, academyId, status, monoacademy, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
-          .bind(teacherId, teacherUserId, academyInfo.id, 'APPROVED', 1, now)
-          .run();
-        
-        // Fetch the newly created teacher user
-        teacherUser = await c.env.DB
-          .prepare('SELECT id FROM User WHERE id = ?')
-          .bind(teacherUserId)
-          .first();
-      }
-      
-      if (!teacherUser) {
-        return c.json(errorResponse('Teacher account creation failed'), 500);
-      }
-      
-      linkedUserId = teacherUser.id;
-    } else if (session.role === 'TEACHER') {
-      // Check if teacher has monoacademy flag
-      const teacher = await c.env.DB
-        .prepare('SELECT monoacademy FROM Teacher WHERE userId = ?')
+      // Ensure Teacher record exists for this user
+      let teacher = await c.env.DB
+        .prepare('SELECT id FROM Teacher WHERE userId = ?')
         .bind(session.id)
         .first();
       
-      if (teacher?.monoacademy !== 1) {
+      if (!teacher) {
+        // Create Teacher record for this user
+        const teacherId = crypto.randomUUID();
+        const now = new Date().toISOString();
+        
+        await c.env.DB
+          .prepare('INSERT INTO Teacher (id, userId, academyId, status, monoacademy, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+          .bind(teacherId, session.id, academy.id, 'APPROVED', 1, now)
+          .run();
+      }
+
+      newRole = 'TEACHER';
+    } else if (session.role === 'TEACHER') {
+      // Check if teacher has monoacademy flag
+      const teacher = await c.env.DB
+        .prepare('SELECT monoacademy, academyId FROM Teacher WHERE userId = ?')
+        .bind(session.id)
+        .first();
+      
+      if (!teacher || teacher.monoacademy !== 1) {
         return c.json(errorResponse('Role switching not enabled for your account'), 403);
       }
 
-      // Find linked academy owner (same email, different role)
-      const academyUser = await c.env.DB
-        .prepare('SELECT id FROM User WHERE email = ? AND role = ?')
-        .bind(session.email, 'ACADEMY')
+      // Verify this user owns the academy
+      const academy = await c.env.DB
+        .prepare('SELECT id FROM Academy WHERE id = ? AND ownerId = ?')
+        .bind(teacher.academyId, session.id)
         .first();
       
-      if (!academyUser) {
-        return c.json(errorResponse('Academy account not found'), 404);
+      if (!academy) {
+        return c.json(errorResponse('You do not own this academy'), 403);
       }
-      
-      linkedUserId = academyUser.id;
+
+      newRole = 'ACADEMY';
+    } else {
+      return c.json(errorResponse('Invalid role'), 400);
     }
 
-    // Create new session for the linked user
-    const sessionId = btoa(linkedUserId);
+    // Update user's role
+    await c.env.DB
+      .prepare('UPDATE User SET role = ? WHERE id = ?')
+      .bind(newRole, session.id)
+      .run();
+
+    // Create new session (same user, new role)
+    const sessionId = btoa(session.id);
     setCookie(c, 'academy_session', sessionId, {
       httpOnly: true,
       secure: true,
@@ -713,15 +686,15 @@ auth.post('/switch-role', async (c) => {
       domain: '.akademo-edu.com',
     });
 
-    // Get the new user's info
-    const newUser = await c.env.DB
-      .prepare('SELECT id, email, firstName, lastName, role FROM User WHERE id = ?')
-      .bind(linkedUserId)
+    // Get the updated user info
+    const updatedUser = await c.env.DB
+      .prepare('SELECT id, email, firstName, lastName, role, monoacademy FROM User WHERE id = ?')
+      .bind(session.id)
       .first();
 
     return c.json(successResponse({
       token: sessionId,
-      user: newUser,
+      user: updatedUser,
     }));
   } catch (error: any) {
     console.error('[Switch Role] Error:', error);
