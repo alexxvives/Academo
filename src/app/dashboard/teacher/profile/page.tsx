@@ -88,10 +88,6 @@ export default function TeacherProfile() {
   if (loading) {
     return <SkeletonProfile />;
   }
-        </div>
-      </>
-    );
-  }
 
   return (
     <div className="space-y-6 pb-12">
