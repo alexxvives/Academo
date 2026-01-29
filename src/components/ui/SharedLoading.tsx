@@ -18,7 +18,7 @@ export default function SharedLoading() {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="text-center space-y-4">
-        <LoaderPinwheelIcon ref={loaderRef} size={64} className="text-brand-600 mx-auto" />
+        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black mx-auto" />
         <p className="text-gray-500 text-sm">Cargando...</p>
       </div>
     </div>

@@ -160,6 +160,64 @@ users.post('/create-teacher', async (c) => {
   }
 });
 
+// DELETE /users/teacher/:id - Delete teacher account (Academy only)
+users.delete('/teacher/:id', async (c) => {
+  try {
+    const session = await requireAuth(c);
+    
+    if (session.role !== 'ACADEMY') {
+      return c.json(errorResponse('Not authorized'), 403);
+    }
+
+    const teacherId = c.req.param('id');
+
+    // Verify teacher belongs to this academy
+    const teacher: any = await c.env.DB
+      .prepare(`
+        SELECT t.id, t.userId, t.academyId, a.ownerId, u.firstName, u.lastName
+        FROM Teacher t
+        JOIN Academy a ON t.academyId = a.id
+        JOIN User u ON t.userId = u.id
+        WHERE u.id = ?
+      `)
+      .bind(teacherId)
+      .first();
+
+    if (!teacher) {
+      return c.json(errorResponse('Teacher not found'), 404);
+    }
+
+    if (teacher.ownerId !== session.id) {
+      return c.json(errorResponse('Not authorized to delete this teacher'), 403);
+    }
+
+    // Unassign from classes
+    await c.env.DB
+      .prepare('UPDATE Class SET teacherId = NULL WHERE teacherId = ?')
+      .bind(teacherId)
+      .run();
+
+    // Delete teacher record
+    await c.env.DB
+      .prepare('DELETE FROM Teacher WHERE userId = ?')
+      .bind(teacherId)
+      .run();
+
+    // Delete user account
+    await c.env.DB
+      .prepare('DELETE FROM User WHERE id = ?')
+      .bind(teacherId)
+      .run();
+
+    console.log(`[Delete Teacher] Successfully deleted teacher ${teacherId} by academy owner ${session.id}`);
+
+    return c.json(successResponse({ message: 'Teacher deleted successfully' }));
+  } catch (error: any) {
+    console.error('[Delete Teacher] Error:', error);
+    return c.json(errorResponse(error.message || 'Failed to delete teacher'), 500);
+  }
+});
+
 // DELETE /users/delete-account - Delete user account
 users.delete('/delete-account', async (c) => {
   try {

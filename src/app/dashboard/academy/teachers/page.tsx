@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { generateDemoTeachers } from '@/lib/demo-data';
+import { LoaderPinwheelIcon } from '@/components/ui/LoaderPinwheelIcon';
 
 interface Teacher {
   id: string;
@@ -24,6 +25,7 @@ export default function AcademyTeachers() {
   const [creating, setCreating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', fullName: '', password: '', classId: '' });
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     loadTeachers();
@@ -80,6 +82,31 @@ export default function AcademyTeachers() {
       console.error('Error loading classes:', error);
     }
   };
+
+  const handleDeleteTeacher = async (teacherId: string, teacherName: string) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar a ${teacherName}?`)) {
+      return;
+    }
+    
+    setDeleting(teacherId);
+    try {
+      const res = await apiClient(`/users/teacher/${teacherId}`, {
+        method: 'DELETE',
+      });
+      
+      if (res.ok) {
+        await loadTeachers();
+      } else {
+        const error = await res.json();
+        alert(error.error || 'Error al eliminar profesor');
+      }
+    } catch (error) {
+      console.error('Error deleting teacher:', error);
+      alert('Error al eliminar profesor');
+    } finally {
+      setDeleting(null);
+    }
+  };
   const handleCreateTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.email || !formData.fullName || !formData.password) {
@@ -129,10 +156,18 @@ export default function AcademyTeachers() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const loaderRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (loading) {
+      loaderRef.current?.startAnimation();
+    }
+  }, [loading]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+        <LoaderPinwheelIcon ref={loaderRef} size={32} className="text-black" />
       </div>
     );
   }
@@ -194,9 +229,28 @@ export default function AcademyTeachers() {
                 {teachers.map((teacher) => (
                   <tr key={teacher.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{teacher.name}</div>
-                        <div className="text-sm text-gray-500">{teacher.email}</div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => handleDeleteTeacher(teacher.id, teacher.name)}
+                          disabled={deleting === teacher.id || paymentStatus === 'NOT PAID'}
+                          className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Eliminar profesor"
+                        >
+                          {deleting === teacher.id ? (
+                            <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
+                        </button>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{teacher.name}</div>
+                          <div className="text-sm text-gray-500">{teacher.email}</div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -300,6 +354,21 @@ export default function AcademyTeachers() {
                     )}
                   </button>
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Asignatura (Opcional)</label>
+                <select
+                  value={formData.classId}
+                  onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  <option value="">Sin asignar</option>
+                  {classes.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="flex gap-3 pt-2">
                 <button

@@ -26,6 +26,7 @@ interface MenuItem {
   icon?: JSX.Element;
   iconType?: 'chart' | 'book' | 'userPlus' | 'message' | 'clap' | 'fileText' | 'clipboard' | 'activity' | 'users' | 'botMessage' | 'handCoins';
   badge?: number;
+  badgeColor?: string;
   matchPaths?: string[];
 }
 
@@ -186,7 +187,7 @@ export function Sidebar({
                   <span className="ml-auto w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
                 )}
                 {!hasLiveStream && item.badge !== undefined && item.badge > 0 && (
-                  <span className="ml-auto text-xs font-bold px-2 py-1 rounded-full bg-[#b1e787]/20 text-[#b1e787]">
+                  <span className={`ml-auto ${item.badgeColor || 'bg-green-500'} text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm`}>
                     {item.badge}
                   </span>
                 )}

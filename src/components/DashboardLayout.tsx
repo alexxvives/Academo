@@ -24,6 +24,7 @@ interface MenuItem {
   icon?: JSX.Element;
   iconType?: 'chart' | 'book' | 'userPlus' | 'message' | 'clap' | 'fileText' | 'clipboard' | 'activity' | 'users' | 'botMessage' | 'handCoins';
   badge?: number;
+  badgeColor?: string;
   matchPaths?: string[];
 }
 
@@ -351,7 +352,7 @@ export default function DashboardLayout({
           { label: 'Streams', href: '/dashboard/academy/streams', iconType: 'clap' as const },
           { label: 'Profesores', href: '/dashboard/academy/teachers', iconType: 'botMessage' as const },
           { label: 'Estudiantes', href: '/dashboard/academy/students', iconType: 'users' as const },
-          { label: 'Pagos', href: '/dashboard/academy/payments', iconType: 'handCoins' as const, badge: pendingEnrollmentsCount > 0 ? pendingEnrollmentsCount : undefined },
+          { label: 'Pagos', href: '/dashboard/academy/payments', iconType: 'handCoins' as const, badge: pendingEnrollmentsCount > 0 ? pendingEnrollmentsCount : undefined, badgeColor: 'bg-green-500' },
         ];
         
         // Filter out Profesores menu for monoacademies
