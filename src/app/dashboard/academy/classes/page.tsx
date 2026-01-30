@@ -714,19 +714,56 @@ export default function AcademyClassesPage() {
             <h2 className="text-xl font-bold text-gray-900 mb-4">Editar Clase</h2>
             
             <form onSubmit={handleEditClass} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre de la clase *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
+              {/* Row 1: Name and Teacher */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nombre de la clase *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Profesor asignado (opcional)
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={formData.teacherId}
+                      onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
+                      className="appearance-none w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                    >
+                      <option value="">Sin profesor asignado (asignar después)</option>
+                      {teachers
+                        .filter(teacher => {
+                          // If allowMultipleTeachers is false, filter out already assigned teachers (except current)
+                          if (!allowMultipleTeachers && editingClass) {
+                            return teacher.userId === editingClass.teacherId || !classes.some(cls => cls.teacherId === teacher.userId);
+                          }
+                          return true;
+                        })
+                        .map((teacher) => (
+                          <option key={teacher.userId} value={teacher.userId}>
+                            {teacher.firstName} {teacher.lastName} ({teacher.email})
+                          </option>
+                        ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
               </div>
 
+              {/* Row 2: Description - Full Width */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Descripción
@@ -734,35 +771,9 @@ export default function AcademyClassesPage() {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Profesor asignado *
-                </label>
-                <div className="relative">
-                  <select
-                    value={formData.teacherId}
-                    onChange={(e) => setFormData({ ...formData, teacherId: e.target.value })}
-                    className="appearance-none w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  >
-                    <option value="">Selecciona un profesor</option>
-                    {teachers.map((teacher) => (
-                      <option key={teacher.userId} value={teacher.userId}>
-                        {teacher.firstName} {teacher.lastName} ({teacher.email})
-                      </option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
               </div>
 
               {/* Pricing Options - Redesigned */}

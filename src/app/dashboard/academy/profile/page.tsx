@@ -691,23 +691,24 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={async () => {
-                const updated = formData.allowedPaymentMethods.includes('stripe')
-                  ? formData.allowedPaymentMethods.filter(m => m !== 'stripe')
-                  : [...formData.allowedPaymentMethods, 'stripe'];
+                const currentMethods = Array.isArray(formData.allowedPaymentMethods) ? formData.allowedPaymentMethods : [];
+                const updated = currentMethods.includes('stripe')
+                  ? currentMethods.filter(m => m !== 'stripe')
+                  : [...currentMethods, 'stripe'];
                 setFormData({ ...formData, allowedPaymentMethods: updated });
                 await handleSettingChange('allowedPaymentMethods', JSON.stringify(updated));
               }}
               className={`p-4 border-2 rounded-xl transition-all duration-200 text-left ${
-                formData.allowedPaymentMethods.includes('stripe')
+                (Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('stripe'))
                   ? 'border-brand-600 bg-brand-50 shadow-md'
                   : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
               <div className="flex items-start gap-3">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                  formData.allowedPaymentMethods.includes('stripe') ? 'border-brand-600 bg-brand-600' : 'border-gray-300'
+                  (Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('stripe')) ? 'border-brand-600 bg-brand-600' : 'border-gray-300'
                 }`}>
-                  {formData.allowedPaymentMethods.includes('stripe') && (
+                  {(Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('stripe')) && (
                     <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
@@ -715,12 +716,12 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex-1">
                   <div className={`text-sm font-semibold mb-1 ${
-                    formData.allowedPaymentMethods.includes('stripe') ? 'text-brand-900' : 'text-gray-900'
+                    (Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('stripe')) ? 'text-brand-900' : 'text-gray-900'
                   }`}>
                     Stripe
                   </div>
                   <p className={`text-xs ${
-                    formData.allowedPaymentMethods.includes('stripe') ? 'text-brand-700' : 'text-gray-500'
+                    (Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('stripe')) ? 'text-brand-700' : 'text-gray-500'
                   }`}>
                     Tarjetas de crédito/débito
                   </p>
@@ -732,23 +733,24 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={async () => {
-                const updated = formData.allowedPaymentMethods.includes('cash')
-                  ? formData.allowedPaymentMethods.filter(m => m !== 'cash')
-                  : [...formData.allowedPaymentMethods, 'cash'];
+                const currentMethods = Array.isArray(formData.allowedPaymentMethods) ? formData.allowedPaymentMethods : [];
+                const updated = currentMethods.includes('cash')
+                  ? currentMethods.filter(m => m !== 'cash')
+                  : [...currentMethods, 'cash'];
                 setFormData({ ...formData, allowedPaymentMethods: updated });
                 await handleSettingChange('allowedPaymentMethods', JSON.stringify(updated));
               }}
               className={`p-4 border-2 rounded-xl transition-all duration-200 text-left ${
-                formData.allowedPaymentMethods.includes('cash')
+                (Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('cash'))
                   ? 'border-green-500 bg-green-50 shadow-md'
                   : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
               <div className="flex items-start gap-3">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                  formData.allowedPaymentMethods.includes('cash') ? 'border-green-500 bg-green-500' : 'border-gray-300'
+                  (Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('cash')) ? 'border-green-500 bg-green-500' : 'border-gray-300'
                 }`}>
-                  {formData.allowedPaymentMethods.includes('cash') && (
+                  {(Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('cash')) && (
                     <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
@@ -756,12 +758,12 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex-1">
                   <div className={`text-sm font-semibold mb-1 ${
-                    formData.allowedPaymentMethods.includes('cash') ? 'text-green-900' : 'text-gray-900'
+                    (Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('cash')) ? 'text-green-900' : 'text-gray-900'
                   }`}>
                     Efectivo
                   </div>
                   <p className={`text-xs ${
-                    formData.allowedPaymentMethods.includes('cash') ? 'text-green-700' : 'text-gray-500'
+                    (Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('cash')) ? 'text-green-700' : 'text-gray-500'
                   }`}>
                     Pago en persona
                   </p>
@@ -773,23 +775,24 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={async () => {
-                const updated = formData.allowedPaymentMethods.includes('bizum')
-                  ? formData.allowedPaymentMethods.filter(m => m !== 'bizum')
-                  : [...formData.allowedPaymentMethods, 'bizum'];
+                const currentMethods = Array.isArray(formData.allowedPaymentMethods) ? formData.allowedPaymentMethods : [];
+                const updated = currentMethods.includes('bizum')
+                  ? currentMethods.filter(m => m !== 'bizum')
+                  : [...currentMethods, 'bizum'];
                 setFormData({ ...formData, allowedPaymentMethods: updated });
                 await handleSettingChange('allowedPaymentMethods', JSON.stringify(updated));
               }}
               className={`p-4 border-2 rounded-xl transition-all duration-200 text-left ${
-                formData.allowedPaymentMethods.includes('bizum')
+                (Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('bizum'))
                   ? 'border-purple-500 bg-purple-50 shadow-md'
                   : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
               <div className="flex items-start gap-3">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                  formData.allowedPaymentMethods.includes('bizum') ? 'border-purple-500 bg-purple-500' : 'border-gray-300'
+                  (Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('bizum')) ? 'border-purple-500 bg-purple-500' : 'border-gray-300'
                 }`}>
-                  {formData.allowedPaymentMethods.includes('bizum') && (
+                  {(Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('bizum')) && (
                     <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
@@ -797,12 +800,12 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex-1">
                   <div className={`text-sm font-semibold mb-1 ${
-                    formData.allowedPaymentMethods.includes('bizum') ? 'text-purple-900' : 'text-gray-900'
+                    (Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('bizum')) ? 'text-purple-900' : 'text-gray-900'
                   }`}>
                     Bizum
                   </div>
                   <p className={`text-xs ${
-                    formData.allowedPaymentMethods.includes('bizum') ? 'text-purple-700' : 'text-gray-500'
+                    (Array.isArray(formData.allowedPaymentMethods) && formData.allowedPaymentMethods.includes('bizum')) ? 'text-purple-700' : 'text-gray-500'
                   }`}>
                     Transferencia instantánea
                   </p>
