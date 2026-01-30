@@ -403,7 +403,7 @@ payments.get('/history', async (c) => {
     let params: any[] = [];
 
     if (session.role === 'ACADEMY') {
-      // Get payment history for owned academies (PAID or explicitly set to PENDING after rejection)
+      // Get payment history for owned academies (PAID only, no denied)
       query = `
         SELECT 
           e.id as enrollmentId,
@@ -427,7 +427,7 @@ payments.get('/history', async (c) => {
         LEFT JOIN User teacher ON c.teacherId = teacher.id
         WHERE a.ownerId = ? 
           AND e.paymentAmount > 0
-          AND e.paymentStatus IN ('PAID', 'PENDING', 'CASH_PENDING')
+          AND e.paymentStatus = 'PAID'
         ORDER BY e.approvedAt DESC
         LIMIT 50
       `;
@@ -645,6 +645,129 @@ payments.get('/stripe-status', async (c) => {
 
   } catch (error: any) {
     console.error('[Stripe Status] Error:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
+// POST /payments/register-manual - Academy registers a manual payment
+payments.post('/register-manual', requireAuth, async (c) => {
+  try {
+    const session = c.get('session');
+    if (session.role !== 'ACADEMY' && session.role !== 'ADMIN') {
+      return c.json(errorResponse('Only academy owners can register payments'), 403);
+    }
+
+    const { studentId, classId, amount, paymentMethod } = await c.req.json();
+
+    if (!studentId || !classId || !amount || !paymentMethod) {
+      return c.json(errorResponse('All fields are required'), 400);
+    }
+
+    // Verify class belongs to academy
+    const classData: any = await c.env.DB
+      .prepare(`
+        SELECT c.id, c.name, c.academyId, a.ownerId
+        FROM Class c
+        JOIN Academy a ON c.academyId = a.id
+        WHERE c.id = ?
+      `)
+      .bind(classId)
+      .first();
+
+    if (!classData || (session.role === 'ACADEMY' && classData.ownerId !== session.id)) {
+      return c.json(errorResponse('Class not found or not authorized'), 404);
+    }
+
+    // Check if enrollment exists
+    const enrollment: any = await c.env.DB
+      .prepare('SELECT id FROM ClassEnrollment WHERE userId = ? AND classId = ?')
+      .bind(studentId, classId)
+      .first();
+
+    if (!enrollment) {
+      return c.json(errorResponse('Student is not enrolled in this class'), 400);
+    }
+
+    // Get student info
+    const student: any = await c.env.DB
+      .prepare('SELECT firstName, lastName, email FROM User WHERE id = ?')
+      .bind(studentId)
+      .first();
+
+    // Create payment record
+    const paymentId = crypto.randomUUID();
+    await c.env.DB
+      .prepare(`
+        INSERT INTO Payment (
+          id, type, payerId, payerType, payerName, payerEmail,
+          receiverId, amount, currency, status, paymentMethod,
+          classId, description, metadata, createdAt, completedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      `)
+      .bind(
+        paymentId,
+        'STUDENT_TO_ACADEMY',
+        studentId,
+        'STUDENT',
+        `${student.firstName} ${student.lastName}`,
+        student.email,
+        classData.academyId,
+        amount,
+        'EUR',
+        'PAID',
+        paymentMethod,
+        classId,
+        `Pago manual registrado por academia`,
+        JSON.stringify({ registeredBy: session.id, enrollmentId: enrollment.id }),
+      )
+      .run();
+
+    return c.json(successResponse({ id: paymentId, message: 'Pago registrado exitosamente' }));
+  } catch (error: any) {
+    console.error('[Payments] Error registering manual payment:', error);
+    return c.json(errorResponse(error.message || 'Internal server error'), 500);
+  }
+});
+
+// DELETE /payments/:id - Delete a payment (reject or remove from ClassEnrollment)
+payments.delete('/:id', requireAuth, async (c) => {
+  try {
+    const session = c.get('session');
+    const enrollmentId = c.req.param('id');
+
+    // Get enrollment details  
+    const enrollment: any = await c.env.DB
+      .prepare(`
+        SELECT e.*, c.academyId, a.ownerId
+        FROM ClassEnrollment e
+        JOIN Class c ON e.classId = c.id
+        JOIN Academy a ON c.academyId = a.id
+        WHERE e.id = ?
+      `)
+      .bind(enrollmentId)
+      .first();
+
+    if (!enrollment) {
+      return c.json(errorResponse('Payment not found'), 404);
+    }
+
+    // Check permissions
+    const isOwner = session.role === 'ACADEMY' && enrollment.ownerId === session.id;
+    const isAdmin = session.role === 'ADMIN';
+
+    if (!isOwner && !isAdmin) {
+      return c.json(errorResponse('Not authorized to delete this payment'), 403);
+    }
+
+    // Reset the payment status to PENDING (keeps enrollment but removes payment request)
+    await c.env.DB
+      .prepare('UPDATE ClassEnrollment SET paymentStatus = ?, paymentAmount = 0, paymentMethod = NULL WHERE id = ?')
+      .bind('PENDING', enrollmentId)
+      .run();
+
+    return c.json(successResponse({ message: 'Payment deleted successfully' }));
+  } catch (error: any) {
+    console.error('[Payments] Error deleting payment:', error);
     return c.json(errorResponse(error.message || 'Internal server error'), 500);
   }
 });
