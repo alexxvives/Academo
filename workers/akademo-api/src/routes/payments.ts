@@ -403,10 +403,39 @@ payments.get('/history', async (c) => {
     let params: any[] = [];
 
     if (session.role === 'ACADEMY') {
-      // Get payment history from Payment table
+      // Query BOTH ClassEnrollment (legacy) and Payment table (new), then merge
+      // This handles existing payments and new manually registered ones
       query = `
         SELECT 
-          p.id,
+          e.id as enrollmentId,
+          e.id as paymentId,
+          e.userId as studentId,
+          e.classId,
+          e.paymentAmount,
+          c.currency,
+          e.paymentMethod,
+          e.approvedAt,
+          e.paymentStatus,
+          u.firstName as studentFirstName,
+          u.lastName as studentLastName,
+          u.email as studentEmail,
+          c.name as className,
+          teacher.firstName || ' ' || teacher.lastName as teacherName,
+          'ENROLLMENT' as source
+        FROM ClassEnrollment e
+        JOIN User u ON e.userId = u.id
+        JOIN Class c ON e.classId = c.id
+        JOIN Academy a ON c.academyId = a.id
+        LEFT JOIN User teacher ON c.teacherId = teacher.id
+        WHERE a.ownerId = ? 
+          AND e.paymentAmount > 0
+          AND e.paymentStatus = 'PAID'
+        
+        UNION ALL
+        
+        SELECT 
+          p.id as enrollmentId,
+          p.id as paymentId,
           p.payerId as studentId,
           p.classId,
           p.amount as paymentAmount,
@@ -414,12 +443,12 @@ payments.get('/history', async (c) => {
           p.paymentMethod,
           p.completedAt as approvedAt,
           p.status as paymentStatus,
-          p.payerName as studentName,
-          p.payerEmail as studentEmail,
           u.firstName as studentFirstName,
           u.lastName as studentLastName,
+          u.email as studentEmail,
           c.name as className,
-          teacher.firstName || ' ' || teacher.lastName as teacherName
+          teacher.firstName || ' ' || teacher.lastName as teacherName,
+          'PAYMENT' as source
         FROM Payment p
         JOIN Class c ON p.classId = c.id
         JOIN Academy a ON c.academyId = a.id
@@ -428,10 +457,11 @@ payments.get('/history', async (c) => {
         WHERE a.ownerId = ? 
           AND p.status IN ('PAID', 'COMPLETED')
           AND p.type = 'STUDENT_TO_ACADEMY'
-        ORDER BY p.completedAt DESC
+        
+        ORDER BY approvedAt DESC
         LIMIT 50
       `;
-      params = [session.id];
+      params = [session.id, session.id];
     } else {
       return c.json(errorResponse('Only academy owners can view payment history'), 403);
     }
