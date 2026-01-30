@@ -21,7 +21,7 @@ ratings.get('/teacher', async (c) => {
     if (session.role === 'TEACHER') {
       query = `
         SELECT 
-          r.id, r.rating, r.comment, r.createdAt,
+          r.id, r.rating, r.comment, r.createdAt, r.isRead,
           l.id as lessonId, l.title as lessonTitle,
           t.id as topicId, t.name as topicName,
           c.id as classId, c.name as className, c.academyId,
@@ -41,7 +41,7 @@ ratings.get('/teacher', async (c) => {
       // Academy owner - see all ratings for their academy's classes
       query = `
         SELECT 
-          r.id, r.rating, r.comment, r.createdAt,
+          r.id, r.rating, r.comment, r.createdAt, r.isRead,
           l.id as lessonId, l.title as lessonTitle,
           t.id as topicId, t.name as topicName,
           c.id as classId, c.name as className, c.academyId,
@@ -63,7 +63,7 @@ ratings.get('/teacher', async (c) => {
       // Admin - see all ratings across platform
       query = `
         SELECT 
-          r.id, r.rating, r.comment, r.createdAt,
+          r.id, r.rating, r.comment, r.createdAt, r.isRead,
           l.id as lessonId, l.title as lessonTitle,
           t.id as topicId, t.name as topicName,
           c.id as classId, c.name as className, c.academyId,
@@ -140,7 +140,8 @@ ratings.get('/teacher', async (c) => {
         rating: r.rating,
         comment: r.comment,
         createdAt: r.createdAt,
-        studentName: `${r.studentFirstName} ${r.studentLastName}`
+        studentName: `${r.studentFirstName} ${r.studentLastName}`,
+        isRead: r.isRead === 1
       };
 
       classesMap[classId].topics[topicId].lessons[lessonId].ratings.push(rating);

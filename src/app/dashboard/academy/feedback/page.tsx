@@ -291,6 +291,21 @@ export default function AcademyFeedbackPage() {
     }
   };
 
+  const handleRatingsViewed = async (ratingIds: string[]) => {
+    if (ratingIds.length === 0) return;
+    try {
+      await apiClient('/lessons/ratings/mark-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ratingIds }),
+      });
+      // Refresh feedback to update isRead status
+      loadFeedback();
+    } catch (error) {
+      console.error('Failed to mark ratings as read:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -302,6 +317,7 @@ export default function AcademyFeedbackPage() {
         classes={classes}
         loading={loading}
         showClassFilter={false}
+        onRatingsViewed={handleRatingsViewed}
       />
     </div>
   );

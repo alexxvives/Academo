@@ -11,6 +11,7 @@ export interface Rating {
   comment: string | null;
   createdAt: string;
   studentName: string;
+  isRead?: boolean;
 }
 
 export interface Lesson {
@@ -86,6 +87,13 @@ export function FeedbackView({
     });
   };
 
+  // Helper to check if topic has unread ratings
+  const hasUnreadRatings = (topic: Topic) => {
+    return topic.lessons.some(lesson => 
+      lesson.ratings.some(rating => rating.isRead === false)
+    );
+  };
+
   const renderStars = (rating: number) => {
     return (
       <div className="flex gap-0.5">
@@ -157,8 +165,10 @@ export function FeedbackView({
 
       {/* Classes */}
       <div className="space-y-4">
-        {filteredClasses.map((classItem) => (
-          <div key={classItem.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {filteredClasses.map((classItem) => {
+          const classHasUnread = classItem.topics.some(hasUnreadRatings);
+          return (
+          <div key={classItem.id} className={`bg-white rounded-xl border overflow-hidden ${classHasUnread ? 'border-green-400 ring-2 ring-green-100' : 'border-gray-200'}`}>
             <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
               <div className="flex items-center justify-between">
                 <div>
@@ -186,11 +196,13 @@ export function FeedbackView({
 
             {/* Topics */}
             <div className="divide-y divide-gray-200">
-              {classItem.topics.map((topic) => (
+              {classItem.topics.map((topic) => {
+                const topicHasUnread = hasUnreadRatings(topic);
+                return (
                 <div key={topic.id}>
                   <button
                     onClick={() => toggleTopic(topic.id, topic)}
-                    className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                    className={`w-full px-6 py-4 flex items-center justify-between transition-colors ${topicHasUnread ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-gray-50'}`}
                   >
                     <div className="flex items-center gap-3">
                       <svg
@@ -225,7 +237,7 @@ export function FeedbackView({
                               lessonRating: lesson.averageRating
                             }))
                           ).map((rating) => (
-                            <div key={rating.id} className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                            <div key={rating.id} className={`bg-white rounded-lg p-3 shadow-sm border ${rating.isRead === false ? 'border-green-400 bg-green-50' : 'border-gray-200'}`}>
                               <div className="flex items-start justify-between mb-1.5">
                                 <div className="flex items-center gap-3 flex-wrap">
                                   <span className="font-medium text-gray-900">{rating.studentName}</span>
@@ -246,10 +258,12 @@ export function FeedbackView({
                     </div>
                   )}
                 </div>
-              ))}
+              );
+              })}
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
     </div>
   );

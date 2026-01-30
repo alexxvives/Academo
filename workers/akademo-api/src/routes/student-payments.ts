@@ -53,7 +53,7 @@ studentPayments.get('/:studentId/class/:classId', requireAuth, async (c) => {
       .first() as any;
 
     if (!enrollment) {
-      return c.json(errorResponse('Enrollment not found'), 404);
+      return errorResponse('Enrollment not found', 404);
     }
 
     // Get all payments for this student in this class

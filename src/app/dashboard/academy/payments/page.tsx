@@ -68,24 +68,17 @@ export default function AcademyPaymentsPage() {
   });
   const [students, setStudents] = useState<{id: string; firstName: string; lastName: string; email: string}[]>([]);
   const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [registerForm, setRegisterForm] = useState({
-    studentId: '',
-    classId: '',
-    amount: '',
-    paymentMethod: 'cash' as 'cash' | 'bizum',
-  });
-  const [students, setStudents] = useState<{id: string; firstName: string; lastName: string; email: string}[]>([]);
-  const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
 
   const showStudentPaymentHistory = async (studentId: string, studentName: string, studentEmail: string, className: string, enrollmentDate: string, classId: string) => {
     try {
+      const url = `/student-payments/${studentId}/class/${classId}`;
+      console.log('Fetching payment history from:', url);
       // Fetch real payment history from API
-      const res = await apiClient(`/student-payments/${studentId}/class/${classId}`);
+      const res = await apiClient(url);
       
       // Check if response is OK before parsing JSON
       if (!res.ok) {
-        console.error(`API returned ${res.status}: ${res.statusText}`);
+        console.error(`API returned ${res.status}: ${res.statusText} for URL: ${url}`);
         const text = await res.text();
         console.error('Response body:', text);
         // Still open modal even if fetch fails, will show empty state

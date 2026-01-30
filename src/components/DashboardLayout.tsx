@@ -362,7 +362,7 @@ export default function DashboardLayout({
         return [
           { label: 'Panel de Control', href: '/dashboard/teacher', iconType: 'chart' },
           { label: 'Asignaturas', href: '/dashboard/teacher/classes', matchPaths: ['/dashboard/teacher/class'], iconType: 'book' },
-          { label: 'Valoraciones', href: '/dashboard/teacher/feedback', iconType: 'message', badge: unreadValoracionesCount > 0 ? unreadValoracionesCount : undefined, badgeColor: 'bg-blue-500' },
+          { label: 'Valoraciones', href: '/dashboard/teacher/feedback', iconType: 'message', badge: unreadValoracionesCount > 0 ? unreadValoracionesCount : undefined, badgeColor: 'bg-green-500' },
           { label: 'Streams', href: '/dashboard/teacher/streams', iconType: 'clap' },
           { label: 'Ejercicios', href: '/dashboard/teacher/assignments', iconType: 'fileText' },
           { label: 'Calificaciones', href: '/dashboard/teacher/grading', iconType: 'clipboard' },
@@ -378,11 +378,11 @@ export default function DashboardLayout({
         const academyMenuItems: MenuItem[] = [
           { label: 'Panel de Control', href: '/dashboard/academy', iconType: 'chart' as const },
           { label: 'Asignaturas', href: '/dashboard/academy/classes', matchPaths: ['/dashboard/academy/class'], iconType: 'book' as const },
-          { label: 'Valoraciones', href: '/dashboard/academy/feedback', iconType: 'message' as const, badge: unreadValoracionesCount > 0 ? unreadValoracionesCount : undefined, badgeColor: 'bg-blue-500' },
+          { label: 'Valoraciones', href: '/dashboard/academy/feedback', iconType: 'message' as const, badge: unreadValoracionesCount > 0 ? unreadValoracionesCount : undefined, badgeColor: 'bg-green-500' },
           { label: 'Streams', href: '/dashboard/academy/streams', iconType: 'clap' as const },
           { label: 'Profesores', href: '/dashboard/academy/teachers', iconType: 'botMessage' as const },
           { label: 'Estudiantes', href: '/dashboard/academy/students', iconType: 'users' as const },
-          { label: 'Pagos', href: '/dashboard/academy/payments', iconType: 'handCoins' as const, badge: pendingEnrollmentsCount > 0 ? pendingEnrollmentsCount : undefined },
+          { label: 'Pagos', href: '/dashboard/academy/payments', iconType: 'handCoins' as const, badge: pendingEnrollmentsCount > 0 ? pendingEnrollmentsCount : undefined, badgeColor: 'bg-green-500' },
         ];
         
         // Filter out Profesores menu for monoacademies
