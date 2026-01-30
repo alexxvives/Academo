@@ -504,7 +504,7 @@ export default function AcademyClassesPage() {
               </div>
 
               {/* Pricing Options - Redesigned */}
-              <div className={`space-y-4 p-4 rounded-xl transition-all ${paymentOptionsError ? 'border-2 border-red-500 bg-red-50' : ''}`}>
+              <div className="space-y-4 p-4 rounded-xl transition-all">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 group relative">
                     <label className="block text-sm font-medium text-gray-900">
@@ -518,7 +518,13 @@ export default function AcademyClassesPage() {
                       <p>Si seleccionas ambas opciones, los estudiantes podrán elegir entre pago mensual o pago único al inscribirse.</p>
                     </div>
                   </div>
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Selecciona al menos una</span>
+                  <span className={`text-xs px-2 py-1 rounded-full transition-all ${
+                    paymentOptionsError 
+                      ? 'bg-red-100 text-red-700 border-2 border-red-400 font-medium' 
+                      : 'text-gray-500 bg-gray-100'
+                  }`}>
+                    Selecciona al menos una
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
