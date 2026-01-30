@@ -270,7 +270,8 @@ export default function AcademyClassesPage() {
         zoomAccountId: '', 
         whatsappGroupLink: '' 
       });
-      loadData();
+      setPaymentOptionsError(false);  // Reset validation error
+      await loadData();  // Wait for data to refresh before allowing next edit
     } catch (err: any) {
       setError(err.message);
     } finally {
