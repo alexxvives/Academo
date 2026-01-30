@@ -226,6 +226,14 @@ export default function AcademyClassesPage() {
     e.preventDefault();
     if (!editingClass) return;
     setError('');
+    
+    // Validate payment options
+    if (!formData.allowMonthly && !formData.allowOneTime) {
+      setPaymentOptionsError(true);
+      return;
+    }
+    setPaymentOptionsError(false);
+    
     setSaving(true);
 
     try {

@@ -207,8 +207,11 @@ export default function ProfilePage() {
 
     console.log('[handleSettingChange] Called with field:', field, 'value:', value);
 
+    // For allowedPaymentMethods, value is a JSON string but we need an array for the state
+    const stateValue = field === 'allowedPaymentMethods' ? JSON.parse(value) : value;
+    
     // Update local state immediately
-    const newFormData = { ...formData, [field]: value };
+    const newFormData = { ...formData, [field]: stateValue };
     setFormData(newFormData);
 
     console.log('[handleSettingChange] newFormData:', newFormData);
