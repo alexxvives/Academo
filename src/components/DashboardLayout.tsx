@@ -119,13 +119,12 @@ export default function DashboardLayout({
         setAcademyPaymentStatus(result.data[0].paymentStatus || 'PAID');
       }
       
-      // Load pending enrollments count
-      const pendingRes = await apiClient('/enrollments/pending');
+      // Load pending cash payments count (not all pending enrollments)
+      const pendingRes = await apiClient('/payments/pending-cash');
       const pendingResult = await pendingRes.json();
       if (pendingResult.success && Array.isArray(pendingResult.data)) {
-        // Filter only PENDING status enrollments
-        const pendingOnly = pendingResult.data.filter((e: any) => e.status === 'PENDING');
-        setPendingEnrollmentsCount(pendingOnly.length);
+        // These are already filtered to CASH_PENDING/BIZUM_PENDING by the API
+        setPendingEnrollmentsCount(pendingResult.data.length);
       }
     } catch (error) {
       console.error('Failed to load academy:', error);
@@ -362,7 +361,7 @@ export default function DashboardLayout({
         return [
           { label: 'Panel de Control', href: '/dashboard/teacher', iconType: 'chart' },
           { label: 'Asignaturas', href: '/dashboard/teacher/classes', matchPaths: ['/dashboard/teacher/class'], iconType: 'book' },
-          { label: 'Valoraciones', href: '/dashboard/teacher/feedback', iconType: 'message', badge: unreadValoracionesCount > 0 ? unreadValoracionesCount : undefined, badgeColor: 'bg-green-500' },
+          { label: 'Valoraciones', href: '/dashboard/teacher/feedback', iconType: 'message', badge: unreadValoracionesCount > 0 ? unreadValoracionesCount : undefined, badgeColor: '[#b0e788]' },
           { label: 'Streams', href: '/dashboard/teacher/streams', iconType: 'clap' },
           { label: 'Ejercicios', href: '/dashboard/teacher/assignments', iconType: 'fileText' },
           { label: 'Calificaciones', href: '/dashboard/teacher/grading', iconType: 'clipboard' },
@@ -378,11 +377,11 @@ export default function DashboardLayout({
         const academyMenuItems: MenuItem[] = [
           { label: 'Panel de Control', href: '/dashboard/academy', iconType: 'chart' as const },
           { label: 'Asignaturas', href: '/dashboard/academy/classes', matchPaths: ['/dashboard/academy/class'], iconType: 'book' as const },
-          { label: 'Valoraciones', href: '/dashboard/academy/feedback', iconType: 'message' as const, badge: unreadValoracionesCount > 0 ? unreadValoracionesCount : undefined, badgeColor: 'bg-green-500' },
+          { label: 'Valoraciones', href: '/dashboard/academy/feedback', iconType: 'message' as const, badge: unreadValoracionesCount > 0 ? unreadValoracionesCount : undefined, badgeColor: '[#b0e788]' },
           { label: 'Streams', href: '/dashboard/academy/streams', iconType: 'clap' as const },
           { label: 'Profesores', href: '/dashboard/academy/teachers', iconType: 'botMessage' as const },
           { label: 'Estudiantes', href: '/dashboard/academy/students', iconType: 'users' as const },
-          { label: 'Pagos', href: '/dashboard/academy/payments', iconType: 'handCoins' as const, badge: pendingEnrollmentsCount > 0 ? pendingEnrollmentsCount : undefined, badgeColor: 'bg-green-500' },
+          { label: 'Pagos', href: '/dashboard/academy/payments', iconType: 'handCoins' as const, badge: pendingEnrollmentsCount > 0 ? pendingEnrollmentsCount : undefined, badgeColor: '[#b0e788]' },
         ];
         
         // Filter out Profesores menu for monoacademies

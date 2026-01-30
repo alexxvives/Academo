@@ -53,21 +53,17 @@ studentPayments.get('/:studentId/class/:classId', requireAuth, async (c) => {
       .first() as any;
 
     if (!enrollment) {
-      return errorResponse('Enrollment not found', 404);
+      return c.json(errorResponse('Enrollment not found'), 404);
     }
 
     // Get all payments for this student in this class
     const payments = await c.env.DB
       .prepare(`
-        SELECT 
-          p.*,
-          u.firstName as approverFirstName,
-          u.lastName as approverLastName
-        FROM Payment p
-        LEFT JOIN User u ON p.metadata LIKE '%approvedBy%' AND u.id = p.payerId
-        WHERE p.payerId = ? 
-        AND p.classId = ?
-        ORDER BY p.createdAt DESC
+        SELECT *
+        FROM Payment
+        WHERE payerId = ? 
+        AND classId = ?
+        ORDER BY createdAt DESC
       `)
       .bind(studentId, classId)
       .all();
@@ -102,7 +98,7 @@ studentPayments.get('/:studentId/class/:classId', requireAuth, async (c) => {
         paymentDate: paymentDate,
         dueDate: dueDate,
         isLate: isLate,
-        approvedBy: metadata.approvedBy || (payment.approverFirstName ? `${payment.approverFirstName} ${payment.approverLastName}` : null),
+        approvedBy: metadata.approvedBy || null,
         monthNumber: paymentFrequency === 'MONTHLY' ? (payments.results.length - index) : null,
       };
     });

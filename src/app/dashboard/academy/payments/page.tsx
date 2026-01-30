@@ -379,22 +379,11 @@ export default function AcademyPaymentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Pagos Pendientes</h1>
-          <p className="text-gray-600 text-sm mt-1">
-            Revisa y confirma los pagos en efectivo de los estudiantes
-          </p>
-        </div>
-        <button
-          onClick={() => setShowRegisterModal(true)}
-          className="px-4 py-2 bg-accent-300 text-gray-900 border-2 border-accent-300 rounded-lg hover:bg-accent-400 hover:border-accent-400 font-medium text-sm transition-all flex items-center gap-2"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Registrar Pago
-        </button>
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-900">Pagos Pendientes</h1>
+        <p className="text-gray-600 text-sm mt-1">
+          Revisa y confirma los pagos en efectivo de los estudiantes
+        </p>
       </div>
       
       <div className="flex items-center gap-3">
@@ -530,7 +519,18 @@ export default function AcademyPaymentsPage() {
       {/* Payment History Table */}
       {paymentHistory.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Historial de Pagos</h2>
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Historial de Pagos</h2>
+            <button
+              onClick={() => setShowRegisterModal(true)}
+              className="ml-auto px-4 py-2 bg-accent-300 text-gray-900 border-2 border-accent-300 rounded-lg hover:bg-accent-400 hover:border-accent-400 font-medium text-sm transition-all flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Registrar Pago
+            </button>
+          </div>
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -583,19 +583,8 @@ export default function AcademyPaymentsPage() {
                       })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleDeletePayment((history as any).paymentId || history.enrollmentId)}
-                          disabled={deletingPaymentId === ((history as any).paymentId || history.enrollmentId)}
-                          className="text-red-600 hover:text-red-700 disabled:opacity-50"
-                          title="Eliminar pago"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => showStudentPaymentHistory(
+                      <button
+                        onClick={() => showStudentPaymentHistory(
                           (history as any).studentId || '',
                           `${history.studentFirstName} ${history.studentLastName}`,
                           history.studentEmail,
@@ -610,7 +599,6 @@ export default function AcademyPaymentsPage() {
                         </svg>
                         Ver historial
                       </button>
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -628,29 +616,44 @@ export default function AcademyPaymentsPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Estudiante *</label>
-                <select
-                  value={registerForm.studentId}
-                  onChange={(e) => setRegisterForm({ ...registerForm, studentId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
-                >
-                  <option value="">Seleccionar estudiante...</option>
-                  {students.map(s => (
-                    <option key={s.id} value={s.id}>{s.firstName} {s.lastName} ({s.email})</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    list="students-list"
+                    value={students.find(s => s.id === registerForm.studentId) ? `${students.find(s => s.id === registerForm.studentId)!.firstName} ${students.find(s => s.id === registerForm.studentId)!.lastName}` : ''}
+                    onChange={(e) => {
+                      const student = students.find(s => `${s.firstName} ${s.lastName}` === e.target.value);
+                      setRegisterForm({ ...registerForm, studentId: student?.id || '' });
+                    }}
+                    placeholder="Buscar estudiante..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                  />
+                  <datalist id="students-list">
+                    {students.map(s => (
+                      <option key={s.id} value={`${s.firstName} ${s.lastName}`}>{s.email}</option>
+                    ))}
+                  </datalist>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Clase *</label>
-                <select
-                  value={registerForm.classId}
-                  onChange={(e) => setRegisterForm({ ...registerForm, classId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
-                >
-                  <option value="">Seleccionar clase...</option>
-                  {classes.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={registerForm.classId}
+                    onChange={(e) => setRegisterForm({ ...registerForm, classId: e.target.value })}
+                    className="w-full appearance-none px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                  >
+                    <option value="">Seleccionar clase...</option>
+                    {classes.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Monto *</label>
@@ -664,15 +667,22 @@ export default function AcademyPaymentsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">M\u00e9todo de Pago *</label>
-                <select
-                  value={registerForm.paymentMethod}
-                  onChange={(e) => setRegisterForm({ ...registerForm, paymentMethod: e.target.value as 'cash' | 'bizum' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
-                >
-                  <option value="cash">Efectivo</option>
-                  <option value="bizum">Bizum</option>
-                </select>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Método de Pago *</label>
+                <div className="relative">
+                  <select
+                    value={registerForm.paymentMethod}
+                    onChange={(e) => setRegisterForm({ ...registerForm, paymentMethod: e.target.value as 'cash' | 'bizum' })}
+                    className="w-full appearance-none px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                  >
+                    <option value="cash">Efectivo</option>
+                    <option value="bizum">Bizum</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="flex gap-3 mt-6">
