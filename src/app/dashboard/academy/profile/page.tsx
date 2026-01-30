@@ -222,6 +222,7 @@ export default function ProfilePage() {
           feedbackAnonymous: field === 'feedbackAnonymous' ? value : (newFormData.feedbackAnonymous ? 1 : 0),
           defaultWatermarkIntervalMins: newFormData.defaultWatermarkIntervalMins,
           defaultMaxWatchTimeMultiplier: newFormData.defaultMaxWatchTimeMultiplier,
+          allowedPaymentMethods: field === 'allowedPaymentMethods' ? value : JSON.stringify(newFormData.allowedPaymentMethods),
           allowMultipleTeachers: field === 'allowMultipleTeachers' ? value : (newFormData.allowMultipleTeachers ? 1 : 0)
         })
       });

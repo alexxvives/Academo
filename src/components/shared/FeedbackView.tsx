@@ -46,6 +46,7 @@ interface FeedbackViewProps {
   selectedClass?: string;
   onClassFilterChange?: (classId: string) => void;
   showClassFilter?: boolean;
+  onRatingsViewed?: (ratingIds: string[]) => void;
 }
 
 export function FeedbackView({
@@ -54,16 +55,32 @@ export function FeedbackView({
   selectedClass = 'all',
   onClassFilterChange,
   showClassFilter = true,
+  onRatingsViewed,
 }: FeedbackViewProps) {
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
 
-  const toggleTopic = (topicId: string) => {
+  const toggleTopic = (topicId: string, topic: Topic) => {
     setExpandedTopics(prev => {
       const newSet = new Set(prev);
+      const isExpanding = !newSet.has(topicId);
+      
       if (newSet.has(topicId)) {
         newSet.delete(topicId);
       } else {
         newSet.add(topicId);
+        
+        // If expanding and we have a callback, collect all rating IDs from this topic's lessons
+        if (isExpanding && onRatingsViewed) {
+          const ratingIds: string[] = [];
+          topic.lessons.forEach(lesson => {
+            lesson.ratings.forEach(rating => {
+              ratingIds.push(rating.id);
+            });
+          });
+          if (ratingIds.length > 0) {
+            onRatingsViewed(ratingIds);
+          }
+        }
       }
       return newSet;
     });
@@ -172,7 +189,7 @@ export function FeedbackView({
               {classItem.topics.map((topic) => (
                 <div key={topic.id}>
                   <button
-                    onClick={() => toggleTopic(topic.id)}
+                    onClick={() => toggleTopic(topic.id, topic)}
                     className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-center gap-3">

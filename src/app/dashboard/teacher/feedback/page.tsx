@@ -56,6 +56,18 @@ export default function TeacherFeedbackPage() {
     }
   };
 
+  const handleRatingsViewed = async (ratingIds: string[]) => {
+    try {
+      await apiClient('/lessons/ratings/mark-read', {
+        method: 'POST',
+        body: JSON.stringify({ ratingIds }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      console.error('Failed to mark ratings as read:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -69,6 +81,7 @@ export default function TeacherFeedbackPage() {
         classes={classes}
         loading={loading}
         showClassFilter={false}
+        onRatingsViewed={handleRatingsViewed}
       />
     </div>
   );
