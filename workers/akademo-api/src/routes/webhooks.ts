@@ -463,11 +463,17 @@ webhooks.post('/stripe', async (c) => {
               isMonthly
             );
             
-            // Create/update payment record (no longer update ClassEnrollment)
-            // Check if payment already exists
-            await c.env.DB
-              .prepare(`
-                INSERT INTO Payment (
+            // Check if payment already exists to avoid duplicates
+            const existingPayment: any = await c.env.DB
+              .prepare('SELECT id FROM Payment WHERE stripeCheckoutSessionId = ?')
+              .bind(sessionId)
+              .first();
+            
+            if (!existingPayment) {
+              // Create payment record
+              await c.env.DB
+                .prepare(`
+                  INSERT INTO Payment (
                   id, type, payerId, payerType, payerName, payerEmail,
                   receiverId, amount, currency, status, stripePaymentId,
                   stripeCheckoutSessionId, paymentMethod, classId,
@@ -498,7 +504,10 @@ webhooks.post('/stripe', async (c) => {
               )
               .run();
 
-            console.log('[Stripe Webhook] Payment confirmed and recorded for enrollment:', enrollmentId);
+              console.log('[Stripe Webhook] Payment confirmed and recorded for enrollment:', enrollmentId);
+            } else {
+              console.log('[Stripe Webhook] Payment already exists for session:', sessionId);
+            }
 
             // IMPORTANT: Update ClassEnrollment status to APPROVED for immediate access
             await c.env.DB

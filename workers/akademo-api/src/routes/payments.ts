@@ -117,23 +117,49 @@ payments.post('/initiate', async (c) => {
 
     // Check if payment already exists
     const existingPayment: any = await c.env.DB
-      .prepare('SELECT id, status, paymentMethod FROM Payment WHERE payerId = ? AND classId = ? AND status IN (?, ?)')
-      .bind(session.id, classId, 'PENDING', 'COMPLETED')
+      .prepare('SELECT id, status, paymentMethod FROM Payment WHERE payerId = ? AND classId = ? AND status = ?')
+      .bind(session.id, classId, 'PENDING')
       .first();
 
     if (existingPayment) {
-      // Allow resubmission - return success with appropriate message
-      const pendingMessage = existingPayment.paymentMethod === 'cash' 
+      // Update existing pending payment with new payment method
+      await c.env.DB
+        .prepare(`
+          UPDATE Payment 
+          SET paymentMethod = ?,
+              amount = ?,
+              metadata = ?,
+              nextPaymentDue = ?,
+              billingCycleStart = ?,
+              billingCycleEnd = ?,
+              createdAt = datetime('now')
+          WHERE id = ?
+        `)
+        .bind(
+          paymentMethod,
+          price,
+          JSON.stringify({
+            payerName: `${session.firstName} ${session.lastName}`,
+            payerEmail: session.email,
+            className: classData.name,
+            paymentFrequency: paymentFrequency
+          }),
+          billingCycle.nextPaymentDue,
+          billingCycle.billingCycleStart,
+          billingCycle.billingCycleEnd,
+          existingPayment.id
+        )
+        .run();
+      
+      const message = paymentMethod === 'cash' 
         ? 'Solicitud de pago enviada. La academia confirmará la recepción del efectivo.'
-        : existingPayment.paymentMethod === 'bizum'
-        ? 'Solicitud de pago enviada. La academia confirmará la recepción del pago por Bizum.'
-        : 'Ya tienes una solicitud de pago pendiente para esta clase.';
+        : 'Solicitud de pago enviada. La academia confirmará la recepción del pago por Bizum.';
       
       return c.json(successResponse({
-        message: pendingMessage,
-        status: existingPayment.status,
+        message,
+        status: 'PENDING',
         paymentId: existingPayment.id,
-        alreadyExists: true,
+        updated: true,
       }));
     }
 

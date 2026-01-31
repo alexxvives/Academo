@@ -363,18 +363,6 @@ export default function StudentClassesPage() {
                     <p className="text-sm text-gray-400 italic mb-4">Sin descripción</p>
                   )}
                   
-                  {/* Pending Payment Banner */}
-                  {classItem.paymentStatus === 'PENDING' && (classItem.paymentMethod === 'cash' || classItem.paymentMethod === 'bizum') && (
-                    <div className="mb-4 bg-[#1a1c29] border-l-4 border-[#b0e788] px-4 py-3 rounded-r-lg">
-                      <p className="text-sm font-semibold text-[#b0e788]">
-                        Esperando aprobación de la academia
-                      </p>
-                      <p className="text-xs text-[#b0e788]/80 mt-1">
-                        Tu solicitud de pago por {classItem.paymentMethod === 'cash' ? 'efectivo' : 'Bizum'} está siendo revisada
-                      </p>
-                    </div>
-                  )}
-                  
                   <div className="flex items-center gap-6 text-sm text-gray-500">
                     <span className="flex items-center gap-1">
                       <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
