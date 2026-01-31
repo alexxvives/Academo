@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { apiPost } from '@/lib/api-client';
 
 interface PaymentModalProps {
@@ -39,10 +39,26 @@ export default function PaymentModal({
   // Auto-select if only one option available
   const defaultFrequency = hasMonthly && !hasOneTime ? 'monthly' : !hasMonthly && hasOneTime ? 'one-time' : null;
   
-  const [paymentFrequency, setPaymentFrequency] = useState<'monthly' | 'one-time' | null>(defaultFrequency);
+  const [paymentFrequency, setPaymentFrequency] = useState<'monthly' | 'one-time' | null>(null);
   const [processing, setProcessing] = useState(false);
   const [confirmingCash, setConfirmingCash] = useState(false);
   const [confirmingBizum, setConfirmingBizum] = useState(false);
+
+  // Auto-select payment frequency when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setPaymentFrequency(defaultFrequency);
+      // Prevent body scrolling when modal is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, defaultFrequency]);
 
   if (!isOpen) return null;
 
@@ -59,16 +75,18 @@ export default function PaymentModal({
     }).format(amount);
   };
 
-  const handleCashPayment = () => {
-    setConfirmingCash(true);
-  };
-
-  const handleConfirmCash = async () => {
+  const handleCashPayment = async () => {
+    if (!paymentFrequency && needsFrequencySelection) {
+      alert('Por favor selecciona un tipo de pago primero');
+      return;
+    }
+    
     setProcessing(true);
     try {
       const res = await apiPost('/payments/initiate', { 
         classId, 
-        paymentMethod: 'cash' 
+        paymentMethod: 'cash',
+        paymentFrequency: paymentFrequency || (hasMonthly ? 'monthly' : 'one-time')
       });
 
       const result = await res.json();
@@ -83,7 +101,6 @@ export default function PaymentModal({
       alert('Error: ' + error.message);
     } finally {
       setProcessing(false);
-      setConfirmingCash(false);
     }
   };
 
@@ -118,15 +135,12 @@ export default function PaymentModal({
     }
   };
 
-  const handleBizumPayment = () => {
+  const handleBizumPayment = async () => {
     if (!paymentFrequency && needsFrequencySelection) {
       alert('Por favor selecciona un tipo de pago primero');
       return;
     }
-    setConfirmingBizum(true);
-  };
-
-  const handleConfirmBizum = async () => {
+    
     setProcessing(true);
     try {
       const res = await apiPost('/payments/initiate', {
@@ -146,85 +160,8 @@ export default function PaymentModal({
       alert('Error: ' + error.message);
     } finally {
       setProcessing(false);
-      setConfirmingBizum(false);
     }
   };
-
-  // Cash confirmation dialog
-  if (confirmingCash) {
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] backdrop-blur-sm p-4">
-        <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl">
-          <div className="p-8 border-b border-gray-200">
-            <h3 className="text-2xl font-semibold text-gray-900">Confirmar Pago en Efectivo</h3>
-          </div>
-          
-          <div className="p-8">
-            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-              <p className="text-gray-700 leading-relaxed text-center">
-                Tu solicitud quedará pendiente hasta que la academia confirme haber recibido el pago. No tendrás acceso a la clase hasta la aprobación.
-              </p>
-            </div>
-          </div>
-
-          <div className="p-8 border-t border-gray-200 flex gap-4">
-            <button
-              onClick={() => setConfirmingCash(false)}
-              disabled={processing}
-              className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg text-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleConfirmCash}
-              disabled={processing}
-              className="flex-1 px-6 py-3 bg-gray-900 text-white rounded-lg text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {processing ? 'Procesando...' : 'Confirmar Pago'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Bizum confirmation dialog
-  if (confirmingBizum) {
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] backdrop-blur-sm p-4">
-        <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl">
-          <div className="p-8 border-b border-gray-200">
-            <h3 className="text-2xl font-semibold text-gray-900">Confirmar Pago por Bizum</h3>
-          </div>
-          
-          <div className="p-8">
-            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-              <p className="text-gray-700 leading-relaxed text-center">
-                Tu solicitud quedará pendiente hasta que la academia confirme haber recibido el pago. No tendrás acceso a la clase hasta la aprobación.
-              </p>
-            </div>
-          </div>
-
-          <div className="p-8 border-t border-gray-200 flex gap-4">
-            <button
-              onClick={() => setConfirmingBizum(false)}
-              disabled={processing}
-              className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-lg text-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleConfirmBizum}
-              disabled={processing}
-              className="flex-1 px-6 py-3 bg-gray-900 text-white rounded-lg text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {processing ? 'Procesando...' : 'Confirmar Pago'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] backdrop-blur-sm p-4">
@@ -375,7 +312,7 @@ export default function PaymentModal({
                     </div>
                     <div className="flex-1">
                       <h4 className="text-base font-semibold text-[#1a1c29] mb-0.5">Tarjeta de Crédito/Débito</h4>
-                      <p className="text-sm text-gray-600">Pago seguro con Stripe</p>
+                      <p className="text-sm text-gray-600">Pago seguro con Stripe • Usa tu email registrado</p>
                     </div>
                     <div className="flex-shrink-0">
                       <span className="inline-block text-xs font-medium text-white bg-black px-3 py-1 rounded-full">
@@ -412,7 +349,7 @@ export default function PaymentModal({
                         </span>
                       ) : (
                         <span className="inline-block text-xs font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                          Requiere aprobación
+                          Requiere aprobación manual
                         </span>
                       )}
                     </div>
@@ -446,7 +383,7 @@ export default function PaymentModal({
                         </span>
                       ) : (
                         <span className="inline-block text-xs font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                          Requiere aprobación
+                          Requiere aprobación manual
                         </span>
                       )}
                     </div>
