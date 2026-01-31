@@ -728,7 +728,6 @@ export default function AcademyPaymentsPage() {
                       )}
                       Eliminar
                     </button>
-                  </div>
                 </td>
               </tr>
             ))}
