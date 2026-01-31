@@ -14,7 +14,7 @@ payments.post('/initiate', async (c) => {
     const session = await requireAuth(c);
     console.log('[Payments] Session authenticated:', session.id, session.email);
     
-    const { classId, paymentMethod } = await c.req.json();
+    const { classId, paymentMethod, paymentFrequency } = await c.req.json();
 
     if (!classId || !paymentMethod) {
       return c.json(errorResponse('classId and paymentMethod are required'), 400);
@@ -24,14 +24,25 @@ payments.post('/initiate', async (c) => {
       return c.json(errorResponse('Invalid payment method. Must be: cash, stripe, or bizum'), 400);
     }
 
+    if (!paymentFrequency || !['monthly', 'one-time'].includes(paymentFrequency)) {
+      return c.json(errorResponse('Valid paymentFrequency is required (monthly or one-time)'), 400);
+    }
+
     // Get class details including price
     const classData: any = await c.env.DB
-      .prepare('SELECT id, name, price, currency, academyId FROM Class WHERE id = ?')
+      .prepare('SELECT id, name, monthlyPrice, oneTimePrice, academyId FROM Class WHERE id = ?')
       .bind(classId)
       .first();
 
     if (!classData) {
       return c.json(errorResponse('Class not found'), 404);
+    }
+
+    // Determine price based on payment frequency
+    const price = paymentFrequency === 'monthly' ? classData.monthlyPrice : classData.oneTimePrice;
+    
+    if (!price || price <= 0) {
+      return c.json(errorResponse(`${paymentFrequency === 'monthly' ? 'Monthly' : 'One-time'} payment not available for this class`), 400);
     }
 
     // Check if enrollment exists
@@ -69,15 +80,16 @@ payments.post('/initiate', async (c) => {
         'STUDENT_TO_ACADEMY',
         session.id,
         classData.academyId,
-        classData.price,
-        classData.currency || 'EUR',
+        price,
+        'EUR',
         'PENDING',
         paymentMethod,
         classId,
         JSON.stringify({
           payerName: `${session.firstName} ${session.lastName}`,
           payerEmail: session.email,
-          className: classData.name
+          className: classData.name,
+          paymentFrequency: paymentFrequency
         })
       )
       .run();
@@ -385,6 +397,7 @@ payments.post('/stripe-session', async (c) => {
         quantity: 1,
       }],
       mode: isRecurring ? 'subscription' : 'payment',
+      customer_email: session.email, // Pre-fill email field
       success_url: `${c.env.FRONTEND_URL || 'https://akademo-edu.com'}/dashboard/student/classes?payment=success&classId=${classId}`,
       cancel_url: `${c.env.FRONTEND_URL || 'https://akademo-edu.com'}/dashboard/student/classes?payment=cancel`,
       metadata: {

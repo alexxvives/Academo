@@ -164,8 +164,8 @@ export default function PaymentModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl w-full max-w-5xl shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] backdrop-blur-sm">
+      <div className="bg-white rounded-2xl w-full max-w-5xl shadow-2xl max-h-[90vh] overflow-y-auto m-4">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 bg-[#1a1c29] relative">
           <div className="text-center">
@@ -312,7 +312,7 @@ export default function PaymentModal({
                     </div>
                     <div className="flex-1">
                       <h4 className="text-base font-semibold text-[#1a1c29] mb-0.5">Tarjeta de Crédito/Débito</h4>
-                      <p className="text-sm text-gray-600">Pago seguro con Stripe • Usa tu email registrado</p>
+                      <p className="text-sm text-gray-600">Pago seguro con Stripe</p>
                     </div>
                     <div className="flex-shrink-0">
                       <span className="inline-block text-xs font-medium text-white bg-black px-3 py-1 rounded-full">
