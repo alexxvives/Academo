@@ -119,12 +119,13 @@ export default function DashboardLayout({
         setAcademyPaymentStatus(result.data[0].paymentStatus || 'PAID');
       }
       
-      // Load pending cash payments count (not all pending enrollments)
+      // Load pending cash/bizum payments count for badge
       const pendingRes = await apiClient('/payments/pending-cash');
       const pendingResult = await pendingRes.json();
       if (pendingResult.success && Array.isArray(pendingResult.data)) {
-        // These are already filtered to CASH_PENDING/BIZUM_PENDING by the API
-        setPendingEnrollmentsCount(pendingResult.data.length);
+        // Count only PENDING status payments (cash/bizum awaiting approval)
+        const pendingCount = pendingResult.data.filter((p: any) => p.status === 'PENDING').length;
+        setPendingEnrollmentsCount(pendingCount);
       }
     } catch (error) {
       console.error('Failed to load academy:', error);

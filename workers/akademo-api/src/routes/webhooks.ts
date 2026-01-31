@@ -474,20 +474,15 @@ webhooks.post('/stripe', async (c) => {
               await c.env.DB
                 .prepare(`
                   INSERT INTO Payment (
-                  id, type, payerId, payerType, payerName, payerEmail,
-                  receiverId, amount, currency, status, stripePaymentId,
-                  stripeCheckoutSessionId, paymentMethod, classId,
-                  description, metadata, nextPaymentDue, billingCycleStart, billingCycleEnd,
-                  createdAt, completedAt, updatedAt
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'), datetime('now'))
+                  id, type, payerId, receiverId, amount, currency, status,
+                  stripePaymentId, stripeCheckoutSessionId, paymentMethod, classId,
+                  metadata, completedAt, nextPaymentDue, billingCycleStart, billingCycleEnd, createdAt
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, datetime('now'))
               `)
               .bind(
                 crypto.randomUUID(),
                 'STUDENT_TO_ACADEMY',
                 enrollment.userId,
-                'STUDENT',
-                `${enrollment.firstName} ${enrollment.lastName}`,
-                enrollment.email,
                 enrollment.academyId,
                 amount_total ? amount_total / 100 : 0, // Stripe uses cents
                 'EUR',
@@ -496,8 +491,13 @@ webhooks.post('/stripe', async (c) => {
                 sessionId,
                 'stripe',
                 enrollment.classId,
-                `Pago de matrícula - ${enrollment.className}`,
-                JSON.stringify({ subscriptionId: subscription, source: 'stripe_checkout', paymentFrequency }),
+                JSON.stringify({ 
+                  subscriptionId: subscription, 
+                  source: 'stripe_checkout', 
+                  paymentFrequency,
+                  payerName: `${enrollment.firstName} ${enrollment.lastName}`,
+                  payerEmail: enrollment.email
+                }),
                 billingCycle.nextPaymentDue,
                 billingCycle.billingCycleStart,
                 billingCycle.billingCycleEnd
@@ -570,13 +570,16 @@ webhooks.post('/stripe', async (c) => {
         .first() as any;
 
       if (enrollment) {
+        // Calculate next billing cycle
+        const billingCycle = calculateBillingCycle('monthly');
+        
         // Add to payment history
         await c.env.DB
           .prepare(`
             INSERT INTO Payment (
               id, type, payerId, receiverId, amount, currency, status, stripePaymentId,
-              paymentMethod, classId, metadata, createdAt, completedAt
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+              paymentMethod, classId, metadata, completedAt, nextPaymentDue, billingCycleStart, billingCycleEnd, createdAt
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, datetime('now'))
           `)
           .bind(
             crypto.randomUUID(),
@@ -595,7 +598,10 @@ webhooks.post('/stripe', async (c) => {
               payerName: `${enrollment.firstName} ${enrollment.lastName}`,
               payerEmail: enrollment.email,
               className: enrollment.className
-            })
+            }),
+            billingCycle.nextPaymentDue,
+            billingCycle.billingCycleStart,
+            billingCycle.billingCycleEnd
           )
           .run();
 

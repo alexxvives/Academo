@@ -163,6 +163,12 @@ export default function AcademyClassesPage() {
     setError('');
     setPaymentOptionsError(false);
     
+    // Block creation for demo academy (NOT PAID status)
+    if (paymentStatus === 'NOT PAID') {
+      setError('Activa tu academia para crear clases reales');
+      return;
+    }
+    
     // Validation: at least one payment option must be selected
     if (!formData.allowMonthly && !formData.allowOneTime) {
       setPaymentOptionsError(true);

@@ -73,31 +73,6 @@ export default function StudentsList({ enrollments }: StudentsListProps) {
                   <p className="font-semibold text-gray-900 text-sm truncate">{e.student.firstName} {e.student.lastName}</p>
                   <p className="text-xs text-gray-500 truncate">{e.student.email}</p>
                 </div>
-                {/* All visible students can be removed */}
-                <button
-                  onClick={async () => {
-                    if (!confirm(`¿Eliminar a ${e.student.firstName} ${e.student.lastName} de esta clase?`)) return;
-                    try {
-                      const { apiClient } = await import('@/lib/api-client');
-                      const response = await apiClient(`/enrollments/${e.id}/reject`, { method: 'POST' });
-                      const result = await response.json();
-                      if (result.success) {
-                        window.location.reload();
-                      } else {
-                        alert(result.error || 'Error al eliminar estudiante');
-                      }
-                    } catch (error) {
-                      console.error('Error removing student:', error);
-                      alert('Error al eliminar estudiante');
-                    }
-                  }}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-red-600 hover:bg-red-50 rounded-lg"
-                  title="Eliminar de clase"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               </div>
             </div>
           ))}

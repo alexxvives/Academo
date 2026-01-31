@@ -246,8 +246,8 @@ export function StudentPaymentDetailModal({
                   </div>
                 </div>
 
-                {/* Payment Timeline */}
-                <div className="p-6 max-h-[400px] overflow-y-auto">
+                {/* Payment Timeline - Compact Cards */}
+                <div className="p-6 max-h-[450px] overflow-y-auto">
                   <h3 className="text-sm font-semibold text-gray-700 mb-4">
                     Historial de Pagos
                   </h3>
@@ -260,38 +260,42 @@ export function StudentPaymentDetailModal({
                       <p className="text-sm font-medium text-gray-500">No hay pagos registrados</p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {payments.map((payment, index) => {
                         const isPaid = payment.status === 'PAID' || payment.status === 'COMPLETED';
                         const isPending = payment.status === 'PENDING';
                         
                         return (
-                          <div key={payment.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all">
-                            {/* Top row: Status & Amount */}
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center gap-2">
-                                {paymentFrequency === 'MONTHLY' && payment.monthNumber && (
-                                  <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded">
-                                    Mes {payment.monthNumber}
-                                  </span>
-                                )}
+                          <div key={payment.id} className="bg-white border border-gray-200 rounded-lg px-4 py-2.5 hover:border-gray-300 hover:shadow-sm transition-all">
+                            <div className="flex items-center justify-between gap-4">
+                              {/* Left: Status & Method */}
+                              <div className="flex items-center gap-2 min-w-0 flex-1">
                                 {getPaymentStatusBadge(payment)}
-                              </div>
-                              <div className="text-right">
-                                <div className="text-lg font-bold text-gray-900">
-                                  {formatCurrency(payment.amount, payment.currency)}
+                                <div className="flex items-center gap-1.5 text-xs text-gray-600">
+                                  {getPaymentMethodIcon(payment.paymentMethod)}
+                                  <span className="capitalize truncate">{payment.paymentMethod === 'cash' ? 'Efectivo' : payment.paymentMethod}</span>
                                 </div>
                               </div>
-                            </div>
-                            
-                            {/* Payment method & date */}
-                            <div className="flex items-center gap-3 text-sm text-gray-600">
-                              <div className="flex items-center gap-1.5">
-                                {getPaymentMethodIcon(payment.paymentMethod)}
-                                <span className="capitalize font-medium">{payment.paymentMethod === 'cash' ? 'Efectivo' : payment.paymentMethod}</span>
+                              
+                              {/* Center: Class & Date */}
+                              <div className="flex flex-col items-center gap-0.5 min-w-0 flex-1">
+                                <span className="text-xs font-semibold text-gray-700 truncate max-w-full">{className}</span>
+                                <span className="text-xs text-gray-500">{formatDate(payment.paymentDate)}</span>
                               </div>
-                              <span className="text-gray-400">•</span>
-                              <span>{formatDate(payment.paymentDate)}</span>
+                              
+                              {/* Right: Month & Amount */}
+                              <div className="flex items-center gap-3 flex-shrink-0">
+                                {paymentFrequency === 'MONTHLY' && payment.monthNumber && (
+                                  <span className="text-xs font-semibold text-gray-600 bg-blue-50 px-2 py-1 rounded border border-blue-200">
+                                    M{payment.monthNumber}
+                                  </span>
+                                )}
+                                <div className="text-right">
+                                  <div className="text-sm font-bold text-gray-900 whitespace-nowrap">
+                                    {formatCurrency(payment.amount, payment.currency)}
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         );

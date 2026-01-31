@@ -40,7 +40,7 @@ classes.get('/', async (c) => {
     let params: any[] = [];
 
     if (session.role === 'STUDENT') {
-      // Get enrolled classes with counts and payment status
+      // Get enrolled classes with counts and payment status (latest payment only)
       query = `
         SELECT 
           c.id, c.name, c.slug, c.description, c.academyId, c.teacherId, c.createdAt, 
@@ -57,7 +57,12 @@ classes.get('/', async (c) => {
         FROM ClassEnrollment ce
         JOIN Class c ON ce.classId = c.id
         JOIN Academy a ON c.academyId = a.id
-        LEFT JOIN Payment p ON p.payerId = ce.userId AND p.classId = c.id AND p.status IN ('PENDING', 'COMPLETED')
+        LEFT JOIN Payment p ON p.id = (
+          SELECT id FROM Payment 
+          WHERE payerId = ce.userId AND classId = c.id 
+          ORDER BY createdAt DESC 
+          LIMIT 1
+        )
         WHERE ce.userId = ? AND ce.status != 'WITHDRAWN'
         ORDER BY ce.enrolledAt DESC
       `;

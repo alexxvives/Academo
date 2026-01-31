@@ -6,7 +6,8 @@ import { successResponse, errorResponse } from '../lib/utils';
 const payments = new Hono<{ Bindings: Bindings }>();
 
 // Helper function to calculate billing cycles based on class start date
-function calculateBillingCycle(classStartDate: string, enrollmentDate: string, isMonthly: boolean) {
+// Returns: amount to charge (including catch-up cycles) + billing cycle info + missed cycles count
+function calculateBillingCycle(classStartDate: string, enrollmentDate: string, isMonthly: boolean, monthlyPrice: number) {
   const classStart = new Date(classStartDate);
   const enrollment = new Date(enrollmentDate);
   const today = new Date();
@@ -16,7 +17,10 @@ function calculateBillingCycle(classStartDate: string, enrollmentDate: string, i
     return {
       billingCycleStart: null,
       billingCycleEnd: null,
-      nextPaymentDue: null
+      nextPaymentDue: null,
+      missedCycles: 0,
+      catchUpAmount: 0,
+      totalAmount: monthlyPrice // Just regular price for one-time
     };
   }
   
@@ -29,14 +33,18 @@ function calculateBillingCycle(classStartDate: string, enrollmentDate: string, i
     return {
       billingCycleStart: classStart.toISOString(),
       billingCycleEnd: cycleEnd.toISOString(),
-      nextPaymentDue: cycleEnd.toISOString() // Charged at end of cycle for next cycle
+      nextPaymentDue: cycleEnd.toISOString(), // Charged at end of cycle for next cycle
+      missedCycles: 0,
+      catchUpAmount: 0,
+      totalAmount: monthlyPrice // Just one cycle
     };
   }
   
-  // Class has already started (late joiner)
+  // Class has already started (late joiner) - CHARGE FOR ALL MISSED CYCLES
   // Find which cycle we're currently in
   const daysSinceStart = Math.floor((today.getTime() - classStart.getTime()) / (1000 * 60 * 60 * 24));
   const currentCycleNumber = Math.floor(daysSinceStart / 30);
+  const missedCycles = currentCycleNumber + 1; // +1 for current cycle
   
   // Current cycle start = classStart + (cycleNumber * 30 days)
   const currentCycleStart = new Date(classStart);
@@ -45,15 +53,21 @@ function calculateBillingCycle(classStartDate: string, enrollmentDate: string, i
   const currentCycleEnd = new Date(currentCycleStart);
   currentCycleEnd.setDate(currentCycleEnd.getDate() + 30);
   
-  // First payment covers NEXT cycle (they get remainder of current cycle free)
+  // Next billing cycle starts after current cycle ends
   const nextCycleStart = currentCycleEnd;
   const nextCycleEnd = new Date(nextCycleStart);
   nextCycleEnd.setDate(nextCycleEnd.getDate() + 30);
   
+  // Calculate catch-up payment: charge for all missed cycles
+  const catchUpAmount = missedCycles * monthlyPrice;
+  
   return {
-    billingCycleStart: nextCycleStart.toISOString(),
-    billingCycleEnd: nextCycleEnd.toISOString(),
-    nextPaymentDue: nextCycleEnd.toISOString() // Charged at end of next cycle
+    billingCycleStart: classStart.toISOString(), // Billing starts from class start
+    billingCycleEnd: currentCycleEnd.toISOString(), // Covers up to end of current cycle
+    nextPaymentDue: nextCycleEnd.toISOString(), // Next regular payment due
+    missedCycles: missedCycles,
+    catchUpAmount: catchUpAmount,
+    totalAmount: catchUpAmount // Total to charge NOW (all missed cycles)
   };
 }
 
@@ -97,13 +111,17 @@ payments.post('/initiate', async (c) => {
       return c.json(errorResponse(`${paymentFrequency === 'monthly' ? 'Monthly' : 'One-time'} payment not available for this class`), 400);
     }
 
-    // Calculate billing cycle for monthly payments
+    // Calculate billing cycle for monthly payments (includes catch-up for late joiners)
     const isMonthly = paymentFrequency === 'monthly';
     const billingCycle = calculateBillingCycle(
       classData.startDate || new Date().toISOString(),
       new Date().toISOString(),
-      isMonthly
+      isMonthly,
+      price // Pass monthly price for catch-up calculation
     );
+    
+    // Use totalAmount from billing cycle (includes catch-up cycles if late joiner)
+    const finalAmount = billingCycle.totalAmount;
 
     // Check if enrollment exists
     const enrollment: any = await c.env.DB
@@ -137,12 +155,16 @@ payments.post('/initiate', async (c) => {
         `)
         .bind(
           paymentMethod,
-          price,
+          finalAmount, // Use total amount including catch-up
           JSON.stringify({
             payerName: `${session.firstName} ${session.lastName}`,
             payerEmail: session.email,
             className: classData.name,
-            paymentFrequency: paymentFrequency
+            paymentFrequency: paymentFrequency,
+            missedCycles: billingCycle.missedCycles,
+            catchUpAmount: billingCycle.catchUpAmount,
+            regularPrice: price,
+            note: billingCycle.missedCycles > 0 ? `Incluye ${billingCycle.missedCycles} ciclo(s) pendiente(s). Próximos pagos serán de ${price}€/mes.` : null
           }),
           billingCycle.nextPaymentDue,
           billingCycle.billingCycleStart,
@@ -151,15 +173,19 @@ payments.post('/initiate', async (c) => {
         )
         .run();
       
-      const message = paymentMethod === 'cash' 
-        ? 'Solicitud de pago enviada. La academia confirmará la recepción del efectivo.'
-        : 'Solicitud de pago enviada. La academia confirmará la recepción del pago por Bizum.';
+      const message = billingCycle.missedCycles > 0
+        ? `Solicitud enviada. Total: ${finalAmount}€ (incluye ${billingCycle.missedCycles} mes(es) pendiente(s)). Próximos pagos: ${price}€/mes.`
+        : paymentMethod === 'cash' 
+          ? 'Solicitud de pago enviada. La academia confirmará la recepción del efectivo.'
+          : 'Solicitud de pago enviada. La academia confirmará la recepción del pago por Bizum.';
       
       return c.json(successResponse({
         message,
         status: 'PENDING',
         paymentId: existingPayment.id,
         updated: true,
+        missedCycles: billingCycle.missedCycles,
+        catchUpAmount: billingCycle.catchUpAmount,
       }));
     }
 
@@ -178,7 +204,7 @@ payments.post('/initiate', async (c) => {
         'STUDENT_TO_ACADEMY',
         session.id,
         classData.academyId,
-        price,
+        finalAmount, // Total including catch-up
         'EUR',
         'PENDING',
         paymentMethod,
@@ -187,7 +213,11 @@ payments.post('/initiate', async (c) => {
           payerName: `${session.firstName} ${session.lastName}`,
           payerEmail: session.email,
           className: classData.name,
-          paymentFrequency: paymentFrequency
+          paymentFrequency: paymentFrequency,
+          missedCycles: billingCycle.missedCycles,
+          catchUpAmount: billingCycle.catchUpAmount,
+          regularPrice: price,
+          note: billingCycle.missedCycles > 0 ? `Incluye ${billingCycle.missedCycles} ciclo(s) pendiente(s). Próximos pagos serán de ${price}€/mes.` : null
         }),
         billingCycle.nextPaymentDue,
         billingCycle.billingCycleStart,
@@ -195,10 +225,16 @@ payments.post('/initiate', async (c) => {
       )
       .run();
 
+    const message = billingCycle.missedCycles > 0
+      ? `Solicitud enviada. Total: ${finalAmount}€ (incluye ${billingCycle.missedCycles} mes(es) pendiente(s)). Próximos pagos: ${price}€/mes.`
+      : `Solicitud de pago enviada. La academia confirmar\u00e1 la recepci\u00f3n del ${paymentMethod === 'cash' ? 'efectivo' : 'pago por Bizum'}.`;
+
     return c.json(successResponse({
-      message: `Solicitud de pago enviada. La academia confirmar\u00e1 la recepci\u00f3n del ${paymentMethod === 'cash' ? 'efectivo' : 'pago por Bizum'}.`,
+      message,
       status: 'PENDING',
       paymentId: paymentId,
+      missedCycles: billingCycle.missedCycles,
+      catchUpAmount: billingCycle.catchUpAmount,
     }));
 
     // For Stripe (card payment), continue to Stripe checkout
@@ -975,26 +1011,26 @@ payments.post('/register-manual', async (c) => {
 payments.delete('/:id', async (c) => {
   try {
     const session = await requireAuth(c);
-    const enrollmentId = c.req.param('id');
+    const paymentId = c.req.param('id');
 
-    // Get enrollment details  
-    const enrollment: any = await c.env.DB
+    // Get payment details
+    const payment: any = await c.env.DB
       .prepare(`
-        SELECT e.*, c.academyId, a.ownerId
-        FROM ClassEnrollment e
-        JOIN Class c ON e.classId = c.id
-        JOIN Academy a ON c.academyId = a.id
-        WHERE e.id = ?
+        SELECT p.*, c.academyId, a.ownerId
+        FROM Payment p
+        LEFT JOIN Class c ON p.classId = c.id
+        LEFT JOIN Academy a ON c.academyId = a.id
+        WHERE p.id = ?
       `)
-      .bind(enrollmentId)
+      .bind(paymentId)
       .first();
 
-    if (!enrollment) {
+    if (!payment) {
       return c.json(errorResponse('Payment not found'), 404);
     }
 
-    // Check permissions
-    const isOwner = session.role === 'ACADEMY' && enrollment.ownerId === session.id;
+    // Check permissions - only academy owner or admin can delete
+    const isOwner = session.role === 'ACADEMY' && payment.ownerId === session.id;
     const isAdmin = session.role === 'ADMIN';
 
     if (!isOwner && !isAdmin) {

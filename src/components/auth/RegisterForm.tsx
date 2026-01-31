@@ -125,8 +125,8 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, onClose }: RegisterFo
     setError('');
 
     try {
-      // Email verification required for ACADEMY and STUDENT roles
-      if ((formData.role === 'STUDENT' || formData.role === 'ACADEMY') && !showVerification && !verificationSuccess) {
+      // Email verification required for all registrations (only STUDENT and ACADEMY allowed)
+      if (!showVerification && !verificationSuccess) {
         try {
           await sendVerificationCode();
           setShowVerification(true);
