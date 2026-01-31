@@ -1351,7 +1351,7 @@ export default function TeacherClassPage() {
   const isReleased = (d: string) => new Date(d) <= new Date();
 
   if (loading) {
-    return <PageLoader label="Cargando clase..." />;
+    return <SkeletonClasses />;
   }
 
   if (!classData) {
