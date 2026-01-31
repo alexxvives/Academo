@@ -32,7 +32,14 @@ export default function PaymentModal({
   maxStudents,
   currentStudentCount,
 }: PaymentModalProps) {
-  const [paymentFrequency, setPaymentFrequency] = useState<'monthly' | 'one-time' | null>(null);
+  // Determine payment options based on which prices are set
+  const hasMonthly = monthlyPrice != null && monthlyPrice > 0;
+  const hasOneTime = oneTimePrice != null && oneTimePrice > 0;
+  
+  // Auto-select if only one option available
+  const defaultFrequency = hasMonthly && !hasOneTime ? 'monthly' : !hasMonthly && hasOneTime ? 'one-time' : null;
+  
+  const [paymentFrequency, setPaymentFrequency] = useState<'monthly' | 'one-time' | null>(defaultFrequency);
   const [processing, setProcessing] = useState(false);
   const [confirmingCash, setConfirmingCash] = useState(false);
   const [confirmingBizum, setConfirmingBizum] = useState(false);
@@ -41,10 +48,6 @@ export default function PaymentModal({
 
   // Check if class is full
   const isClassFull = maxStudents && currentStudentCount && currentStudentCount >= maxStudents;
-
-  // Determine payment options based on which prices are set
-  const hasMonthly = monthlyPrice != null && monthlyPrice > 0;
-  const hasOneTime = oneTimePrice != null && oneTimePrice > 0;
   const needsFrequencySelection = hasMonthly && hasOneTime;
 
   const currency = 'EUR';
@@ -150,7 +153,7 @@ export default function PaymentModal({
   // Cash confirmation dialog
   if (confirmingCash) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm p-4">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] backdrop-blur-sm p-4">
         <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl">
           <div className="p-8 border-b border-gray-200">
             <h3 className="text-2xl font-semibold text-gray-900">Confirmar Pago en Efectivo</h3>
@@ -188,7 +191,7 @@ export default function PaymentModal({
   // Bizum confirmation dialog
   if (confirmingBizum) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm p-4">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] backdrop-blur-sm p-4">
         <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl">
           <div className="p-8 border-b border-gray-200">
             <h3 className="text-2xl font-semibold text-gray-900">Confirmar Pago por Bizum</h3>
@@ -224,29 +227,27 @@ export default function PaymentModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl w-full max-w-5xl shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-[#b0e788]/10 to-[#b0e788]/5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-[#1a1c29]">{className}</h2>
-              <p className="text-gray-600 mt-1 flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                {academyName}
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/50 rounded-lg transition-colors"
-            >
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        <div className="p-6 border-b border-gray-200 bg-[#1a1c29] relative">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-[#b1e787]">{className}</h2>
+            <p className="text-[#b1e787]/80 mt-1 flex items-center justify-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
-            </button>
+              {academyName}
+            </p>
           </div>
+          <button
+            onClick={onClose}
+            className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <svg className="w-6 h-6 text-[#b1e787]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         {isClassFull ? (
@@ -377,7 +378,7 @@ export default function PaymentModal({
                       <p className="text-sm text-gray-600">Pago seguro con Stripe</p>
                     </div>
                     <div className="flex-shrink-0">
-                      <span className="inline-block text-xs font-medium text-white bg-[#b0e788] px-3 py-1 rounded-full">
+                      <span className="inline-block text-xs font-medium text-white bg-black px-3 py-1 rounded-full">
                         Instantáneo
                       </span>
                     </div>

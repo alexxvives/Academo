@@ -300,11 +300,15 @@ payments.post('/stripe-session', async (c) => {
     const session = await requireAuth(c);
     console.log('[Stripe Session] User authenticated:', session.id);
     
-    const { classId } = await c.req.json();
-    console.log('[Stripe Session] Request data:', { classId });
+    const { classId, paymentFrequency } = await c.req.json();
+    console.log('[Stripe Session] Request data:', { classId, paymentFrequency });
 
     if (!classId) {
       return c.json(errorResponse('classId is required'), 400);
+    }
+
+    if (!paymentFrequency || !['monthly', 'one-time'].includes(paymentFrequency)) {
+      return c.json(errorResponse('Valid paymentFrequency is required (monthly or one-time)'), 400);
     }
 
     // Get class details
@@ -330,15 +334,21 @@ payments.post('/stripe-session', async (c) => {
       return c.json(errorResponse('Academy has not set up Stripe Connect. Please pay with cash.'), 400);
     }
 
+    // Determine price based on payment frequency
+    const price = paymentFrequency === 'monthly' ? classData.monthlyPrice : classData.oneTimePrice;
+    
+    if (!price || price <= 0) {
+      return c.json(errorResponse(`${paymentFrequency === 'monthly' ? 'Monthly' : 'One-time'} payment not available for this class`), 400);
+    }
+
+    console.log('[Stripe Session] Using price:', price, 'for frequency:', paymentFrequency);
+
     if (!c.env.STRIPE_SECRET_KEY) {
       return c.json(errorResponse('Stripe is not configured on this server'), 500);
     }
 
     // Create Stripe Checkout Session
     const stripe = require('stripe')(c.env.STRIPE_SECRET_KEY);
-    
-    // Calculate platform fee (5%)
-    const platformFeeAmount = Math.round(classData.price * 100 * 0.05);
     
     // Stripe doesn't support Bizum directly - redirect to card payment
     const paymentMethods = ['card', 'link'];
@@ -353,24 +363,28 @@ payments.post('/stripe-session', async (c) => {
       return c.json(errorResponse('Enrollment not found'), 404);
     }
 
+    const isRecurring = paymentFrequency === 'monthly';
+    const priceData: any = {
+      currency: 'eur',
+      product_data: { 
+        name: `${classData.name} - Acceso completo`,
+        description: isRecurring ? 'Suscripción mensual' : 'Pago único',
+        images: ['https://akademo-edu.com/logo/akademo-icon.png'],
+      },
+      unit_amount: Math.round(price * 100), // Convert to cents
+    };
+    
+    if (isRecurring) {
+      priceData.recurring = { interval: 'month' };
+    }
+
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: paymentMethods,
       line_items: [{
-        price_data: {
-          currency: 'eur', // Only EUR
-          product_data: { 
-            name: `${classData.name} - Acceso completo`,
-            description: 'Acceso al contenido de la clase',
-            images: ['https://akademo-edu.com/logo/akademo-icon.png'],
-          },
-          unit_amount: Math.round(classData.price * 100), // Convert to cents
-          recurring: {
-            interval: 'month',
-          },
-        },
+        price_data: priceData,
         quantity: 1,
       }],
-      mode: 'subscription',
+      mode: isRecurring ? 'subscription' : 'payment',
       success_url: `${c.env.FRONTEND_URL || 'https://akademo-edu.com'}/dashboard/student/classes?payment=success&classId=${classId}`,
       cancel_url: `${c.env.FRONTEND_URL || 'https://akademo-edu.com'}/dashboard/student/classes?payment=cancel`,
       metadata: {
