@@ -4,6 +4,58 @@ import { successResponse, errorResponse } from '../lib/utils';
 
 const webhooks = new Hono<{ Bindings: Bindings }>();
 
+// Helper function to calculate billing cycles based on class start date
+function calculateBillingCycle(classStartDate: string, enrollmentDate: string, isMonthly: boolean) {
+  const classStart = new Date(classStartDate);
+  const enrollment = new Date(enrollmentDate);
+  const today = new Date();
+  
+  // For one-time payments, no next payment
+  if (!isMonthly) {
+    return {
+      billingCycleStart: null,
+      billingCycleEnd: null,
+      nextPaymentDue: null
+    };
+  }
+  
+  // If class hasn't started yet (early joiner)
+  if (today < classStart) {
+    // First payment covers first cycle: classStart to classStart+30 days
+    const cycleEnd = new Date(classStart);
+    cycleEnd.setDate(cycleEnd.getDate() + 30);
+    
+    return {
+      billingCycleStart: classStart.toISOString(),
+      billingCycleEnd: cycleEnd.toISOString(),
+      nextPaymentDue: cycleEnd.toISOString() // Charged at end of cycle for next cycle
+    };
+  }
+  
+  // Class has already started (late joiner)
+  // Find which cycle we're currently in
+  const daysSinceStart = Math.floor((today.getTime() - classStart.getTime()) / (1000 * 60 * 60 * 24));
+  const currentCycleNumber = Math.floor(daysSinceStart / 30);
+  
+  // Current cycle start = classStart + (cycleNumber * 30 days)
+  const currentCycleStart = new Date(classStart);
+  currentCycleStart.setDate(currentCycleStart.getDate() + (currentCycleNumber * 30));
+  
+  const currentCycleEnd = new Date(currentCycleStart);
+  currentCycleEnd.setDate(currentCycleEnd.getDate() + 30);
+  
+  // First payment covers NEXT cycle (they get remainder of current cycle free)
+  const nextCycleStart = currentCycleEnd;
+  const nextCycleEnd = new Date(nextCycleStart);
+  nextCycleEnd.setDate(nextCycleEnd.getDate() + 30);
+  
+  return {
+    billingCycleStart: nextCycleStart.toISOString(),
+    billingCycleEnd: nextCycleEnd.toISOString(),
+    nextPaymentDue: nextCycleEnd.toISOString() // Charged at end of next cycle
+  };
+}
+
 // POST /webhooks/zoom - Zoom webhook handler
 webhooks.post('/zoom', async (c) => {
   try {
@@ -389,7 +441,8 @@ webhooks.post('/stripe', async (c) => {
           // Get enrollment details for payment record
           const enrollment = await c.env.DB
             .prepare(`
-              SELECT e.*, c.name as className, c.academyId, u.firstName, u.lastName, u.email
+              SELECT e.*, c.name as className, c.academyId, c.startDate, c.monthlyPrice, c.oneTimePrice,
+                     u.firstName, u.lastName, u.email
               FROM ClassEnrollment e
               JOIN Class c ON e.classId = c.id
               JOIN User u ON e.userId = u.id
@@ -399,6 +452,17 @@ webhooks.post('/stripe', async (c) => {
             .first() as any;
 
           if (enrollment) {
+            // Determine if this is monthly or one-time payment
+            const paymentFrequency = metadata?.paymentFrequency || 'one-time';
+            const isMonthly = paymentFrequency === 'monthly';
+            
+            // Calculate billing cycle
+            const billingCycle = calculateBillingCycle(
+              enrollment.startDate || new Date().toISOString(),
+              new Date().toISOString(),
+              isMonthly
+            );
+            
             // Create/update payment record (no longer update ClassEnrollment)
             // Check if payment already exists
             await c.env.DB
@@ -407,8 +471,9 @@ webhooks.post('/stripe', async (c) => {
                   id, type, payerId, payerType, payerName, payerEmail,
                   receiverId, amount, currency, status, stripePaymentId,
                   stripeCheckoutSessionId, paymentMethod, classId,
-                  description, metadata, createdAt, completedAt, updatedAt
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'), datetime('now'))
+                  description, metadata, nextPaymentDue, billingCycleStart, billingCycleEnd,
+                  createdAt, completedAt, updatedAt
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'), datetime('now'))
               `)
               .bind(
                 crypto.randomUUID(),
@@ -426,7 +491,10 @@ webhooks.post('/stripe', async (c) => {
                 'stripe',
                 enrollment.classId,
                 `Pago de matrícula - ${enrollment.className}`,
-                JSON.stringify({ subscriptionId: subscription, source: 'stripe_checkout' })
+                JSON.stringify({ subscriptionId: subscription, source: 'stripe_checkout', paymentFrequency }),
+                billingCycle.nextPaymentDue,
+                billingCycle.billingCycleStart,
+                billingCycle.billingCycleEnd
               )
               .run();
 
